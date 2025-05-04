@@ -16,6 +16,10 @@ export default function AddWorkout() {
     const backgroundColor = scheme === "dark" ? "#000000" : "#ffffff";
     const textColor = scheme === "dark" ? "#ffffff" : "#000000";
     const borderColor = scheme === "dark" ? "#444" : "#ccc";
+    const [exercises, setExercises] = useState<any[]>([]);
+    const [exerciseName, setExerciseName] = useState("");
+    const [sets, setSets] = useState("");
+    const [reps, setReps] = useState("");
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -41,6 +45,24 @@ export default function AddWorkout() {
         if (selectedDate) {
             setDate(selectedDate);
         }
+    };
+
+    const handleSaveExercise = () => {
+        if (!exerciseName || !sets || !reps) return; // Simple validation
+
+        const newExercise = {
+            name: exerciseName,
+            sets: sets,
+            reps: reps
+        };
+
+        setExercises([...exercises, newExercise]);
+
+        // Reset modal state
+        setExerciseName("");
+        setSets("");
+        setReps("");
+        setModalVisible(false);
     };
 
     return (
@@ -85,6 +107,18 @@ export default function AddWorkout() {
                     </TouchableOpacity>
                 </View>
 
+                {exercises.length > 0 && (
+                    <View style={{ marginBottom: 20 }}>
+                        <Text style={{ color: textColor, fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>Exercises</Text>
+                        {exercises.map((exercise, index) => (
+                            <View key={index} style={{ backgroundColor: "#2a2a2a", borderRadius: 8, padding: 12, marginBottom: 10 }}>
+                                <Text style={{ color: "white", fontSize: 16 }}>{exercise.name}</Text>
+                                <Text style={{ color: "#aaa" }}>Sets: {exercise.sets} | Reps: {exercise.reps}</Text>
+                            </View>
+                        ))}
+                    </View>
+                )}
+
                 <Button title="Save Workout" onPress={saveWorkout} />
             </ScrollView>
 
@@ -110,34 +144,39 @@ export default function AddWorkout() {
 
                             <Text style={{ color: "white", marginBottom: 5 }}>Exercise Name</Text>
                             <TextInput
-                                placeholder="e.g. Bench Press"
-                                placeholderTextColor="#888"
-                                style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
-                            />
+    placeholder="e.g. Bench Press"
+    placeholderTextColor="#888"
+    value={exerciseName}
+    onChangeText={setExerciseName}
+    style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
+/>
 
-                            <Text style={{ color: "white", marginBottom: 5 }}>Sets</Text>
-                            <TextInput
-                                placeholder="e.g. 3"
-                                placeholderTextColor="#888"
-                                keyboardType="numeric"
-                                style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
-                            />
+<Text style={{ color: "white", marginBottom: 5 }}>Sets</Text>
+<TextInput
+    placeholder="e.g. 3"
+    placeholderTextColor="#888"
+    keyboardType="numeric"
+    value={sets}
+    onChangeText={setSets}
+    style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
+/>
 
-                            <Text style={{ color: "white", marginBottom: 5 }}>Reps</Text>
-                            <TextInput
-                                placeholder="e.g. 12"
-                                placeholderTextColor="#888"
-                                keyboardType="numeric"
-                                style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 20 }}
-                            />
+<Text style={{ color: "white", marginBottom: 5 }}>Reps</Text>
+<TextInput
+    placeholder="e.g. 12"
+    placeholderTextColor="#888"
+    keyboardType="numeric"
+    value={reps}
+    onChangeText={setReps}
+    style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 20 }}
+/>
 
                             <Pressable
                                 style={{ backgroundColor: "#1e90ff", padding: 12, borderRadius: 8, marginBottom: 10 }}
-                                onPress={() => setModalVisible(false)} // Later this can save
+                                onPress={handleSaveExercise}
                             >
                                 <Text style={{ color: "white", textAlign: "center", fontWeight: "bold" }}>Save Exercise</Text>
                             </Pressable>
-
                             <Pressable
                                 style={{ backgroundColor: "#ff5555", padding: 12, borderRadius: 8 }}
                                 onPress={() => setModalVisible(false)}
