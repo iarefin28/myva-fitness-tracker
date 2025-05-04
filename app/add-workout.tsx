@@ -69,32 +69,41 @@ export default function AddWorkout() {
     };
 
     return (
-        <ScrollView style={{ flex: 1, padding: 20, backgroundColor }}>
-            <Text style={{ fontSize: 24, marginBottom: 10, color: textColor }}>Add a Workout</Text>
+        <ScrollView style={{ flex: 1, padding: 20 }}>
+            <View style={{ backgroundColor: "#1e1e1e", borderRadius: 12, padding: 16, marginVertical: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 3 }}>
 
-            <View style={{ marginBottom: 20, borderWidth: 0, borderColor, borderRadius: 8, overflow: "hidden" }}>
-                <DateTimePicker
-                    value={date}
-                    mode="date"
-                    display="default"
-                    onChange={(event, selectedDate) => {
-                        if (selectedDate) {
-                            setDate(selectedDate);
-                        }
-                    }}
-                    style={{ width: "100%" }}
-                />
+                {/* Workout Date */}
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+                    <Text style={{ fontSize: 16, color: textColor }}>Workout Date</Text>
+                    <DateTimePicker
+                        value={date}
+                        mode="date"
+                        display="default"
+                        onChange={(event, selectedDate) => {
+                            if (selectedDate) {
+                                setDate(selectedDate);
+                            }
+                        }}
+                        style={{ width: 150 }}
+                    />
+                </View>
+
+                {/* Divider */}
+                <View style={{ height: 1, backgroundColor: scheme === "dark" ? "#333" : "#ccc", opacity: 0.4, marginVertical: 12 }} />
+
+                {/* Workout Name */}
+                <View>
+                    <Text style={{ fontSize: 16, color: textColor, marginBottom: 5 }}>Workout Name</Text>
+                    <TextInput
+                        value={workoutName}
+                        onChangeText={setWorkoutName}
+                        placeholder="e.g., Push Day, Leg Day"
+                        placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
+                        style={{ color: textColor, backgroundColor: "#2a2a2a", borderRadius: 8, padding: 12 }}
+                    />
+                </View>
+
             </View>
-
-            <Text style={{ fontSize: 16, marginBottom: 3, color: textColor }}>Workout Name</Text>
-            <TextInput
-                value={workoutName}
-                onChangeText={setWorkoutName}
-                placeholder="e.g., Push Day, Leg Day"
-                placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
-                style={{ borderWidth: 1, borderColor, padding: 10, marginBottom: 20, borderRadius: 8, color: textColor }}
-            />
-
             <Text style={{ fontSize: 16, marginBottom: 3, color: textColor }}>Exercises</Text>
             <View style={{ flexDirection: "row", marginBottom: 10 }}>
                 <TextInput
