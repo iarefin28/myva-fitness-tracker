@@ -1,7 +1,10 @@
+import { AntDesign } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useNavigation, useTheme } from "@react-navigation/native";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useState } from "react";
-import { FlatList, Text, useColorScheme, View } from "react-native";
+import { useCallback, useLayoutEffect, useState } from "react";
+import { FlatList, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+
 
 interface Workout {
   id: number;
@@ -20,6 +23,20 @@ export default function Index() {
   const textColor = scheme === "dark" ? "#ffffff" : "#000000";
   const cardColor = scheme === "dark" ? "#1a1a1a" : "#ffffff";
   const buttonColor = scheme === "dark" ? "#1e90ff" : "#007bff";
+
+  const navigation = useNavigation();
+  const { colors } = useTheme();
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: 'Workout Log',
+      headerRight: () => (
+        <TouchableOpacity onPress={() => router.push("/add-workout")} style={{}}>
+          <AntDesign name="plus" size={20} color={colors.text} />
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, colors]);
 
   const loadWorkouts = useCallback(async () => {
     try {

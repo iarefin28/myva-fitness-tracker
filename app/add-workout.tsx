@@ -1,3 +1,4 @@
+import { AntDesign } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRouter } from "expo-router";
 import { useLayoutEffect, useState } from "react";
@@ -133,43 +134,54 @@ export default function AddWorkout() {
                         behavior={Platform.OS === "ios" ? "padding" : "height"}
                         style={{
                             backgroundColor: "#2a2a2a",
-                            height: "70%",
+                            height: "95%",
                             borderTopLeftRadius: 20,
                             borderTopRightRadius: 20,
                             padding: 20,
                         }}
                     >
                         <ScrollView>
+                            <View style={{
+                                flexDirection: "row",
+                                justifyContent: "flex-start",
+                                alignItems: "center",
+                                marginBottom: 20
+                            }}>
+                                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                                    <AntDesign name="close" size={24} color="white" />
+                                </TouchableOpacity>
+                            </View>
+
                             <Text style={{ color: "white", fontSize: 20, fontWeight: "bold", marginBottom: 15 }}>Add Exercise</Text>
 
                             <Text style={{ color: "white", marginBottom: 5 }}>Exercise Name</Text>
                             <TextInput
-    placeholder="e.g. Bench Press"
-    placeholderTextColor="#888"
-    value={exerciseName}
-    onChangeText={setExerciseName}
-    style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
-/>
+                                placeholder="e.g. Bench Press"
+                                placeholderTextColor="#888"
+                                value={exerciseName}
+                                onChangeText={setExerciseName}
+                                style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
+                            />
 
-<Text style={{ color: "white", marginBottom: 5 }}>Sets</Text>
-<TextInput
-    placeholder="e.g. 3"
-    placeholderTextColor="#888"
-    keyboardType="numeric"
-    value={sets}
-    onChangeText={setSets}
-    style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
-/>
+                            <Text style={{ color: "white", marginBottom: 5 }}>Sets</Text>
+                            <TextInput
+                                placeholder="e.g. 3"
+                                placeholderTextColor="#888"
+                                keyboardType="numeric"
+                                value={sets}
+                                onChangeText={setSets}
+                                style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
+                            />
 
-<Text style={{ color: "white", marginBottom: 5 }}>Reps</Text>
-<TextInput
-    placeholder="e.g. 12"
-    placeholderTextColor="#888"
-    keyboardType="numeric"
-    value={reps}
-    onChangeText={setReps}
-    style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 20 }}
-/>
+                            <Text style={{ color: "white", marginBottom: 5 }}>Reps</Text>
+                            <TextInput
+                                placeholder="e.g. 12"
+                                placeholderTextColor="#888"
+                                keyboardType="numeric"
+                                value={reps}
+                                onChangeText={setReps}
+                                style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 20 }}
+                            />
 
                             <Pressable
                                 style={{ backgroundColor: "#1e90ff", padding: 12, borderRadius: 8, marginBottom: 10 }}
