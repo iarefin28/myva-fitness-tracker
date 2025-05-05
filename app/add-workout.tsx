@@ -27,27 +27,24 @@ export default function AddWorkout() {
 
     const closeModal = () => {
         setModalVisible(false);
-        setSetList([]);
-        setRestList([]);
-        setExerciseName("");
+        setActionsList([]); // <-- ADD THIS to clear sets/rest when closing
+        setExerciseName(""); 
         setSets("");
         setReps("");
     };
 
+    const [actionsList, setActionsList] = useState<any[]>([]);
+
     const addSet = () => {
-        setSetList([...setList, { id: setList.length + 1, value: "" }]);
+        setActionsList([...actionsList, { type: "set", id: actionsList.length + 1, value: "" }]);
     };
 
     const addRest = () => {
-        setRestList([...restList, { id: restList.length + 1, value: "" }]);
+        setActionsList([...actionsList, { type: "rest", id: actionsList.length + 1, value: "" }]);
     };
 
-    const updateSetValue = (id: number, value: string) => {
-        setSetList(setList.map(set => set.id === id ? { ...set, value } : set));
-    };
-
-    const updateRestValue = (id: number, value: string) => {
-        setRestList(restList.map(rest => rest.id === id ? { ...rest, value } : rest));
+    const updateActionValue = (id: number, value: string) => {
+        setActionsList(actionsList.map(action => action.id === id ? { ...action, value } : action));
     };
 
     useLayoutEffect(() => {
@@ -168,13 +165,8 @@ export default function AddWorkout() {
                             padding: 20,
                         }}
                     >
-                        <ScrollView>
-                            <View style={{
-                                flexDirection: "row",
-                                justifyContent: "flex-start",
-                                alignItems: "center",
-                                marginBottom: 20
-                            }}>
+                        <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+                            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
                                 <TouchableOpacity onPress={() => closeModal()}>
                                     <AntDesign name="close" size={24} color="white" />
                                 </TouchableOpacity>
@@ -191,85 +183,35 @@ export default function AddWorkout() {
                                 style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
                             />
 
-                            {/* <Text style={{ color: "white", marginBottom: 5 }}>Sets</Text>
-                            <TextInput
-                                placeholder="e.g. 3"
-                                placeholderTextColor="#888"
-                                keyboardType="numeric"
-                                value={sets}
-                                onChangeText={setSets}
-                                style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
-                            />
-
-                            <Text style={{ color: "white", marginBottom: 5 }}>Reps</Text>
-                            <TextInput
-                                placeholder="e.g. 12"
-                                placeholderTextColor="#888"
-                                keyboardType="numeric"
-                                value={reps}
-                                onChangeText={setReps}
-                                style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 20 }}
-                            /> */}
-
                             <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
                                 <TouchableOpacity
-                                    style={{
-                                        flex: 1,
-                                        backgroundColor: "yellow",
-                                        paddingVertical: 16,
-                                        borderRadius: 12,
-                                        marginRight: 4, // reduced space here
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                    }}
+                                    style={{ flex: 1, backgroundColor: "yellow", paddingVertical: 16, borderRadius: 12, marginRight: 4, alignItems: "center", justifyContent: "center" }}
                                     onPress={addSet}
                                 >
                                     <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Set</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
-                                    style={{
-                                        flex: 1,
-                                        backgroundColor: "orange",
-                                        paddingVertical: 16,
-                                        borderRadius: 12,
-                                        marginLeft: 4, // reduced space here
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                    }}
+                                    style={{ flex: 1, backgroundColor: "orange", paddingVertical: 16, borderRadius: 12, marginLeft: 4, alignItems: "center", justifyContent: "center" }}
                                     onPress={addRest}
                                 >
                                     <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Rest</Text>
                                 </TouchableOpacity>
                             </View>
 
-                            {setList.map((set, index) => (
-                                <View key={set.id} style={{ backgroundColor: "#3a3a3a", borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 8 }}>
+                            {actionsList.map((action) => (
+                                <View key={action.id} style={{ backgroundColor: action.type === "set" ? "#3a3a3a" : "#262626", borderRadius: 8, padding: action.type === "set" ? 12 : 8, marginBottom: 8 }}>
                                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                                        <Text style={{ color: "white", fontSize: 16 }}>Set #{set.id}</Text>
+                                        <Text style={{ color: "white", fontSize: action.type === "set" ? 16 : 14 }}>
+                                            {action.type === "set" ? `Set #${action.id}` : `Rest Duration (sec)`}
+                                        </Text>
                                         <TextInput
-                                            placeholder="Enter reps"
+                                            placeholder={action.type === "set" ? "Enter reps" : "Enter rest duration"}
                                             placeholderTextColor="#888"
                                             keyboardType="numeric"
-                                            value={set.value}
-                                            onChangeText={(value) => updateSetValue(set.id, value)}
-                                            style={{ backgroundColor: "#2a2a2a", color: "white", borderRadius: 6, padding: 8, width: 140, textAlign: "center" }}
-                                        />
-                                    </View>
-                                </View>
-                            ))}
-
-                            {restList.map((rest, index) => (
-                                <View key={rest.id} style={{ backgroundColor: "#262626", borderRadius: 6, paddingVertical: 6, paddingHorizontal: 10, marginBottom: 6 }}>
-                                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                                        <Text style={{ color: "#bbb", fontSize: 14 }}>Rest (sec)</Text>
-                                        <TextInput
-                                            placeholder="e.g. 60"
-                                            placeholderTextColor="#777"
-                                            keyboardType="numeric"
-                                            value={rest.value}
-                                            onChangeText={(value) => updateRestValue(rest.id, value)}
-                                            style={{ backgroundColor: "#1a1a1a", color: "white", borderRadius: 6, padding: 6, width: 100, textAlign: "center" }}
+                                            value={action.value}
+                                            onChangeText={(value) => updateActionValue(action.id, value)}
+                                            style={{ backgroundColor: "#2a2a2a", color: "white", borderRadius: 6, padding: 8, width: action.type === "set" ? 140 : 100, textAlign: "center" }}
                                         />
                                     </View>
                                 </View>
