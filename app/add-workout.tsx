@@ -22,6 +22,34 @@ export default function AddWorkout() {
     const [sets, setSets] = useState("");
     const [reps, setReps] = useState("");
 
+    const [setList, setSetList] = useState<any[]>([]);
+    const [restList, setRestList] = useState<any[]>([]);
+
+    const closeModal = () => {
+        setModalVisible(false);
+        setSetList([]);
+        setRestList([]);
+        setExerciseName("");
+        setSets("");
+        setReps("");
+    };
+
+    const addSet = () => {
+        setSetList([...setList, { id: setList.length + 1, value: "" }]);
+    };
+
+    const addRest = () => {
+        setRestList([...restList, { id: restList.length + 1, value: "" }]);
+    };
+
+    const updateSetValue = (id: number, value: string) => {
+        setSetList(setList.map(set => set.id === id ? { ...set, value } : set));
+    };
+
+    const updateRestValue = (id: number, value: string) => {
+        setRestList(restList.map(rest => rest.id === id ? { ...rest, value } : rest));
+    };
+
     useLayoutEffect(() => {
         navigation.setOptions({
             headerRight: () => (
@@ -63,7 +91,7 @@ export default function AddWorkout() {
         setExerciseName("");
         setSets("");
         setReps("");
-        setModalVisible(false);
+        closeModal();
     };
 
     return (
@@ -127,7 +155,7 @@ export default function AddWorkout() {
                 animationType="slide"
                 transparent={true}
                 visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
+                onRequestClose={() => closeModal()}
             >
                 <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
                     <KeyboardAvoidingView
@@ -147,7 +175,7 @@ export default function AddWorkout() {
                                 alignItems: "center",
                                 marginBottom: 20
                             }}>
-                                <TouchableOpacity onPress={() => setModalVisible(false)}>
+                                <TouchableOpacity onPress={() => closeModal()}>
                                     <AntDesign name="close" size={24} color="white" />
                                 </TouchableOpacity>
                             </View>
@@ -163,7 +191,7 @@ export default function AddWorkout() {
                                 style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
                             />
 
-                            <Text style={{ color: "white", marginBottom: 5 }}>Sets</Text>
+                            {/* <Text style={{ color: "white", marginBottom: 5 }}>Sets</Text>
                             <TextInput
                                 placeholder="e.g. 3"
                                 placeholderTextColor="#888"
@@ -181,7 +209,71 @@ export default function AddWorkout() {
                                 value={reps}
                                 onChangeText={setReps}
                                 style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 20 }}
-                            />
+                            /> */}
+
+                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
+                                <TouchableOpacity
+                                    style={{
+                                        flex: 1,
+                                        backgroundColor: "yellow",
+                                        paddingVertical: 16,
+                                        borderRadius: 12,
+                                        marginRight: 4, // reduced space here
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
+                                    onPress={addSet}
+                                >
+                                    <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Set</Text>
+                                </TouchableOpacity>
+
+                                <TouchableOpacity
+                                    style={{
+                                        flex: 1,
+                                        backgroundColor: "orange",
+                                        paddingVertical: 16,
+                                        borderRadius: 12,
+                                        marginLeft: 4, // reduced space here
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                    }}
+                                    onPress={addRest}
+                                >
+                                    <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Rest</Text>
+                                </TouchableOpacity>
+                            </View>
+
+                            {setList.map((set, index) => (
+                                <View key={set.id} style={{ backgroundColor: "#3a3a3a", borderRadius: 8, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 8 }}>
+                                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                                        <Text style={{ color: "white", fontSize: 16 }}>Set #{set.id}</Text>
+                                        <TextInput
+                                            placeholder="Enter reps"
+                                            placeholderTextColor="#888"
+                                            keyboardType="numeric"
+                                            value={set.value}
+                                            onChangeText={(value) => updateSetValue(set.id, value)}
+                                            style={{ backgroundColor: "#2a2a2a", color: "white", borderRadius: 6, padding: 8, width: 140, textAlign: "center" }}
+                                        />
+                                    </View>
+                                </View>
+                            ))}
+
+                            {restList.map((rest, index) => (
+                                <View key={rest.id} style={{ backgroundColor: "#262626", borderRadius: 6, paddingVertical: 6, paddingHorizontal: 10, marginBottom: 6 }}>
+                                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                                        <Text style={{ color: "#bbb", fontSize: 14 }}>Rest (sec)</Text>
+                                        <TextInput
+                                            placeholder="e.g. 60"
+                                            placeholderTextColor="#777"
+                                            keyboardType="numeric"
+                                            value={rest.value}
+                                            onChangeText={(value) => updateRestValue(rest.id, value)}
+                                            style={{ backgroundColor: "#1a1a1a", color: "white", borderRadius: 6, padding: 6, width: 100, textAlign: "center" }}
+                                        />
+                                    </View>
+                                </View>
+                            ))}
 
                             <Pressable
                                 style={{ backgroundColor: "#1e90ff", padding: 12, borderRadius: 8, marginBottom: 10 }}
