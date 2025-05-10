@@ -17,22 +17,39 @@ const ExerciseCard: React.FC<Props> = ({ exercise }) => {
                 .reduce((sum, a) => sum + Number(a.reps || 0), 0) / (totalSets || 1)
         ) || 0;
 
+    const renderSetRestRows = () => {
+        const rows = [];
+        for (let i = 0; i < exercise.actions.length; i++) {
+            const action = exercise.actions[i];
+            if (action.type === "set") {
+                const next = exercise.actions[i + 1];
+                const restText = next && next.type === "rest"
+                    ? `Rest: ${next.value || 0} ${next.unit}`
+                    : "No Rest";
+
+                rows.push(
+                    <View key={`set-${action.setNumber}`} style={styles.row}>
+                        <Text style={styles.setText}>
+                            Set #{action.setNumber}: {action.weight || 0}
+                            {action.unit} × {action.reps || 0} reps
+                        </Text>
+                        <Text style={styles.restText}>{restText}</Text>
+                    </View>
+                );
+
+                // Skip the rest in the next loop iteration if it was paired
+                if (next && next.type === "rest") i++;
+            }
+        }
+        return rows;
+    };
+
     return (
         <TouchableOpacity onPress={() => setExpanded(!expanded)} style={styles.card}>
             <Text style={styles.name}>{exercise.name}</Text>
             <Text style={styles.details}>Sets: {totalSets} | Avg Reps: {avgReps}</Text>
 
-            {expanded && (
-                <View style={styles.detailList}>
-                    {exercise.actions.map((action, i) => (
-                        <Text key={i} style={styles.action}>
-                            {action.type === "set"
-                                ? `Set #${action.setNumber}: ${action.weight}${action.unit} x ${action.reps} reps`
-                                : `Rest #${action.restNumber}: ${action.value} ${action.unit}`}
-                        </Text>
-                    ))}
-                </View>
-            )}
+            {expanded && <View style={styles.detailList}>{renderSetRestRows()}</View>}
         </TouchableOpacity>
     );
 };
@@ -56,10 +73,21 @@ const styles = StyleSheet.create({
     detailList: {
         marginTop: 10,
     },
-    action: {
+    row: {
+        flexDirection: "row",
+        justifyContent: "space-between",
+        marginBottom: 6,
+    },
+    setText: {
         color: "white",
         fontSize: 14,
-        marginBottom: 4,
+        flex: 1,
+    },
+    restText: {
+        color: "#1e90ff",
+        fontSize: 14,
+        flex: 1,
+        textAlign: "right",
     },
 });
 

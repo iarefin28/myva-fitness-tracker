@@ -2,7 +2,7 @@ import { AntDesign } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRouter } from "expo-router";
 import { useLayoutEffect, useState } from "react";
-import { Button, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
+import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
 import ActionInput from "../components/ActionInput";
 import ExerciseCard from "../components/ExerciseCard";
@@ -122,57 +122,148 @@ export default function AddWorkout() {
 
     return (
         <>
-            <ScrollView style={{ flex: 1, padding: 20 }}>
-                <View style={{ backgroundColor: "#1e1e1e", borderRadius: 12, padding: 16, marginVertical: 12, shadowColor: "#000", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.2, shadowRadius: 6, elevation: 3 }}>
-                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-                        <Text style={{ fontSize: 16, color: textColor }}>Workout Date</Text>
-                        <DateTimePicker
-                            value={date}
-                            mode="date"
-                            display="default"
-                            onChange={(event, selectedDate) => {
-                                if (selectedDate) {
-                                    setDate(selectedDate);
-                                }
+            <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+                <View style={{ flex: 1, padding: 20 }}>
+                    {/* Motivational Quote: this could be made up of quotes from the user themselves after they keep tracking workouts */}
+                    <Text style={{
+                        color: "#888",
+                        fontSize: 14,
+                        fontStyle: "italic",
+                        textAlign: "center",
+                        marginBottom: 16,
+                        paddingHorizontal: 12
+                    }}>
+                        “Discipline is doing what needs to be done, even when you don’t feel like doing it.”– Unknown
+                    </Text>
+                    {/* Workout Info */}
+                    <View style={{
+                        backgroundColor: "#1e1e1e",
+                        borderRadius: 12,
+                        padding: 12,
+                        marginBottom: 20,
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 4,
+                        elevation: 2
+                    }}>
+                        {/* Pre-Workout Notes */}
+                        <TextInput
+                            value={notes}
+                            onChangeText={setNotes}
+                            placeholder="Write a pre-workout note for reflection"
+                            placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
+                            multiline
+                            scrollEnabled
+                            blurOnSubmit={false}
+                            style={{
+                                color: textColor,
+                                backgroundColor: "#2a2a2a",
+                                borderRadius: 8,
+                                paddingHorizontal: 10,
+                                paddingTop: 12,
+                                paddingBottom: 10,
+                                height: 65,
+                                fontSize: 14,
+                                textAlignVertical: "top"
                             }}
-                            style={{ width: 150 }}
                         />
-                    </View>
 
-                    <View style={{ height: 1, backgroundColor: scheme === "dark" ? "#333" : "#ccc", opacity: 0.4, marginVertical: 12 }} />
+                        {/* Divider */}
+                        <View style={{
+                            height: 1,
+                            backgroundColor: scheme === "dark" ? "#333" : "#ccc",
+                            opacity: 0.4,
+                            marginVertical: 7
+                        }} />
 
-                    <View>
-                        <Text style={{ fontSize: 16, color: textColor, marginBottom: 5 }}>Workout Name</Text>
+                        {/* Workout Date */}
+                        <View style={{
+                            flexDirection: "row",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            marginBottom: 10,
+                            minHeight: 35
+                        }}>
+                            <Text style={{ fontSize: 15, color: textColor }}>Workout Date</Text>
+                            <View style={{
+                                height: 30,
+                                justifyContent: "center"
+                            }}>
+                                <DateTimePicker
+                                    value={date}
+                                    mode="date"
+                                    display="default"
+                                    onChange={(event, selectedDate) => {
+                                        if (selectedDate) setDate(selectedDate);
+                                    }}
+                                    style={{ transform: [{ scale: 0.85 }] }}
+                                />
+                            </View>
+                        </View>
+
+                        {/* Divider */}
+                        <View style={{
+                            height: 1,
+                            backgroundColor: scheme === "dark" ? "#333" : "#ccc",
+                            opacity: 0.4,
+                            marginVertical: 7
+                        }} />
+
+                        {/* Workout Name */}
                         <TextInput
                             value={workoutName}
                             onChangeText={setWorkoutName}
                             placeholder="e.g., Push Day, Leg Day"
                             placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
-                            style={{ color: textColor, backgroundColor: "#2a2a2a", borderRadius: 8, padding: 12 }}
+                            style={{
+                                color: textColor,
+                                backgroundColor: "#2a2a2a",
+                                borderRadius: 8,
+                                padding: 10,
+                                fontSize: 14
+                            }}
                         />
                     </View>
-                </View>
 
-                <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
-                    <TouchableOpacity
-                        style={{ flex: 1, backgroundColor: "#1e90ff", padding: 12, borderRadius: 8, marginRight: 10 }}
-                        onPress={() => setModalVisible(true)}
-                    >
-                        <Text style={{ color: "white", fontWeight: "bold", textAlign: "center" }}>Add Exercise</Text>
-                    </TouchableOpacity>
-                </View>
-
-                {exercises.length > 0 && (
-                    <View style={{ marginBottom: 20 }}>
-                        <Text style={{ color: textColor, fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>Exercises</Text>
-                        {exercises.map((exercise, index) => (
-                            <ExerciseCard key={index} exercise={exercise} />
-                        ))}
+                    {/* Add Exercise Button */}
+                    <View style={{ marginTop: -10, marginBottom: 16 }}>
+                        <TouchableOpacity
+                            onPress={() => setModalVisible(true)}
+                            style={{
+                                backgroundColor: "#1e90ff",
+                                borderRadius: 8,
+                                paddingVertical: 12,
+                                paddingHorizontal: 16,
+                                alignItems: "center"
+                            }}
+                        >
+                            <Text style={{ color: "white", fontWeight: "bold", fontSize: 15 }}>
+                                + Add Exercise
+                            </Text>
+                        </TouchableOpacity>
                     </View>
-                )}
+                    {/* Exercises Header */}
+                    {exercises.length > 0 && (
+                        <Text style={{ color: textColor, fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>Exercises</Text>
+                    )}
 
-                <Button title="Save Workout" onPress={saveWorkout} />
-            </ScrollView>
+                    {/* Scrollable Cards Only */}
+                    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} >
+                        {exercises.length === 0 ? (
+                            <View style={{ flex: 1, alignItems: "center", justifyContent: "flex-start", paddingTop: 150, paddingHorizontal: 20 }}>
+                                <Text style={{ color: "#666", fontSize: 13, textAlign: "center" }}>
+                                    No exercises yet. Build your workout above.
+                                </Text>
+                            </View>
+                        ) : (
+                            exercises.map((exercise, index) => (
+                                <ExerciseCard key={index} exercise={exercise} />
+                            ))
+                        )}
+                    </ScrollView>
+                </View>
+            </TouchableWithoutFeedback>
 
             <Modal
                 animationType="slide"
