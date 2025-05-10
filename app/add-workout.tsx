@@ -4,76 +4,37 @@ import { useNavigation, useRouter } from "expo-router";
 import { useLayoutEffect, useState } from "react";
 import { Button, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, useColorScheme, View } from "react-native";
 
+import ActionInput from "../components/ActionInput";
+import ExerciseCard from "../components/ExerciseCard";
+import type { Exercise, ExerciseAction } from "../types/workout";
+
 export default function AddWorkout() {
+    // ───── Theme & Navigation ─────
+    const scheme = useColorScheme();
+    const navigation = useNavigation();
+    const router = useRouter();
+
+    const backgroundColor = scheme === "dark" ? "#000000" : "#ffffff";
+    const textColor = scheme === "dark" ? "#ffffff" : "#000000";
+    const borderColor = scheme === "dark" ? "#444" : "#ccc";
+
+    // ───── Workout Info State ─────
     const [workoutName, setWorkoutName] = useState("");
     const [notes, setNotes] = useState("");
     const [date, setDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
+
+    // ───── Modal & Exercise State ─────
     const [modalVisible, setModalVisible] = useState(false);
-
-    const navigation = useNavigation();
-    const router = useRouter();
-    const scheme = useColorScheme();
-    const backgroundColor = scheme === "dark" ? "#000000" : "#ffffff";
-    const textColor = scheme === "dark" ? "#ffffff" : "#000000";
-    const borderColor = scheme === "dark" ? "#444" : "#ccc";
-    const [exercises, setExercises] = useState<any[]>([]);
     const [exerciseName, setExerciseName] = useState("");
-    const [sets, setSets] = useState("");
-    const [reps, setReps] = useState("");
+    const [exercises, setExercises] = useState<Exercise[]>([]);
 
-    const [setList, setSetList] = useState<any[]>([]);
-    const [restList, setRestList] = useState<any[]>([]);
+    // ───── Action Management State ─────
+    const [actionsList, setActionsList] = useState<ExerciseAction[]>([]);
     const [setCounter, setSetCounter] = useState(1);
     const [restCounter, setRestCounter] = useState(1);
 
-    const closeModal = () => {
-        setModalVisible(false);
-        setActionsList([]); // <-- ADD THIS to clear sets/rest when closing
-        setExerciseName("");
-        setSets("");
-        setReps("");
-        setSetCounter(1);
-        setRestCounter(1);
-    };
-
-    const [actionsList, setActionsList] = useState<any[]>([]);
-
-    const addSet = () => {
-        setActionsList([
-            ...actionsList,
-            {
-                type: "set",
-                setNumber: setCounter,
-                reps: "",
-                weight: "",
-                unit: "lb"
-            }
-        ]);
-        setSetCounter(prev => prev + 1);
-    };
-
-    const addRest = () => {
-        setActionsList([
-            ...actionsList,
-            {
-                type: "rest",
-                restNumber: restCounter,
-                value: "",
-                unit: "sec"
-            }
-        ]);
-        setRestCounter(prev => prev + 1);
-    };
-
-    const updateActionValue = (index: number, field: "reps" | "weight" | "value" | "unit", value: string) => {
-        setActionsList(prev =>
-            prev.map((action, i) =>
-                i === index ? { ...action, [field]: value } : action
-            )
-        );
-    };
-
+    // ───── Layout Effect for Header Buttons ─────
     useLayoutEffect(() => {
         navigation.setOptions({
             headerRight: () => (
@@ -89,33 +50,74 @@ export default function AddWorkout() {
         });
     }, [navigation]);
 
-    const saveWorkout = async () => {
-        // Save logic here
-    };
-
-    const onChangeDate = (event: any, selectedDate?: Date) => {
-        setShowDatePicker(Platform.OS === "ios");
-        if (selectedDate) {
-            setDate(selectedDate);
-        }
+    // ───── Modal & Exercise Handlers ─────
+    const closeModal = () => {
+        setModalVisible(false);
+        setActionsList([]);
+        setExerciseName("");
+        setSetCounter(1);
+        setRestCounter(1);
     };
 
     const handleSaveExercise = () => {
-        if (!exerciseName || !sets || !reps) return; // Simple validation
-
-        const newExercise = {
+        if (!exerciseName || actionsList.length === 0) return;
+        const newExercise: Exercise = {
             name: exerciseName,
-            sets: sets,
-            reps: reps
+            actions: actionsList
         };
-
-        setExercises([...exercises, newExercise]);
-
-        // Reset modal state
-        setExerciseName("");
-        setSets("");
-        setReps("");
+        setExercises(prev => [...prev, newExercise]);
         closeModal();
+    };
+
+    // ───── Workout Save (To Implement) ─────
+    const saveWorkout = async () => {
+        // TODO: Save workout to storage
+    };
+
+    // ───── Action Handlers ─────
+    const addSet = () => {
+        setActionsList(prev => [
+            ...prev,
+            {
+                type: "set",
+                setNumber: setCounter,
+                reps: "",
+                weight: "",
+                unit: "lb"
+            }
+        ]);
+        setSetCounter(prev => prev + 1);
+    };
+
+    const addRest = () => {
+        setActionsList(prev => [
+            ...prev,
+            {
+                type: "rest",
+                restNumber: restCounter,
+                value: "",
+                unit: "sec"
+            }
+        ]);
+        setRestCounter(prev => prev + 1);
+    };
+
+    const updateActionValue = (
+        index: number,
+        field: "reps" | "weight" | "value" | "unit",
+        value: string
+    ) => {
+        setActionsList(prev =>
+            prev.map((action, i) =>
+                i === index ? { ...action, [field]: value } : action
+            )
+        );
+    };
+
+    // ───── Date Picker Handler ─────
+    const onChangeDate = (event: any, selectedDate?: Date) => {
+        setShowDatePicker(Platform.OS === "ios");
+        if (selectedDate) setDate(selectedDate);
     };
 
     return (
@@ -164,10 +166,7 @@ export default function AddWorkout() {
                     <View style={{ marginBottom: 20 }}>
                         <Text style={{ color: textColor, fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>Exercises</Text>
                         {exercises.map((exercise, index) => (
-                            <View key={index} style={{ backgroundColor: "#2a2a2a", borderRadius: 8, padding: 12, marginBottom: 10 }}>
-                                <Text style={{ color: "white", fontSize: 16 }}>{exercise.name}</Text>
-                                <Text style={{ color: "#aaa" }}>Sets: {exercise.sets} | Reps: {exercise.reps}</Text>
-                            </View>
+                            <ExerciseCard key={index} exercise={exercise} />
                         ))}
                     </View>
                 )}
@@ -199,7 +198,6 @@ export default function AddWorkout() {
                         </View>
 
                         <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-                            
 
                             <Text style={{ color: "white", marginBottom: 5 }}>Exercise Name</Text>
                             <TextInput
@@ -227,108 +225,12 @@ export default function AddWorkout() {
                             </View>
 
                             {actionsList.map((action, index) => (
-                                <View key={index} style={{ backgroundColor: action.type === "set" ? "#3a3a3a" : "#262626", borderRadius: 8, padding: 12, marginBottom: 8 }}>
-                                    <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                                        <Text style={{ color: "white", fontSize: 16 }}>
-                                            {action.type === "set"
-                                                ? `Set #${action.setNumber}`
-                                                : `Rest #${action.restNumber} (${action.unit})`}
-                                        </Text>
-                                        {action.type === "set" ? (
-                                            <View style={{ flexDirection: "row", gap: 8 }}>
-                                                <TextInput
-                                                    placeholder="Weight"
-                                                    placeholderTextColor="#888"
-                                                    keyboardType="numeric"
-                                                    value={action.weight}
-                                                    onChangeText={(value) => updateActionValue(index, "weight", value)}
-                                                    style={{
-                                                        backgroundColor: "#2a2a2a",
-                                                        color: "white",
-                                                        borderRadius: 6,
-                                                        padding: 8,
-                                                        width: 80,
-                                                        textAlign: "center"
-                                                    }}
-                                                />
-                                                <TouchableOpacity
-                                                    onPress={() =>
-                                                        updateActionValue(index, "unit", action.unit === "lb" ? "kg" : "lb")
-                                                    }
-                                                    style={{
-                                                        backgroundColor: "#444",
-                                                        paddingVertical: 6,
-                                                        paddingHorizontal: 10,
-                                                        borderRadius: 6
-                                                    }}
-                                                >
-                                                    <Text style={{ color: "white", fontSize: 14 }}>
-                                                        {action.unit}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                                <TextInput
-                                                    placeholder="Reps"
-                                                    placeholderTextColor="#888"
-                                                    keyboardType="numeric"
-                                                    value={action.reps}
-                                                    onChangeText={(value) => updateActionValue(index, "reps", value)}
-                                                    style={{
-                                                        backgroundColor: "#2a2a2a",
-                                                        color: "white",
-                                                        borderRadius: 6,
-                                                        padding: 8,
-                                                        width: 80,
-                                                        textAlign: "center"
-                                                    }}
-                                                />
-
-                                            </View>
-                                        ) : (
-                                            <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
-                                                {/* Rest Duration */}
-                                                <TextInput
-                                                    placeholder="Time"
-                                                    placeholderTextColor="#888"
-                                                    keyboardType="numeric"
-                                                    value={action.value}
-                                                    onChangeText={(value) => updateActionValue(index, "value", value)}
-                                                    style={{
-                                                        backgroundColor: "#2a2a2a",
-                                                        color: "white",
-                                                        borderRadius: 6,
-                                                        padding: 8,
-                                                        width: 80,
-                                                        textAlign: "center",
-                                                        fontSize: 15,
-                                                        borderWidth: 1,
-                                                        borderColor: "#333"
-                                                    }}
-                                                />
-
-                                                {/* Time Unit Toggle */}
-                                                <TouchableOpacity
-                                                    onPress={() =>
-                                                        updateActionValue(index, "unit", action.unit === "sec" ? "min" : "sec")
-                                                    }
-                                                    style={{
-                                                        backgroundColor: "#444",
-                                                        paddingVertical: 8,
-                                                        paddingHorizontal: 12,
-                                                        borderRadius: 6,
-                                                        borderWidth: 1,
-                                                        borderColor: "#555",
-                                                        justifyContent: "center",
-                                                        alignItems: "center"
-                                                    }}
-                                                >
-                                                    <Text style={{ color: "white", fontWeight: "bold", fontSize: 14 }}>
-                                                        {action.unit}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        )}
-                                    </View>
-                                </View>
+                                <ActionInput
+                                    key={index}
+                                    action={action}
+                                    index={index}
+                                    updateActionValue={updateActionValue}
+                                />
                             ))}
 
                             <Pressable
@@ -350,3 +252,4 @@ export default function AddWorkout() {
         </>
     );
 }
+

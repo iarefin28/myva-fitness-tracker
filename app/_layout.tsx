@@ -21,12 +21,6 @@ export default function RootLayout() {
             title: '',
           }}
         />
-        <Stack.Screen
-          name="add-workouttest"
-          options={{
-            title: '',
-          }}
-        />
       </Stack>
     </ThemeProvider>
   );
