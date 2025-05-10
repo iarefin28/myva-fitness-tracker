@@ -24,27 +24,54 @@ export default function AddWorkout() {
 
     const [setList, setSetList] = useState<any[]>([]);
     const [restList, setRestList] = useState<any[]>([]);
+    const [setCounter, setSetCounter] = useState(1);
+    const [restCounter, setRestCounter] = useState(1);
 
     const closeModal = () => {
         setModalVisible(false);
         setActionsList([]); // <-- ADD THIS to clear sets/rest when closing
-        setExerciseName(""); 
+        setExerciseName("");
         setSets("");
         setReps("");
+        setSetCounter(1);
+        setRestCounter(1);
     };
 
     const [actionsList, setActionsList] = useState<any[]>([]);
 
     const addSet = () => {
-        setActionsList([...actionsList, { type: "set", id: actionsList.length + 1, value: "" }]);
+        setActionsList([
+            ...actionsList,
+            {
+                type: "set",
+                setNumber: setCounter,
+                reps: "",
+                weight: "",
+                unit: "lb"
+            }
+        ]);
+        setSetCounter(prev => prev + 1);
     };
 
     const addRest = () => {
-        setActionsList([...actionsList, { type: "rest", id: actionsList.length + 1, value: "" }]);
+        setActionsList([
+            ...actionsList,
+            {
+                type: "rest",
+                restNumber: restCounter,
+                value: "",
+                unit: "sec"
+            }
+        ]);
+        setRestCounter(prev => prev + 1);
     };
 
-    const updateActionValue = (id: number, value: string) => {
-        setActionsList(actionsList.map(action => action.id === id ? { ...action, value } : action));
+    const updateActionValue = (index: number, field: "reps" | "weight" | "value" | "unit", value: string) => {
+        setActionsList(prev =>
+            prev.map((action, i) =>
+                i === index ? { ...action, [field]: value } : action
+            )
+        );
     };
 
     useLayoutEffect(() => {
@@ -165,14 +192,14 @@ export default function AddWorkout() {
                             padding: 20,
                         }}
                     >
-                        <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-                            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-                                <TouchableOpacity onPress={() => closeModal()}>
-                                    <AntDesign name="close" size={24} color="white" />
-                                </TouchableOpacity>
-                            </View>
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
+                            <TouchableOpacity onPress={() => closeModal()}>
+                                <AntDesign name="close" size={24} color="white" />
+                            </TouchableOpacity>
+                        </View>
 
-                            <Text style={{ color: "white", fontSize: 20, fontWeight: "bold", marginBottom: 15 }}>Add Exercise</Text>
+                        <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+                            
 
                             <Text style={{ color: "white", marginBottom: 5 }}>Exercise Name</Text>
                             <TextInput
@@ -199,20 +226,107 @@ export default function AddWorkout() {
                                 </TouchableOpacity>
                             </View>
 
-                            {actionsList.map((action) => (
-                                <View key={action.id} style={{ backgroundColor: action.type === "set" ? "#3a3a3a" : "#262626", borderRadius: 8, padding: action.type === "set" ? 12 : 8, marginBottom: 8 }}>
+                            {actionsList.map((action, index) => (
+                                <View key={index} style={{ backgroundColor: action.type === "set" ? "#3a3a3a" : "#262626", borderRadius: 8, padding: 12, marginBottom: 8 }}>
                                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                                        <Text style={{ color: "white", fontSize: action.type === "set" ? 16 : 14 }}>
-                                            {action.type === "set" ? `Set #${action.id}` : `Rest Duration (sec)`}
+                                        <Text style={{ color: "white", fontSize: 16 }}>
+                                            {action.type === "set"
+                                                ? `Set #${action.setNumber}`
+                                                : `Rest #${action.restNumber} (${action.unit})`}
                                         </Text>
-                                        <TextInput
-                                            placeholder={action.type === "set" ? "Enter reps" : "Enter rest duration"}
-                                            placeholderTextColor="#888"
-                                            keyboardType="numeric"
-                                            value={action.value}
-                                            onChangeText={(value) => updateActionValue(action.id, value)}
-                                            style={{ backgroundColor: "#2a2a2a", color: "white", borderRadius: 6, padding: 8, width: action.type === "set" ? 140 : 100, textAlign: "center" }}
-                                        />
+                                        {action.type === "set" ? (
+                                            <View style={{ flexDirection: "row", gap: 8 }}>
+                                                <TextInput
+                                                    placeholder="Weight"
+                                                    placeholderTextColor="#888"
+                                                    keyboardType="numeric"
+                                                    value={action.weight}
+                                                    onChangeText={(value) => updateActionValue(index, "weight", value)}
+                                                    style={{
+                                                        backgroundColor: "#2a2a2a",
+                                                        color: "white",
+                                                        borderRadius: 6,
+                                                        padding: 8,
+                                                        width: 80,
+                                                        textAlign: "center"
+                                                    }}
+                                                />
+                                                <TouchableOpacity
+                                                    onPress={() =>
+                                                        updateActionValue(index, "unit", action.unit === "lb" ? "kg" : "lb")
+                                                    }
+                                                    style={{
+                                                        backgroundColor: "#444",
+                                                        paddingVertical: 6,
+                                                        paddingHorizontal: 10,
+                                                        borderRadius: 6
+                                                    }}
+                                                >
+                                                    <Text style={{ color: "white", fontSize: 14 }}>
+                                                        {action.unit}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                                <TextInput
+                                                    placeholder="Reps"
+                                                    placeholderTextColor="#888"
+                                                    keyboardType="numeric"
+                                                    value={action.reps}
+                                                    onChangeText={(value) => updateActionValue(index, "reps", value)}
+                                                    style={{
+                                                        backgroundColor: "#2a2a2a",
+                                                        color: "white",
+                                                        borderRadius: 6,
+                                                        padding: 8,
+                                                        width: 80,
+                                                        textAlign: "center"
+                                                    }}
+                                                />
+
+                                            </View>
+                                        ) : (
+                                            <View style={{ flexDirection: "row", gap: 8, alignItems: "center" }}>
+                                                {/* Rest Duration */}
+                                                <TextInput
+                                                    placeholder="Time"
+                                                    placeholderTextColor="#888"
+                                                    keyboardType="numeric"
+                                                    value={action.value}
+                                                    onChangeText={(value) => updateActionValue(index, "value", value)}
+                                                    style={{
+                                                        backgroundColor: "#2a2a2a",
+                                                        color: "white",
+                                                        borderRadius: 6,
+                                                        padding: 8,
+                                                        width: 80,
+                                                        textAlign: "center",
+                                                        fontSize: 15,
+                                                        borderWidth: 1,
+                                                        borderColor: "#333"
+                                                    }}
+                                                />
+
+                                                {/* Time Unit Toggle */}
+                                                <TouchableOpacity
+                                                    onPress={() =>
+                                                        updateActionValue(index, "unit", action.unit === "sec" ? "min" : "sec")
+                                                    }
+                                                    style={{
+                                                        backgroundColor: "#444",
+                                                        paddingVertical: 8,
+                                                        paddingHorizontal: 12,
+                                                        borderRadius: 6,
+                                                        borderWidth: 1,
+                                                        borderColor: "#555",
+                                                        justifyContent: "center",
+                                                        alignItems: "center"
+                                                    }}
+                                                >
+                                                    <Text style={{ color: "white", fontWeight: "bold", fontSize: 14 }}>
+                                                        {action.unit}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        )}
                                     </View>
                                 </View>
                             ))}
