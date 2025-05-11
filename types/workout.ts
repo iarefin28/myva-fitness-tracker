@@ -1,12 +1,13 @@
 export type UnitWeight = "lb" | "kg";
 export type UnitTime = "sec" | "min";
+export type ExerciseType = "weighted" | "bodyweight";
 
 export interface SetAction {
-  type: "set";
-  setNumber: number;
-  weight: string; // keep as string if directly used in input fields
-  unit: UnitWeight;
-  reps: string;
+    type: "set";
+    setNumber: number;
+    reps: string;
+    weight?: string;
+    unit?: "lb" | "kg";
 }
 
 export interface RestAction {
@@ -19,8 +20,9 @@ export interface RestAction {
 export type ExerciseAction = SetAction | RestAction;
 
 export interface Exercise {
-  name: string;
-  actions: ExerciseAction[];
+    name: string;
+    type: ExerciseType;
+    actions: ExerciseAction[];
 }
 
 export interface Workout {

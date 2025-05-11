@@ -18,20 +18,24 @@ const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionVa
                 </Text>
                 {action.type === "set" ? (
                     <View style={styles.inputRow}>
-                        <TextInput
-                            placeholder="Weight"
-                            placeholderTextColor="#888"
-                            keyboardType="numeric"
-                            value={action.weight}
-                            onChangeText={(value) => updateActionValue(index, "weight", value)}
-                            style={styles.input}
-                        />
-                        <TouchableOpacity
-                            onPress={() => updateActionValue(index, "unit", action.unit === "lb" ? "kg" : "lb")}
-                            style={styles.unitToggle}
-                        >
-                            <Text style={styles.unitText}>{action.unit}</Text>
-                        </TouchableOpacity>
+                        {action.weight !== undefined && (
+                            <>
+                                <TextInput
+                                    placeholder="Weight"
+                                    placeholderTextColor="#888"
+                                    keyboardType="numeric"
+                                    value={action.weight}
+                                    onChangeText={(value) => updateActionValue(index, "weight", value)}
+                                    style={styles.input}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => updateActionValue(index, "unit", action.unit === "lb" ? "kg" : "lb")}
+                                    style={styles.unitToggle}
+                                >
+                                    <Text style={styles.unitText}>{action.unit}</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
                         <TextInput
                             placeholder="Reps"
                             placeholderTextColor="#888"

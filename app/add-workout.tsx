@@ -2,7 +2,7 @@ import { AntDesign } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRouter } from "expo-router";
 import { useLayoutEffect, useState } from "react";
-import { Keyboard, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
+import { Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
 import ActionInput from "../components/ActionInput";
 import ExerciseCard from "../components/ExerciseCard";
@@ -30,6 +30,8 @@ export default function AddWorkout() {
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [exerciseNameBlurred, setExerciseNameBlurred] = useState(false);
     const [lockedExerciseTitle, setLockedExerciseTitle] = useState("");
+    const [exerciseType, setExerciseType] = useState<"weighted" | "bodyweight">("weighted");
+
 
     // ───── Action Management State ─────
     const [actionsList, setActionsList] = useState<ExerciseAction[]>([]);
@@ -67,6 +69,7 @@ export default function AddWorkout() {
         if (!exerciseName || actionsList.length === 0) return;
         const newExercise: Exercise = {
             name: exerciseName,
+            type: exerciseType,
             actions: actionsList
         };
         setExercises(prev => [...prev, newExercise]);
@@ -80,18 +83,19 @@ export default function AddWorkout() {
 
     // ───── Action Handlers ─────
     const addSet = () => {
+        const isWeighted = exerciseType === "weighted";
         setActionsList(prev => [
-            ...prev,
-            {
-                type: "set",
-                setNumber: setCounter,
-                reps: "",
-                weight: "",
-                unit: "lb"
-            }
+          ...prev,
+          {
+            type: "set",
+            setNumber: setCounter,
+            reps: "",
+            weight: isWeighted ? "" : undefined,
+            unit: isWeighted ? "lb" : undefined,
+          }
         ]);
         setSetCounter(prev => prev + 1);
-    };
+      };
 
     const addRest = () => {
         setActionsList(prev => [
@@ -327,6 +331,26 @@ export default function AddWorkout() {
                             </TouchableOpacity>
                         </View>
                         <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+                            <View style={{ flexDirection: "row", marginBottom: 12 }}>
+                                {["weighted", "bodyweight"].map(type => (
+                                    <TouchableOpacity
+                                        key={type}
+                                        onPress={() => setExerciseType(type as "weighted" | "bodyweight")}
+                                        style={{
+                                            flex: 1,
+                                            backgroundColor: exerciseType === type ? "#1e90ff" : "#3a3a3a",
+                                            paddingVertical: 10,
+                                            borderRadius: 8,
+                                            marginRight: type === "weighted" ? 8 : 0,
+                                            alignItems: "center",
+                                        }}
+                                    >
+                                        <Text style={{ color: "white", fontWeight: "bold", fontSize: 14 }}>
+                                            {type === "weighted" ? "Weighted" : "Bodyweight"}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </View>
 
                             <Text style={{ color: "white", marginBottom: 5 }}>Exercise Name</Text>
                             <TextInput
@@ -365,19 +389,6 @@ export default function AddWorkout() {
                                     updateActionValue={updateActionValue}
                                 />
                             ))}
-
-                            <Pressable
-                                style={{ backgroundColor: "#1e90ff", padding: 12, borderRadius: 8, marginBottom: 10 }}
-                                onPress={handleSaveExercise}
-                            >
-                                <Text style={{ color: "white", textAlign: "center", fontWeight: "bold" }}>Save Exercise</Text>
-                            </Pressable>
-                            <Pressable
-                                style={{ backgroundColor: "#ff5555", padding: 12, borderRadius: 8 }}
-                                onPress={() => setModalVisible(false)}
-                            >
-                                <Text style={{ color: "white", textAlign: "center", fontWeight: "bold" }}>Cancel</Text>
-                            </Pressable>
                         </ScrollView>
                     </KeyboardAvoidingView>
                 </View>
