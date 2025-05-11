@@ -28,6 +28,8 @@ export default function AddWorkout() {
     const [modalVisible, setModalVisible] = useState(false);
     const [exerciseName, setExerciseName] = useState("");
     const [exercises, setExercises] = useState<Exercise[]>([]);
+    const [exerciseNameBlurred, setExerciseNameBlurred] = useState(false);
+    const [lockedExerciseTitle, setLockedExerciseTitle] = useState("");
 
     // ───── Action Management State ─────
     const [actionsList, setActionsList] = useState<ExerciseAction[]>([]);
@@ -57,6 +59,8 @@ export default function AddWorkout() {
         setExerciseName("");
         setSetCounter(1);
         setRestCounter(1);
+        setExerciseNameBlurred(false);
+        setLockedExerciseTitle("");
     };
 
     const handleSaveExercise = () => {
@@ -271,23 +275,57 @@ export default function AddWorkout() {
                 visible={modalVisible}
                 onRequestClose={() => closeModal()}
             >
-                <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.5)" }}>
+                <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0, 0, 0, 1)" }}>
                     <KeyboardAvoidingView
                         behavior={Platform.OS === "ios" ? "padding" : "height"}
                         style={{
-                            backgroundColor: "#2a2a2a",
+                            backgroundColor: "rgba(44, 44, 46, 1)",
                             height: "95%",
                             borderTopLeftRadius: 20,
                             borderTopRightRadius: 20,
                             padding: 20,
                         }}
                     >
-                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 20 }}>
-                            <TouchableOpacity onPress={() => closeModal()}>
+                        <View
+                            style={{
+                                flexDirection: "row",
+                                alignItems: "center",
+                                justifyContent: "space-between",
+                                marginBottom: 20,
+                            }}
+                        >
+                            {/* Left: Close Button */}
+                            <TouchableOpacity onPress={closeModal} style={{ padding: 4, minWidth: 50 }}>
                                 <AntDesign name="close" size={24} color="white" />
                             </TouchableOpacity>
-                        </View>
 
+                            {/* Center: Title */}
+                            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                                {exerciseNameBlurred && !!lockedExerciseTitle && (
+                                    <Text
+                                        numberOfLines={1}
+                                        ellipsizeMode="tail"
+                                        style={{
+                                            color: "white",
+                                            fontSize: 16,
+                                            fontWeight: "bold",
+                                            textAlign: "center",
+                                            maxWidth: "90%",
+                                        }}
+                                    >
+                                        {lockedExerciseTitle}
+                                    </Text>
+                                )}
+                            </View>
+
+                            {/* Right: Save Button */}
+                            <TouchableOpacity
+                                onPress={handleSaveExercise}
+                                style={{ padding: 4, minWidth: 50, alignItems: "flex-end" }}
+                            >
+                                <Text style={{ color: "#1e90ff", fontWeight: "bold", fontSize: 16 }}>Save</Text>
+                            </TouchableOpacity>
+                        </View>
                         <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
 
                             <Text style={{ color: "white", marginBottom: 5 }}>Exercise Name</Text>
@@ -296,6 +334,10 @@ export default function AddWorkout() {
                                 placeholderTextColor="#888"
                                 value={exerciseName}
                                 onChangeText={setExerciseName}
+                                onBlur={() => {
+                                    setExerciseNameBlurred(true);
+                                    setLockedExerciseTitle(exerciseName); // freeze it!
+                                }}
                                 style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
                             />
 
