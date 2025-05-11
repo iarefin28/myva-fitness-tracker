@@ -5,8 +5,10 @@ import { useLayoutEffect, useState } from "react";
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
 import ActionInput from "../components/ActionInput";
+import ExerciseAutocomplete from "../components/ExerciseAutocomplete";
 import ExerciseCard from "../components/ExerciseCard";
 import type { Exercise, ExerciseAction } from "../types/workout";
+
 
 export default function AddWorkout() {
     // ───── Theme & Navigation ─────
@@ -85,17 +87,17 @@ export default function AddWorkout() {
     const addSet = () => {
         const isWeighted = exerciseType === "weighted";
         setActionsList(prev => [
-          ...prev,
-          {
-            type: "set",
-            setNumber: setCounter,
-            reps: "",
-            weight: isWeighted ? "" : undefined,
-            unit: isWeighted ? "lb" : undefined,
-          }
+            ...prev,
+            {
+                type: "set",
+                setNumber: setCounter,
+                reps: "",
+                weight: isWeighted ? "" : undefined,
+                unit: isWeighted ? "lb" : undefined,
+            }
         ]);
         setSetCounter(prev => prev + 1);
-      };
+    };
 
     const addRest = () => {
         setActionsList(prev => [
@@ -298,12 +300,10 @@ export default function AddWorkout() {
                                 marginBottom: 20,
                             }}
                         >
-                            {/* Left: Close Button */}
                             <TouchableOpacity onPress={closeModal} style={{ padding: 4, minWidth: 50 }}>
                                 <AntDesign name="close" size={24} color="white" />
                             </TouchableOpacity>
 
-                            {/* Center: Title */}
                             <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                                 {exerciseNameBlurred && !!lockedExerciseTitle && (
                                     <Text
@@ -322,7 +322,6 @@ export default function AddWorkout() {
                                 )}
                             </View>
 
-                            {/* Right: Save Button */}
                             <TouchableOpacity
                                 onPress={handleSaveExercise}
                                 style={{ padding: 4, minWidth: 50, alignItems: "flex-end" }}
@@ -330,66 +329,67 @@ export default function AddWorkout() {
                                 <Text style={{ color: "#1e90ff", fontWeight: "bold", fontSize: 16 }}>Save</Text>
                             </TouchableOpacity>
                         </View>
-                        <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-                            <View style={{ flexDirection: "row", marginBottom: 12 }}>
-                                {["weighted", "bodyweight"].map(type => (
-                                    <TouchableOpacity
-                                        key={type}
-                                        onPress={() => setExerciseType(type as "weighted" | "bodyweight")}
-                                        style={{
-                                            flex: 1,
-                                            backgroundColor: exerciseType === type ? "#1e90ff" : "#3a3a3a",
-                                            paddingVertical: 10,
-                                            borderRadius: 8,
-                                            marginRight: type === "weighted" ? 8 : 0,
-                                            alignItems: "center",
-                                        }}
-                                    >
-                                        <Text style={{ color: "white", fontWeight: "bold", fontSize: 14 }}>
-                                            {type === "weighted" ? "Weighted" : "Bodyweight"}
-                                        </Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
 
-                            <Text style={{ color: "white", marginBottom: 5 }}>Exercise Name</Text>
-                            <TextInput
-                                placeholder="e.g. Bench Press"
-                                placeholderTextColor="#888"
-                                value={exerciseName}
-                                onChangeText={setExerciseName}
-                                onBlur={() => {
-                                    setExerciseNameBlurred(true);
-                                    setLockedExerciseTitle(exerciseName); // freeze it!
-                                }}
-                                style={{ backgroundColor: "#3a3a3a", color: "white", borderRadius: 8, padding: 12, marginBottom: 12 }}
-                            />
-
-                            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
+                        <View style={{ flexDirection: "row", marginBottom: 12 }}>
+                            {["weighted", "bodyweight"].map(type => (
                                 <TouchableOpacity
-                                    style={{ flex: 1, backgroundColor: "yellow", paddingVertical: 16, borderRadius: 12, marginRight: 4, alignItems: "center", justifyContent: "center" }}
-                                    onPress={addSet}
+                                    key={type}
+                                    onPress={() => setExerciseType(type as "weighted" | "bodyweight")}
+                                    style={{
+                                        flex: 1,
+                                        backgroundColor: exerciseType === type ? "#1e90ff" : "#3a3a3a",
+                                        paddingVertical: 10,
+                                        borderRadius: 8,
+                                        marginRight: type === "weighted" ? 8 : 0,
+                                        alignItems: "center",
+                                    }}
                                 >
-                                    <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Set</Text>
+                                    <Text style={{ color: "white", fontWeight: "bold", fontSize: 14 }}>
+                                        {type === "weighted" ? "Weighted" : "Bodyweight"}
+                                    </Text>
                                 </TouchableOpacity>
-
-                                <TouchableOpacity
-                                    style={{ flex: 1, backgroundColor: "orange", paddingVertical: 16, borderRadius: 12, marginLeft: 4, alignItems: "center", justifyContent: "center" }}
-                                    onPress={addRest}
-                                >
-                                    <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Rest</Text>
-                                </TouchableOpacity>
-                            </View>
-
-                            {actionsList.map((action, index) => (
-                                <ActionInput
-                                    key={index}
-                                    action={action}
-                                    index={index}
-                                    updateActionValue={updateActionValue}
-                                />
                             ))}
-                        </ScrollView>
+                        </View>
+
+                        <Text style={{ color: "white", marginBottom: 5 }}>Exercise Name</Text>
+
+                        <ExerciseAutocomplete
+                            value={exerciseName}
+                            onChangeText={(text) => {
+                                setExerciseName(text);
+                                setExerciseNameBlurred(false);
+                            }}
+                            onSelect={(exercise) => {
+                                setExerciseName(exercise);
+                                setExerciseNameBlurred(true);
+                                setLockedExerciseTitle(exercise);
+                            }}
+                        />
+
+                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
+                            <TouchableOpacity
+                                style={{ flex: 1, backgroundColor: "yellow", paddingVertical: 16, borderRadius: 12, marginRight: 4, alignItems: "center", justifyContent: "center" }}
+                                onPress={addSet}
+                            >
+                                <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Set</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={{ flex: 1, backgroundColor: "orange", paddingVertical: 16, borderRadius: 12, marginLeft: 4, alignItems: "center", justifyContent: "center" }}
+                                onPress={addRest}
+                            >
+                                <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Rest</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                        {actionsList.map((action, index) => (
+                            <ActionInput
+                                key={index}
+                                action={action}
+                                index={index}
+                                updateActionValue={updateActionValue}
+                            />
+                        ))}
                     </KeyboardAvoidingView>
                 </View>
             </Modal>
