@@ -1,7 +1,7 @@
 import { AntDesign } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRouter } from "expo-router";
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
 import ActionInput from "../components/ActionInput";
@@ -33,6 +33,7 @@ export default function AddWorkout() {
     const [exerciseNameBlurred, setExerciseNameBlurred] = useState(false);
     const [lockedExerciseTitle, setLockedExerciseTitle] = useState("");
     const [exerciseType, setExerciseType] = useState<"bodyweight" | "weighted" | "duration" | "unknown" | "weighted distance" | "weighted duration">("unknown");
+    const scrollViewRef = useRef<ScrollView>(null);
 
     // ───── Action Management State ─────
     const [actionsList, setActionsList] = useState<ExerciseAction[]>([]);
@@ -442,15 +443,22 @@ export default function AddWorkout() {
                                     </TouchableOpacity>
                                 </View>
 
-                                {actionsList.map((action, index) => (
-                                    <ActionInput
-                                        key={index}
-                                        action={action}
-                                        index={index}
-                                        updateActionValue={updateActionValue}
-                                        exerciseType={exerciseType}
-                                    />
-                                ))}
+                                <ScrollView
+                                    ref={scrollViewRef}
+                                    style={{ flex: 1 }}
+                                    showsVerticalScrollIndicator={false}
+                                    onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+                                >
+                                    {actionsList.map((action, index) => (
+                                        <ActionInput
+                                            key={index}
+                                            action={action}
+                                            index={index}
+                                            updateActionValue={updateActionValue}
+                                            exerciseType={exerciseType}
+                                        />
+                                    ))}
+                                </ScrollView>
                             </>
                         )}
                     </KeyboardAvoidingView>

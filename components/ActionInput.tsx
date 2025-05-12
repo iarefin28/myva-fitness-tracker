@@ -65,6 +65,39 @@ const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionVa
                                 </TouchableOpacity>
                             </>
                         )}
+                        {exerciseType === "weighted duration" && (
+                            <>
+                                <TextInput
+                                    placeholder="Weight"
+                                    placeholderTextColor="#888"
+                                    keyboardType="numeric"
+                                    value={action.weight}
+                                    onChangeText={(value) => updateActionValue(index, "weight", value)}
+                                    style={styles.input}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => updateActionValue(index, "unit", action.weightUnit === "lb" ? "kg" : "lb")}
+                                    style={styles.unitToggle}
+                                >
+                                    <Text style={styles.unitText}>{action.weightUnit}</Text>
+                                </TouchableOpacity>
+
+                                <TextInput
+                                    placeholder="Duration"
+                                    placeholderTextColor="#888"
+                                    keyboardType="numeric"
+                                    value={action.value}
+                                    onChangeText={(value) => updateActionValue(index, "value", value)}
+                                    style={[styles.input, { borderWidth: 1, borderColor: "#333" }]}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => updateActionValue(index, "unit", action.valueUnit === "sec" ? "min" : "sec")}
+                                    style={styles.unitToggle}
+                                >
+                                    <Text style={styles.unitText}>{action.valueUnit}</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
                     </View>
                 ) : (
                     // Rest timer input

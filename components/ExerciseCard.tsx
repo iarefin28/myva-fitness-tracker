@@ -30,8 +30,22 @@ const ExerciseCard: React.FC<Props> = ({ exercise }) => {
                 rows.push(
                     <View key={`set-${action.setNumber}`} style={styles.row}>
                         <Text style={styles.setText}>
-                            Set #{action.setNumber}: {action.weight || 0}
-                            {action.unit} × {action.reps || 0} reps
+                            Set #{action.setNumber}:{' '}
+                            {(() => {
+                                if (action.weight && action.value) {
+                                    // Weighted + Duration or Distance
+                                    return `${action.weight} ${action.weightUnit} for ${action.value} ${action.valueUnit}`;
+                                } else if (action.weight) {
+                                    // Weighted only
+                                    return `${action.weight} ${action.weightUnit} × ${action.reps || 0} reps`;
+                                } else if (action.value) {
+                                    // Duration or Distance only
+                                    return `${action.value} ${action.valueUnit}`;
+                                } else {
+                                    // Bodyweight
+                                    return `${action.reps || 0} reps`;
+                                }
+                            })()}
                         </Text>
                         <Text style={styles.restText}>{restText}</Text>
                     </View>
