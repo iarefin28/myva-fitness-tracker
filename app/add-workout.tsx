@@ -330,66 +330,84 @@ export default function AddWorkout() {
                             </TouchableOpacity>
                         </View>
 
-                        <View style={{ flexDirection: "row", marginBottom: 12 }}>
-                            {["weighted", "bodyweight"].map(type => (
-                                <TouchableOpacity
-                                    key={type}
-                                    onPress={() => setExerciseType(type as "weighted" | "bodyweight")}
-                                    style={{
-                                        flex: 1,
-                                        backgroundColor: exerciseType === type ? "#1e90ff" : "#3a3a3a",
-                                        paddingVertical: 10,
-                                        borderRadius: 8,
-                                        marginRight: type === "weighted" ? 8 : 0,
-                                        alignItems: "center",
-                                    }}
-                                >
-                                    <Text style={{ color: "white", fontWeight: "bold", fontSize: 14 }}>
-                                        {type === "weighted" ? "Weighted" : "Bodyweight"}
-                                    </Text>
-                                </TouchableOpacity>
-                            ))}
-                        </View>
-
-                        <Text style={{ color: "white", marginBottom: 5 }}>Exercise Name</Text>
-
-                        <ExerciseAutocomplete
-                            value={exerciseName}
-                            onChangeText={(text) => {
-                                setExerciseName(text);
-                                setExerciseNameBlurred(false);
-                            }}
-                            onSelect={(exercise) => {
-                                setExerciseName(exercise);
-                                setExerciseNameBlurred(true);
-                                setLockedExerciseTitle(exercise);
-                            }}
-                        />
-
-                        <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
-                            <TouchableOpacity
-                                style={{ flex: 1, backgroundColor: "yellow", paddingVertical: 16, borderRadius: 12, marginRight: 4, alignItems: "center", justifyContent: "center" }}
-                                onPress={addSet}
+                        {exerciseNameBlurred && !!lockedExerciseTitle ? (
+                            <View
+                                style={{
+                                    backgroundColor: "#1e1e1e",
+                                    borderRadius: 16,
+                                    paddingVertical: 14,
+                                    paddingHorizontal: 16,
+                                    shadowColor: "#000",
+                                    shadowOpacity: 0.15,
+                                    shadowOffset: { width: 0, height: 6 },
+                                    shadowRadius: 10,
+                                    elevation: 6,
+                                    marginBottom: 8,
+                                }}
                             >
-                                <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Set</Text>
-                            </TouchableOpacity>
-
-                            <TouchableOpacity
-                                style={{ flex: 1, backgroundColor: "orange", paddingVertical: 16, borderRadius: 12, marginLeft: 4, alignItems: "center", justifyContent: "center" }}
-                                onPress={addRest}
-                            >
-                                <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Rest</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        {actionsList.map((action, index) => (
-                            <ActionInput
-                                key={index}
-                                action={action}
-                                index={index}
-                                updateActionValue={updateActionValue}
+                                <Text style={{ color: "white", fontSize: 16, fontWeight: "400" }}>
+                                    {lockedExerciseTitle}
+                                </Text>
+                            </View>
+                        ) : (
+                            <ExerciseAutocomplete
+                                value={exerciseName}
+                                onChangeText={(text) => {
+                                    setExerciseName(text);
+                                    setExerciseNameBlurred(false);
+                                }}
+                                onSelect={(exercise) => {
+                                    setExerciseName(exercise);
+                                    setExerciseNameBlurred(true);
+                                    setLockedExerciseTitle(exercise);
+                                }}
                             />
-                        ))}
+                        )}
+
+                        {lockedExerciseTitle && (
+                            <>
+                                <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
+                                    <TouchableOpacity
+                                        style={{
+                                            flex: 1,
+                                            backgroundColor: "yellow",
+                                            paddingVertical: 16,
+                                            borderRadius: 12,
+                                            marginRight: 4,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                        }}
+                                        onPress={addSet}
+                                    >
+                                        <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Set</Text>
+                                    </TouchableOpacity>
+
+                                    <TouchableOpacity
+                                        style={{
+                                            flex: 1,
+                                            backgroundColor: "orange",
+                                            paddingVertical: 16,
+                                            borderRadius: 12,
+                                            marginLeft: 4,
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                        }}
+                                        onPress={addRest}
+                                    >
+                                        <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Rest</Text>
+                                    </TouchableOpacity>
+                                </View>
+
+                                {actionsList.map((action, index) => (
+                                    <ActionInput
+                                        key={index}
+                                        action={action}
+                                        index={index}
+                                        updateActionValue={updateActionValue}
+                                    />
+                                ))}
+                            </>
+                        )}
                     </KeyboardAvoidingView>
                 </View>
             </Modal>
