@@ -32,8 +32,7 @@ export default function AddWorkout() {
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [exerciseNameBlurred, setExerciseNameBlurred] = useState(false);
     const [lockedExerciseTitle, setLockedExerciseTitle] = useState("");
-    const [exerciseType, setExerciseType] = useState<"weighted" | "bodyweight">("weighted");
-
+    const [exerciseType, setExerciseType] = useState<"bodyweight" | "weighted" | "duration" | "unknown" | "weighted distance" | "weighted duration">("unknown");
 
     // ───── Action Management State ─────
     const [actionsList, setActionsList] = useState<ExerciseAction[]>([]);
@@ -85,17 +84,61 @@ export default function AddWorkout() {
 
     // ───── Action Handlers ─────
     const addSet = () => {
-        const isWeighted = exerciseType === "weighted";
-        setActionsList(prev => [
-            ...prev,
-            {
-                type: "set",
-                setNumber: setCounter,
-                reps: "",
-                weight: isWeighted ? "" : undefined,
-                unit: isWeighted ? "lb" : undefined,
-            }
-        ]);
+        let newSet: any = {
+            type: "set",
+            setNumber: setCounter,
+        };
+        console.log(exerciseName + exerciseType)
+
+        switch (exerciseType) {
+            case "weighted":
+                newSet = {
+                    ...newSet,
+                    weight: "",
+                    reps: "",
+                    unit: "lb"
+                };
+                break;
+            case "bodyweight":
+                newSet = {
+                    ...newSet,
+                    reps: "",
+                    unit: "" // No toggle needed
+                };
+                break;
+            case "duration":
+                newSet = {
+                    ...newSet,
+                    value: "",
+                    unit: "sec"
+                };
+                break;
+            case "weighted duration":
+                newSet = {
+                    ...newSet,
+                    weight: "",
+                    weightUnit: "lb",
+                    value: "",
+                    valueUnit: "sec"
+                };
+                break;
+            case "weighted distance":
+                newSet = {
+                    ...newSet,
+                    weight: "",
+                    value: "",
+                    unit: "m"
+                };
+                break;
+            default:
+                newSet = {
+                    ...newSet,
+                    reps: "",
+                    unit: ""
+                };
+        }
+
+        setActionsList(prev => [...prev, newSet]);
         setSetCounter(prev => prev + 1);
     };
 
@@ -356,8 +399,9 @@ export default function AddWorkout() {
                                     setExerciseName(text);
                                     setExerciseNameBlurred(false);
                                 }}
-                                onSelect={(exercise) => {
+                                onSelect={(exercise, type) => {
                                     setExerciseName(exercise);
+                                    setExerciseType(type);
                                     setExerciseNameBlurred(true);
                                     setLockedExerciseTitle(exercise);
                                 }}
@@ -404,6 +448,7 @@ export default function AddWorkout() {
                                         action={action}
                                         index={index}
                                         updateActionValue={updateActionValue}
+                                        exerciseType={exerciseType}
                                     />
                                 ))}
                             </>

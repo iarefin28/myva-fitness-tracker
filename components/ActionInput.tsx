@@ -5,9 +5,10 @@ interface ActionInputProps {
     action: any;
     index: number;
     updateActionValue: (index: number, field: "reps" | "weight" | "value" | "unit", value: string) => void;
+    exerciseType: "weighted" | "bodyweight" | "duration" | "unknown" | "weighted distance" | "weighted duration";
 }
 
-const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionValue }) => {
+const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionValue, exerciseType }) => {
     return (
         <View style={[styles.container, { backgroundColor: action.type === "set" ? "#3a3a3a" : "#262626" }]}>
             <View style={styles.headerRow}>
@@ -18,7 +19,7 @@ const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionVa
                 </Text>
                 {action.type === "set" ? (
                     <View style={styles.inputRow}>
-                        {action.weight !== undefined && (
+                        {(exerciseType === "weighted") && (
                             <>
                                 <TextInput
                                     placeholder="Weight"
@@ -36,16 +37,37 @@ const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionVa
                                 </TouchableOpacity>
                             </>
                         )}
-                        <TextInput
-                            placeholder="Reps"
-                            placeholderTextColor="#888"
-                            keyboardType="numeric"
-                            value={action.reps}
-                            onChangeText={(value) => updateActionValue(index, "reps", value)}
-                            style={styles.input}
-                        />
+                        {(exerciseType === "bodyweight" || exerciseType === "weighted") && (
+                            <TextInput
+                                placeholder="Reps"
+                                placeholderTextColor="#888"
+                                keyboardType="numeric"
+                                value={action.reps}
+                                onChangeText={(value) => updateActionValue(index, "reps", value)}
+                                style={styles.input}
+                            />
+                        )}
+                        {exerciseType === "duration" && (
+                            <>
+                                <TextInput
+                                    placeholder="Duration"
+                                    placeholderTextColor="#888"
+                                    keyboardType="numeric"
+                                    value={action.value}
+                                    onChangeText={(value) => updateActionValue(index, "value", value)}
+                                    style={[styles.input, { borderWidth: 1, borderColor: "#333" }]}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => updateActionValue(index, "unit", action.unit === "sec" ? "min" : "sec")}
+                                    style={styles.unitToggle}
+                                >
+                                    <Text style={styles.unitText}>{action.unit}</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
                     </View>
                 ) : (
+                    // Rest timer input
                     <View style={styles.inputRow}>
                         <TextInput
                             placeholder="Time"

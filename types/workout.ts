@@ -1,13 +1,15 @@
 export type UnitWeight = "lb" | "kg";
 export type UnitTime = "sec" | "min";
-export type ExerciseType = "weighted" | "bodyweight";
+export type ExerciseType = "weighted" | "bodyweight" | "duration" | "unknown" | "weighted distance" | "weighted duration";
 
 export interface SetAction {
     type: "set";
     setNumber: number;
     reps: string;
     weight?: string;
-    unit?: "lb" | "kg";
+    weightUnit?: string;  // e.g., lb/kg
+    value?: string;       // for duration or distance
+    valueUnit?: string;   // e.g., sec/min or m/ft
 }
 
 export interface RestAction {
