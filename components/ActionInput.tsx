@@ -14,13 +14,38 @@ interface ActionInputProps {
 }
 
 const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionValue, exerciseType }) => {
+    function formatRestDisplay(raw: string): string {
+        const digits = raw.replace(/\D/g, "");
+
+        if (digits.length <= 2) return digits; // don't show colon
+        const minutes = digits.slice(0, digits.length - 2);
+        const seconds = digits.slice(-2);
+        return `${parseInt(minutes)}:${seconds.padStart(2, "0")}`;
+    }
+
     return (
-        <View style={[styles.container, { backgroundColor: action.type === "set" ? "#3a3a3a" : "#262626" }]}>
+        <View
+            style={[
+                styles.container,
+                {
+                    backgroundColor: action.type === "set" ? "#402c2c" : "#2c3d3c", // set vs rest
+                    borderWidth: 1,
+                    borderColor: action.type === "set" ? "#ff6b6b" : "#4ecdc4", // optional: visual glow accent
+                },
+            ]}
+        >
             <View style={styles.headerRow}>
-                <Text style={styles.label}>
-                    {action.type === "set"
-                        ? `Set #${action.setNumber}`
-                        : `Rest #${action.restNumber} (${action.unit})`}
+                <Text
+                    style={[
+                        styles.label,
+                        {
+                            color: "#ffd700", // Gold for both
+                            fontSize: 18,
+                            fontWeight: "bold",
+                        },
+                    ]}
+                >
+                    {action.type === "set" ? `${action.setNumber}` : "Rest"}
                 </Text>
                 {action.type === "set" ? (
                     <View style={styles.inputRow}>
@@ -141,19 +166,17 @@ const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionVa
                     // Rest timer input
                     <View style={styles.inputRow}>
                         <TextInput
-                            placeholder="Time"
+                            placeholder="Enter time"
                             placeholderTextColor="#888"
                             keyboardType="numeric"
-                            value={action.value}
-                            onChangeText={(value) => updateActionValue(index, "value", value)}
-                            style={[styles.input, { borderWidth: 1, borderColor: "#333" }]}
+                            value={formatRestDisplay(action.value)}
+                            onChangeText={(text) => {
+                                const clean = text.replace(/\D/g, "");
+                                updateActionValue(index, "value", clean);
+                            }}
+                            maxLength={5} 
+                            style={styles.input}
                         />
-                        <TouchableOpacity
-                            onPress={() => updateActionValue(index, "unit", action.unit === "sec" ? "min" : "sec")}
-                            style={styles.unitToggle}
-                        >
-                            <Text style={styles.unitText}>{action.unit}</Text>
-                        </TouchableOpacity>
                     </View>
                 )}
             </View>

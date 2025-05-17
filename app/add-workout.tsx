@@ -166,8 +166,7 @@ export default function AddWorkout() {
             {
                 type: "rest",
                 restNumber: restCounter,
-                value: "",
-                unit: "min"
+                value: "", 
             }
         ]);
         setRestCounter(prev => prev + 1);

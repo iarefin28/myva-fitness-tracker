@@ -25,7 +25,7 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress }) => {
             if (action.type === "set") {
                 const next = exercise.actions[i + 1];
                 const restText = next && next.type === "rest"
-                    ? `Rest: ${next.value || 0} ${next.unit}`
+                    ? `Rest: ${next.minutes || 0} ${next.seconds}`
                     : "No Rest";
 
                 rows.push(

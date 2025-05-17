@@ -22,8 +22,7 @@ export interface SetAction {
 export interface RestAction {
   type: "rest";
   restNumber: number;
-  value: string; // rest duration
-  unit: UnitTime;
+  value: string, 
 }
 
 export type ExerciseAction = SetAction | RestAction;
