@@ -38,6 +38,10 @@ export default function AddWorkout() {
     const [setCounter, setSetCounter] = useState(1);
     const [restCounter, setRestCounter] = useState(1);
 
+
+    const [editIndex, setEditIndex] = useState<number | null>(null);
+
+
     // ───── Layout Effect for Header Buttons ─────
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -63,16 +67,30 @@ export default function AddWorkout() {
         setRestCounter(1);
         setExerciseNameBlurred(false);
         setLockedExerciseTitle("");
+        setEditIndex(null);
     };
 
     const handleSaveExercise = () => {
         if (!exerciseName || actionsList.length === 0) return;
+    
         const newExercise: Exercise = {
             name: exerciseName,
             type: exerciseType,
             actions: actionsList
         };
-        setExercises(prev => [...prev, newExercise]);
+    
+        if (editIndex !== null) {
+            // Editing existing exercise
+            setExercises(prev => {
+                const updated = [...prev];
+                updated[editIndex] = newExercise;
+                return updated;
+            });
+        } else {
+            // Adding new exercise
+            setExercises(prev => [...prev, newExercise]);
+        }
+    
         closeModal();
     };
 
@@ -331,7 +349,19 @@ export default function AddWorkout() {
                                 contentContainerStyle={{ paddingBottom: 100 }}
                             >
                                 {exercises.map((exercise, index) => (
-                                    <ExerciseCard key={index} exercise={exercise} />
+                                    <ExerciseCard
+                                    key={index}
+                                    exercise={exercise}
+                                    onPress={() => {
+                                        setEditIndex(index);
+                                        setExerciseName(exercise.name);
+                                        setExerciseType(exercise.type);
+                                        setActionsList(exercise.actions);
+                                        setLockedExerciseTitle(exercise.name);
+                                        setExerciseNameBlurred(true);
+                                        setModalVisible(true);
+                                    }}
+                                />
                                 ))}
                             </ScrollView>
                         </View>
@@ -361,6 +391,7 @@ export default function AddWorkout() {
                 }}
                 addSet={addSet}
                 addRest={addRest}
+                isEditing={editIndex !== null}
             />
         </>
     );

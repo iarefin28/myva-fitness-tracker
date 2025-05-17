@@ -4,9 +4,10 @@ import type { Exercise } from "../types/workout";
 
 interface Props {
     exercise: Exercise;
+    onPress?: () => void;
 }
 
-const ExerciseCard: React.FC<Props> = ({ exercise }) => {
+const ExerciseCard: React.FC<Props> = ({ exercise, onPress }) => {
     const [expanded, setExpanded] = useState(false);
 
     const totalSets = exercise.actions.filter(a => a.type === "set").length;
@@ -59,7 +60,11 @@ const ExerciseCard: React.FC<Props> = ({ exercise }) => {
     };
 
     return (
-        <TouchableOpacity onPress={() => setExpanded(!expanded)} style={styles.card}>
+        <TouchableOpacity
+            onPress={() => setExpanded(!expanded)}
+            onLongPress={onPress}
+            style={styles.card}
+        >
             <Text style={styles.name}>{exercise.name}</Text>
             <Text style={styles.details}>Sets: {totalSets} | Avg Reps: {avgReps}</Text>
 

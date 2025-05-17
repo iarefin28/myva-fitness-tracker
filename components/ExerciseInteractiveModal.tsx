@@ -24,6 +24,7 @@ interface Props {
     onChangeExerciseName: (text: string) => void;
     addSet: () => void;
     addRest: () => void;
+    isEditing?: boolean;
 }
 
 export default function ExerciseEditorModal({
@@ -39,7 +40,8 @@ export default function ExerciseEditorModal({
     onSelectExercise,
     onChangeExerciseName,
     addSet,
-    addRest
+    addRest,
+    isEditing
 }: Props) {
     const scrollViewRef = useRef<ScrollView>(null);
 
@@ -94,7 +96,9 @@ export default function ExerciseEditorModal({
                             onPress={onSave}
                             style={{ padding: 4, minWidth: 50, alignItems: "flex-end" }}
                         >
-                            <Text style={{ color: "#1e90ff", fontWeight: "bold", fontSize: 16 }}>Save</Text>
+                            <Text style={{ color: "#1e90ff", fontWeight: "bold", fontSize: 16 }}>
+                                {isEditing ? "Save Changes" : "Save"}
+                            </Text>
                         </TouchableOpacity>
                     </View>
 
