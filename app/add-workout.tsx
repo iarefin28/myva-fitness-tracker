@@ -1,14 +1,12 @@
-import { AntDesign } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRouter } from "expo-router";
 import { useLayoutEffect, useRef, useState } from "react";
-import { Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
+import { Keyboard, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
-import ActionInput from "../components/ActionInput";
-import ExerciseAutocomplete from "../components/ExerciseAutocomplete";
 import ExerciseCard from "../components/ExerciseCard";
 import type { Exercise, ExerciseAction, ExerciseType } from "../types/workout";
 
+import ExerciseInteractiveModal from "../components/ExerciseInteractiveModal";
 
 export default function AddWorkout() {
     // ───── Theme & Navigation ─────
@@ -341,151 +339,29 @@ export default function AddWorkout() {
                 </View>
             </TouchableWithoutFeedback>
 
-            <Modal
-                animationType="slide"
-                transparent={true}
+            <ExerciseInteractiveModal
                 visible={modalVisible}
-                onRequestClose={() => closeModal()}
-            >
-                <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0, 0, 0, 1)" }}>
-                    <KeyboardAvoidingView
-                        behavior={Platform.OS === "ios" ? "padding" : "height"}
-                        style={{
-                            backgroundColor: "rgba(44, 44, 46, 1)",
-                            height: "95%",
-                            borderTopLeftRadius: 20,
-                            borderTopRightRadius: 20,
-                            padding: 20,
-                        }}
-                    >
-                        <View
-                            style={{
-                                flexDirection: "row",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                marginBottom: 20,
-                            }}
-                        >
-                            <TouchableOpacity onPress={closeModal} style={{ padding: 4, minWidth: 50 }}>
-                                <AntDesign name="close" size={24} color="white" />
-                            </TouchableOpacity>
-
-                            <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                                {exerciseNameBlurred && !!lockedExerciseTitle && (
-                                    <Text
-                                        numberOfLines={1}
-                                        ellipsizeMode="tail"
-                                        style={{
-                                            color: "white",
-                                            fontSize: 16,
-                                            fontWeight: "bold",
-                                            textAlign: "center",
-                                            maxWidth: "90%",
-                                        }}
-                                    >
-                                        {lockedExerciseTitle}
-                                    </Text>
-                                )}
-                            </View>
-
-                            <TouchableOpacity
-                                onPress={handleSaveExercise}
-                                style={{ padding: 4, minWidth: 50, alignItems: "flex-end" }}
-                            >
-                                <Text style={{ color: "#1e90ff", fontWeight: "bold", fontSize: 16 }}>Save</Text>
-                            </TouchableOpacity>
-                        </View>
-
-                        {exerciseNameBlurred && !!lockedExerciseTitle ? (
-                            <View
-                                style={{
-                                    backgroundColor: "#1e1e1e",
-                                    borderRadius: 16,
-                                    paddingVertical: 14,
-                                    paddingHorizontal: 16,
-                                    shadowColor: "#000",
-                                    shadowOpacity: 0.15,
-                                    shadowOffset: { width: 0, height: 6 },
-                                    shadowRadius: 10,
-                                    elevation: 6,
-                                    marginBottom: 8,
-                                }}
-                            >
-                                <Text style={{ color: "white", fontSize: 16, fontWeight: "400" }}>
-                                    {lockedExerciseTitle}
-                                </Text>
-                            </View>
-                        ) : (
-                            <ExerciseAutocomplete
-                                value={exerciseName}
-                                onChangeText={(text) => {
-                                    setExerciseName(text);
-                                    setExerciseNameBlurred(false);
-                                }}
-                                onSelect={(exercise, type) => {
-                                    setExerciseName(exercise);
-                                    setExerciseType(type);
-                                    setExerciseNameBlurred(true);
-                                    setLockedExerciseTitle(exercise);
-                                }}
-                            />
-                        )}
-
-                        {lockedExerciseTitle && (
-                            <>
-                                <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
-                                    <TouchableOpacity
-                                        style={{
-                                            flex: 1,
-                                            backgroundColor: "yellow",
-                                            paddingVertical: 16,
-                                            borderRadius: 12,
-                                            marginRight: 4,
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                        }}
-                                        onPress={addSet}
-                                    >
-                                        <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Set</Text>
-                                    </TouchableOpacity>
-
-                                    <TouchableOpacity
-                                        style={{
-                                            flex: 1,
-                                            backgroundColor: "orange",
-                                            paddingVertical: 16,
-                                            borderRadius: 12,
-                                            marginLeft: 4,
-                                            alignItems: "center",
-                                            justifyContent: "center",
-                                        }}
-                                        onPress={addRest}
-                                    >
-                                        <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Rest</Text>
-                                    </TouchableOpacity>
-                                </View>
-
-                                <ScrollView
-                                    ref={scrollViewRef}
-                                    style={{ flex: 1 }}
-                                    showsVerticalScrollIndicator={false}
-                                    onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-                                >
-                                    {actionsList.map((action, index) => (
-                                        <ActionInput
-                                            key={index}
-                                            action={action}
-                                            index={index}
-                                            updateActionValue={updateActionValue}
-                                            exerciseType={exerciseType}
-                                        />
-                                    ))}
-                                </ScrollView>
-                            </>
-                        )}
-                    </KeyboardAvoidingView>
-                </View>
-            </Modal>
+                onClose={closeModal}
+                onSave={handleSaveExercise}
+                exerciseName={exerciseName}
+                exerciseNameBlurred={exerciseNameBlurred}
+                lockedExerciseTitle={lockedExerciseTitle}
+                exerciseType={exerciseType}
+                actionsList={actionsList}
+                updateActionValue={updateActionValue}
+                onSelectExercise={(exercise, type) => {
+                    setExerciseName(exercise);
+                    setExerciseType(type);
+                    setExerciseNameBlurred(true);
+                    setLockedExerciseTitle(exercise);
+                }}
+                onChangeExerciseName={(text) => {
+                    setExerciseName(text);
+                    setExerciseNameBlurred(false);
+                }}
+                addSet={addSet}
+                addRest={addRest}
+            />
         </>
     );
 }
