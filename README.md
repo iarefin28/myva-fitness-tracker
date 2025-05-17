@@ -31,33 +31,7 @@ Currently in active development – MVP features being finalized.
 
 ## 🗂 Current Folder Structure
 
-myva-fitness/
-├── .expo/                    # Expo-generated files (auto-managed)
-├── .vscode/                 # VSCode workspace settings
-├── app/                     # App router and screen components
-│   ├── _layout.tsx          # Layout wrapper (like a root stack/tab navigator)
-│   ├── add-workout.tsx      # Add Workout screen
-│   ├── add-workout.tsx.swp  # Swap file (temp – safe to delete if not editing)
-│   └── index.tsx            # Home screen or landing page
-├── assets/                  # Fonts, images, icons, etc.
-├── components/              # Reusable UI components
-│   ├── ActionInput.tsx
-│   ├── ExerciseAutocomplete.tsx
-│   ├── ExerciseCard.tsx
-│   └── ExerciseInteractiveModal.tsx
-├── data/                    # Static or structured data files
-│   ├── exerciseData.ts
-│   └── exerciseTypeMap.ts
-├── types/                   # Shared TypeScript types
-│   └── workout.ts
-├── .gitignore               # Files to ignore in Git versioning
-├── app.json                 # Expo config (includes entry point)
-├── eslint.config.js         # Linting rules
-├── expo-env.d.ts            # Type declarations for Expo
-├── package-lock.json        # Dependency lock file
-├── package.json             # Project metadata and scripts
-├── README.md                # Project overview and instructions
-└── tsconfig.json            # TypeScript configuration
+<pre><code>## 🗂 Current Folder Structure ```text myva-fitness/ ├── .expo/ # Expo-generated files (auto-managed) ├── .vscode/ # VSCode workspace settings ├── app/ # App router and screen components │ ├── _layout.tsx # Layout wrapper (like a root stack/tab navigator) │ ├── add-workout.tsx # Add Workout screen │ ├── add-workout.tsx.swp # Swap file (temp – safe to delete if not editing) │ └── index.tsx # Home screen or landing page ├── assets/ # Fonts, images, icons, etc. ├── components/ # Reusable UI components │ ├── ActionInput.tsx │ ├── ExerciseAutocomplete.tsx │ ├── ExerciseCard.tsx │ └── ExerciseInteractiveModal.tsx ├── data/ # Static or structured data files │ ├── exerciseData.ts │ └── exerciseTypeMap.ts ├── types/ # Shared TypeScript types │ └── workout.ts ├── .gitignore # Files to ignore in Git versioning ├── app.json # Expo config (includes entry point) ├── eslint.config.js # Linting rules ├── expo-env.d.ts # Type declarations for Expo ├── package-lock.json # Dependency lock file ├── package.json # Project metadata and scripts ├── README.md # Project overview and instructions └── tsconfig.json # TypeScript configuration ``` </code></pre>
 
 ## 🛠️ Tech Stack
 - **React Native** with **Expo**
