@@ -31,7 +31,7 @@ export default function Index() {
     navigation.setOptions({
       headerTitle: 'Workout Log',
       headerRight: () => (
-        <TouchableOpacity onPress={() => router.push("/add-workout")} style={{}}>
+        <TouchableOpacity onPress={() => router.push("/add-workout")} style={{paddingRight: 15}}>
           <AntDesign name="plus" size={20} color={colors.text} />
         </TouchableOpacity>
       ),
