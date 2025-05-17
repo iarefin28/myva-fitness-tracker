@@ -89,7 +89,7 @@ export default function AddWorkout() {
             type: "set",
             setNumber: setCounter,
         };
-    
+
         switch (exerciseType) {
             case "weighted":
                 newSet = {
@@ -298,25 +298,46 @@ export default function AddWorkout() {
                             </Text>
                         </TouchableOpacity>
                     </View>
-                    {/* Exercises Header */}
                     {exercises.length > 0 && (
-                        <Text style={{ color: textColor, fontSize: 18, fontWeight: "bold", marginBottom: 10 }}>Exercises</Text>
-                    )}
+                        <View style={{
+                            flex: 1,
+                            backgroundColor: "#1e1e1e",
+                            borderTopLeftRadius: 24,
+                            borderTopRightRadius: 24,
+                            paddingTop: 16,
+                            paddingHorizontal: 16,
+                            position: "absolute",
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            top: 350, // adjust this value depending on where you want the overlay to *start*
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: -6 },
+                            shadowOpacity: 0.3,
+                            shadowRadius: 12,
+                            elevation: 10,
+                            zIndex: 2
+                        }}>
+                            <Text style={{
+                                color: textColor,
+                                fontSize: 18,
+                                fontWeight: "bold",
+                                marginBottom: 12,
+                                textAlign: "center"
+                            }}>
+                                Your Exercises
+                            </Text>
 
-                    {/* Scrollable Cards Only */}
-                    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} >
-                        {exercises.length === 0 ? (
-                            <View style={{ flex: 1, alignItems: "center", justifyContent: "flex-start", paddingTop: 150, paddingHorizontal: 20 }}>
-                                <Text style={{ color: "#666", fontSize: 13, textAlign: "center" }}>
-                                    No exercises yet. Build your workout above.
-                                </Text>
-                            </View>
-                        ) : (
-                            exercises.map((exercise, index) => (
-                                <ExerciseCard key={index} exercise={exercise} />
-                            ))
-                        )}
-                    </ScrollView>
+                            <ScrollView
+                                showsVerticalScrollIndicator={false}
+                                contentContainerStyle={{ paddingBottom: 100 }}
+                            >
+                                {exercises.map((exercise, index) => (
+                                    <ExerciseCard key={index} exercise={exercise} />
+                                ))}
+                            </ScrollView>
+                        </View>
+                    )}
                 </View>
             </TouchableWithoutFeedback>
 
