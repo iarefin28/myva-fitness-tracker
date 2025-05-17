@@ -1,3 +1,19 @@
+// ------------------------------
+// TODO: Expand EXERCISES_DB List
+// ------------------------------
+// Context:
+// - Current exercise list is a sample subset for MVP testing
+// - Does not include all variations or uncommon movements
+//
+// Goal:
+// - Add more exercises for a full user experience
+// - Include mobility, warm-ups, unilateral, and barbell/dumbbell alternatives
+//
+// Notes:
+// - Consider alphabetizing or categorizing them for easier access
+// - Sync with EXERCISE_TYPE_MAP as new entries are added
+// ------------------------------
+
 export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "duration" | "weighted duration" | "weighted distance"> = {
     "Bench Press": "weighted",
     "Dumbbell Bench Press": "weighted",

@@ -1,3 +1,20 @@
+// ------------------------------
+// TODO: Support Custom Exercises
+// ------------------------------
+// Context:
+// - Currently, exercises are hardcoded in EXERCISES_DB
+// - Users cannot add their own workouts dynamically
+//
+//  Goal:
+// - Allow users to add a new exercise name + type
+// - Store this data locally (AsyncStorage or SQLite)
+// - Merge with default exercises on app load
+//
+// Notes:
+// - Watch for duplicate exercise names
+// - Consider tagging custom exercises with isCustom = true
+// ------------------------------
+
 export const EXERCISES_DB = [
     // Upper Body - Push
     "Bench Press",
