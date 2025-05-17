@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "strongprototype",
-    "slug": "strongprototype",
+    "name": "Myva Fitness Tracker",
+    "slug": "myva-fitness",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
