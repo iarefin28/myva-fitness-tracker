@@ -1,6 +1,13 @@
 export type UnitWeight = "lb" | "kg";
 export type UnitTime = "sec" | "min";
-export type ExerciseType = "weighted" | "bodyweight" | "duration" | "unknown" | "weighted distance" | "weighted duration";
+
+export type ExerciseType = 
+  | "weighted"
+  | "bodyweight"
+  | "duration"
+  | "unknown"
+  | "weighted distance"
+  | "weighted duration";
 
 export interface SetAction {
     type: "set";

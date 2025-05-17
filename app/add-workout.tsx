@@ -7,7 +7,7 @@ import { Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, Text, Text
 import ActionInput from "../components/ActionInput";
 import ExerciseAutocomplete from "../components/ExerciseAutocomplete";
 import ExerciseCard from "../components/ExerciseCard";
-import type { Exercise, ExerciseAction } from "../types/workout";
+import type { Exercise, ExerciseAction, ExerciseType } from "../types/workout";
 
 
 export default function AddWorkout() {
@@ -32,7 +32,7 @@ export default function AddWorkout() {
     const [exercises, setExercises] = useState<Exercise[]>([]);
     const [exerciseNameBlurred, setExerciseNameBlurred] = useState(false);
     const [lockedExerciseTitle, setLockedExerciseTitle] = useState("");
-    const [exerciseType, setExerciseType] = useState<"bodyweight" | "weighted" | "duration" | "unknown" | "weighted distance" | "weighted duration">("unknown");
+    const [exerciseType, setExerciseType] = useState<ExerciseType>("unknown");;
     const scrollViewRef = useRef<ScrollView>(null);
 
     // ───── Action Management State ─────
@@ -89,13 +89,13 @@ export default function AddWorkout() {
             type: "set",
             setNumber: setCounter,
         };
-        console.log(exerciseName + exerciseType)
-
+    
         switch (exerciseType) {
             case "weighted":
                 newSet = {
                     ...newSet,
                     weight: "",
+                    weightUnit: "lb",
                     reps: "",
                     unit: "lb"
                 };
@@ -127,8 +127,9 @@ export default function AddWorkout() {
                 newSet = {
                     ...newSet,
                     weight: "",
+                    weightUnit: "lb",
                     value: "",
-                    unit: "m"
+                    valueUnit: "yd"
                 };
                 break;
             default:
@@ -150,7 +151,7 @@ export default function AddWorkout() {
                 type: "rest",
                 restNumber: restCounter,
                 value: "",
-                unit: "sec"
+                unit: "min"
             }
         ]);
         setRestCounter(prev => prev + 1);
@@ -158,7 +159,7 @@ export default function AddWorkout() {
 
     const updateActionValue = (
         index: number,
-        field: "reps" | "weight" | "value" | "unit",
+        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit",
         value: string
     ) => {
         setActionsList(prev =>

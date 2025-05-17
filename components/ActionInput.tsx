@@ -1,11 +1,16 @@
 import React from "react";
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { ExerciseType } from "../types/workout";
 
 interface ActionInputProps {
     action: any;
     index: number;
-    updateActionValue: (index: number, field: "reps" | "weight" | "value" | "unit", value: string) => void;
-    exerciseType: "weighted" | "bodyweight" | "duration" | "unknown" | "weighted distance" | "weighted duration";
+    updateActionValue: (
+        index: number,
+        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit",
+        value: string
+    ) => void;
+    exerciseType: ExerciseType
 }
 
 const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionValue, exerciseType }) => {
@@ -30,7 +35,7 @@ const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionVa
                                     style={styles.input}
                                 />
                                 <TouchableOpacity
-                                    onPress={() => updateActionValue(index, "unit", action.unit === "lb" ? "kg" : "lb")}
+                                    onPress={() => updateActionValue(index, "unit", action.weightUnit === "lb" ? "kg" : "lb")}
                                     style={styles.unitToggle}
                                 >
                                     <Text style={styles.unitText}>{action.unit}</Text>
@@ -92,6 +97,39 @@ const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionVa
                                 />
                                 <TouchableOpacity
                                     onPress={() => updateActionValue(index, "unit", action.valueUnit === "sec" ? "min" : "sec")}
+                                    style={styles.unitToggle}
+                                >
+                                    <Text style={styles.unitText}>{action.valueUnit}</Text>
+                                </TouchableOpacity>
+                            </>
+                        )}
+                        {exerciseType === "weighted distance" && (
+                            <>
+                                <TextInput
+                                    placeholder="Weight"
+                                    placeholderTextColor="#888"
+                                    keyboardType="numeric"
+                                    value={action.weight}
+                                    onChangeText={(value) => updateActionValue(index, "weight", value)}
+                                    style={styles.input}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => updateActionValue(index, "weightUnit", action.weightUnit === "lb" ? "kg" : "lb")}
+                                    style={styles.unitToggle}
+                                >
+                                    <Text style={styles.unitText}>{action.weightUnit}</Text>
+                                </TouchableOpacity>
+
+                                <TextInput
+                                    placeholder="Distance"
+                                    placeholderTextColor="#888"
+                                    keyboardType="numeric"
+                                    value={action.value}
+                                    onChangeText={(value) => updateActionValue(index, "value", value)}
+                                    style={[styles.input, { borderWidth: 1, borderColor: "#333" }]}
+                                />
+                                <TouchableOpacity
+                                    onPress={() => updateActionValue(index, "valueUnit", action.valueUnit === "yd" ? "m" : "yd")}
                                     style={styles.unitToggle}
                                 >
                                     <Text style={styles.unitText}>{action.valueUnit}</Text>
