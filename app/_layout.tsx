@@ -4,6 +4,8 @@ import { DarkTheme, DefaultTheme, ThemeProvider, useNavigation } from '@react-na
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { TouchableOpacity, useColorScheme, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
 
 import AddWorkoutScreen from './add-workout';
 import CalendarScreen from './calendar';
@@ -24,7 +26,7 @@ function CustomAddButton() {
         top: -20,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#1e1e1e',
+        backgroundColor: "#1A1A1A",
         width: 60,
         height: 60,
         borderRadius: 30,
@@ -40,13 +42,15 @@ function CustomAddButton() {
 }
 
 function TabLayout() {
+  const insets = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: true,
         tabBarShowLabel: false,
         tabBarStyle: {
-          height: 60,
+          height: 60 + insets.bottom,
           backgroundColor: '#111',
         },
         headerStyle: {
