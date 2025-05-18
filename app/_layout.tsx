@@ -57,8 +57,8 @@ function TabLayout() {
           backgroundColor: 'black'
         },
         tabBarIconStyle: {
-          marginTop: 10, // 🔻 Pushes the icon lower
-        },
+          marginTop: 10, // pushes the icon lower
+        }
       }}
     >
       <Tab.Screen
