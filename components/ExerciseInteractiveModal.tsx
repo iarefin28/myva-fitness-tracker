@@ -54,12 +54,12 @@ export default function ExerciseEditorModal({
             visible={visible}
             onRequestClose={onClose}
         >
-            <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "rgba(0, 0, 0, 1)" }}>
+            <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#2a2a2a"}}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                     style={{
 
-                        backgroundColor: "#1a1a1a",
+                        backgroundColor: "black",
                         height: "95%",
                         borderTopLeftRadius: 20,
                         borderTopRightRadius: 20,
@@ -138,33 +138,37 @@ export default function ExerciseEditorModal({
                                 <TouchableOpacity
                                     style={{
                                         flex: 1,
-                                        backgroundColor: "#ff6b6b",
+                                        backgroundColor: "#1e90ff",
                                         paddingVertical: 16,
                                         borderRadius: 12,
                                         marginRight: 4,
                                         alignItems: "center",
                                         justifyContent: "center",
+                                        borderWidth: 1,
+                                        borderColor: "#444",
                                     }}
                                     onPress={addSet}
                                 >
-                                    <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Set</Text>
+                                    <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>+ Add Set</Text>
                                 </TouchableOpacity>
 
                                 <TouchableOpacity
                                     style={{
                                         flex: 1,
-                                        backgroundColor: canAddRest ? "#4ecdc4" : "#3a3a3a", // teal if active, gray if blocked
+                                        backgroundColor: "#2a2a2a",
                                         paddingVertical: 16,
                                         borderRadius: 12,
                                         marginLeft: 4,
                                         alignItems: "center",
                                         justifyContent: "center",
-                                        opacity: canAddRest ? 1 : 0.5, // visually dimmed
+                                        borderWidth: 1,
+                                        borderColor: "#444",
+                                        opacity: canAddRest ? 1 : 0.5,
                                     }}
-                                    onPress={canAddRest ? addRest : undefined} // disables touch event
+                                    onPress={canAddRest ? addRest : undefined}
                                     disabled={!canAddRest}
                                 >
-                                    <Text style={{ color: "black", fontWeight: "bold", fontSize: 16 }}>+ Add Rest</Text>
+                                    <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>+ Add Rest</Text>
                                 </TouchableOpacity>
                             </View>
 

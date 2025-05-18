@@ -45,7 +45,7 @@ const ExerciseAutocomplete: React.FC<ExerciseAutocompleteProps> = ({
   return (
     <View style={styles.container}>
       <TextInput
-        placeholder="e.g. Bench Press"
+        placeholder="Enter an exercise name"
         placeholderTextColor="#aaa"
         value={value}
         onChangeText={handleChange}

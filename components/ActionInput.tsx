@@ -28,9 +28,7 @@ const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionVa
             style={[
                 styles.container,
                 {
-                    backgroundColor: action.type === "set" ? "#402c2c" : "#2c3d3c", // set vs rest
-                    borderWidth: 1,
-                    borderColor: action.type === "set" ? "#ff6b6b" : "#4ecdc4", // optional: visual glow accent
+                    backgroundColor: action.type === "set" ? "#2a2a2a" : "#2a2a2a", // set vs rest
                 },
             ]}
         >
@@ -39,7 +37,7 @@ const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionVa
                     style={[
                         styles.label,
                         {
-                            color: "#ffd700", // Gold for both
+                            color: "white", // Gold for both
                             fontSize: 18,
                             fontWeight: "bold",
                         },
@@ -205,7 +203,7 @@ const styles = StyleSheet.create({
         alignItems: "center",
     },
     input: {
-        backgroundColor: "#2a2a2a",
+        backgroundColor: "black",
         color: "white",
         borderRadius: 6,
         padding: 8,
