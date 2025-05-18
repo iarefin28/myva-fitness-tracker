@@ -49,6 +49,9 @@ function TabLayout() {
           height: 60,
           backgroundColor: '#111',
         },
+        headerStyle: {
+          backgroundColor: 'black'
+        }
       }}
     >
       <Tab.Screen
