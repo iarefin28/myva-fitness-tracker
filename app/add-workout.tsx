@@ -40,6 +40,7 @@ export default function AddWorkout() {
 
 
     const [editIndex, setEditIndex] = useState<number | null>(null);
+    const [resetExpansionTrigger, setResetExpansionTrigger] = useState(0);
 
 
     // ───── Layout Effect for Header Buttons ─────
@@ -68,6 +69,7 @@ export default function AddWorkout() {
         setExerciseNameBlurred(false);
         setLockedExerciseTitle("");
         setEditIndex(null);
+        setResetExpansionTrigger(prev => prev + 1);
     };
 
     const handleSaveExercise = () => {
@@ -392,6 +394,7 @@ export default function AddWorkout() {
                 addSet={addSet}
                 addRest={addRest}
                 isEditing={editIndex !== null}
+                resetExpansionTrigger={resetExpansionTrigger}
             />
         </>
     );

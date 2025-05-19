@@ -1,5 +1,5 @@
 import { AntDesign } from "@expo/vector-icons";
-import React, { useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import type { ExerciseAction, ExerciseType } from "../types/workout";
@@ -25,6 +25,7 @@ interface Props {
     addSet: () => void;
     addRest: () => void;
     isEditing?: boolean;
+    resetExpansionTrigger: number;
 }
 
 export default function ExerciseEditorModal({
@@ -41,12 +42,17 @@ export default function ExerciseEditorModal({
     onChangeExerciseName,
     addSet,
     addRest,
-    isEditing
+    isEditing,
+    resetExpansionTrigger
 }: Props) {
     const scrollViewRef = useRef<ScrollView>(null);
     const canAddRest = actionsList.length === 0 || actionsList[actionsList.length - 1].type !== "rest";
 
     const [expandedIndex, setExpandedIndex] = React.useState<number | null>(null);
+    
+    useEffect(() => {
+        setExpandedIndex(null);
+    }, [resetExpansionTrigger]);
 
     const toggleExpand = (index: number) => {
         setExpandedIndex(prev => (prev === index ? null : index));

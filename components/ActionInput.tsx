@@ -1,6 +1,8 @@
+import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Dimensions, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { ExerciseType } from "../types/workout";
+
 
 interface ActionInputProps {
     action: any;
@@ -39,22 +41,29 @@ const ActionInput: React.FC<ActionInputProps> = ({
         return (
             <View style={[styles.container, { backgroundColor: "#2a2a2a" }]}>
                 <View style={styles.headerRow}>
-                    <Text style={[styles.label, { color: "white", fontSize: 18, fontWeight: "bold" }]}>
+                    <Text style={[styles.label, { fontSize: 18, fontWeight: "bold", color: "white" }]}>
                         Rest
                     </Text>
-                    <View style={styles.inputRow}>
-                        <TextInput
-                            placeholder="Enter time"
-                            placeholderTextColor="#888"
-                            keyboardType="numeric"
-                            value={formatRestDisplay(action.value)}
-                            onChangeText={(text) => {
-                                const clean = text.replace(/\D/g, "");
-                                updateActionValue(index, "value", clean);
-                            }}
-                            maxLength={5}
-                            style={styles.input}
-                        />
+
+                    <View style={styles.rightRow}>
+                        <View style={styles.inputRow}>
+                            <TextInput
+                                placeholder="Time"
+                                placeholderTextColor="#888"
+                                keyboardType="numeric"
+                                value={formatRestDisplay(action.value)}
+                                onChangeText={(text) => {
+                                    const clean = text.replace(/\D/g, "");
+                                    updateActionValue(index, "value", clean);
+                                }}
+                                maxLength={5}
+                                style={styles.input}
+                            />
+                        </View>
+
+                        <View style={styles.infoIcon}>
+                            <Feather name="clock" size={20} color="white" />
+                        </View>
                     </View>
                 </View>
             </View>
@@ -64,15 +73,16 @@ const ActionInput: React.FC<ActionInputProps> = ({
 
     // ───── SET ─────
     return (
-        <TouchableOpacity onPress={onToggle} activeOpacity={0.9}>
-            <View style={[styles.container, { backgroundColor: "#2a2a2a" }]}>
-                {/* Set row: Number left, inputs right */}
-                <View style={styles.headerRow}>
-                    <Text style={[styles.label, { fontSize: 18, fontWeight: "bold", color: "white" }]}>
-                        Set {action.setNumber}
-                    </Text>
+        <View style={[styles.container, { backgroundColor: "#2a2a2a" }]}>
+            {/* Set row: Number left, inputs right */}
+            <View style={styles.headerRow}>
+                <Text style={[styles.label, { fontSize: 18, fontWeight: "bold", color: "white" }]}>
+                    Set {action.setNumber}
+                </Text>
 
+                <View style={styles.rightRow}>
                     <View style={styles.inputRow}>
+
                         {(exerciseType === "weighted") && (
                             <>
                                 <TextInput
@@ -121,33 +131,36 @@ const ActionInput: React.FC<ActionInputProps> = ({
                         )}
                         {/* Add other cases like 'weighted duration' and 'weighted distance' here similarly */}
                     </View>
+
+                    <TouchableOpacity onPress={onToggle} style={styles.infoIcon}>
+                        <Feather name="more-vertical" size={21} color="white" />
+                    </TouchableOpacity>
                 </View>
-
-                {/* Note expands below */}
-                {isExpanded && (
-                    <TextInput
-                        placeholder="Add a note..."
-                        placeholderTextColor="#888"
-                        multiline
-                        numberOfLines={5}
-                        scrollEnabled={true}
-                        style={{
-                            backgroundColor: "#1e1e1e",
-                            color: "white",
-                            borderRadius: 6,
-                            padding: 10,
-                            fontSize: 14,
-                            marginTop: 10,
-                            maxHeight: screenHeight * 0.2, 
-                            textAlignVertical: "top",
-                        }}
-                        value={action.note}
-                        onChangeText={(text) => updateActionValue(index, "note", text)}
-                    />
-                )}
             </View>
-        </TouchableOpacity>
 
+            {/* Note expands below */}
+            {isExpanded && (
+                <TextInput
+                    placeholder="Add a note..."
+                    placeholderTextColor="#888"
+                    multiline
+                    numberOfLines={5}
+                    scrollEnabled={true}
+                    style={{
+                        backgroundColor: "#1e1e1e",
+                        color: "white",
+                        borderRadius: 6,
+                        padding: 10,
+                        fontSize: 14,
+                        marginTop: 10,
+                        maxHeight: screenHeight * 0.2,
+                        textAlignVertical: "top",
+                    }}
+                    value={action.note}
+                    onChangeText={(text) => updateActionValue(index, "note", text)}
+                />
+            )}
+        </View>
     );
 };
 
@@ -195,6 +208,18 @@ const styles = StyleSheet.create({
         color: "white",
         fontWeight: "bold",
         fontSize: 14,
+    },
+    rightRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        gap: 8,
+    },
+
+    infoIcon: {
+        paddingHorizontal: 6,
+        paddingVertical: 4,
+        justifyContent: "center",
+        alignItems: "center",
     },
 });
 
