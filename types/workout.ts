@@ -17,6 +17,7 @@ export interface SetAction {
     weightUnit?: string;  // e.g., lb/kg
     value?: string;       // for duration or distance
     valueUnit?: string;   // e.g., sec/min or m/ft
+    note?: string;
 }
 
 export interface RestAction {

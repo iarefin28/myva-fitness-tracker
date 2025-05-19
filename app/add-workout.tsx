@@ -113,7 +113,8 @@ export default function AddWorkout() {
                     weight: "",
                     weightUnit: "lb",
                     reps: "",
-                    unit: "lb"
+                    unit: "lb",
+                    note: ""
                 };
                 break;
             case "bodyweight":
@@ -174,7 +175,7 @@ export default function AddWorkout() {
 
     const updateActionValue = (
         index: number,
-        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit",
+        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note",
         value: string
     ) => {
         setActionsList(prev =>

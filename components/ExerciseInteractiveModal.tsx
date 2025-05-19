@@ -15,7 +15,7 @@ interface Props {
     actionsList: ExerciseAction[];
     updateActionValue: (
         index: number,
-        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit",
+        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note",
         value: string
     ) => void;
     onClose: () => void;
@@ -46,6 +46,12 @@ export default function ExerciseEditorModal({
     const scrollViewRef = useRef<ScrollView>(null);
     const canAddRest = actionsList.length === 0 || actionsList[actionsList.length - 1].type !== "rest";
 
+    const [expandedIndex, setExpandedIndex] = React.useState<number | null>(null);
+
+    const toggleExpand = (index: number) => {
+        setExpandedIndex(prev => (prev === index ? null : index));
+    };
+
 
     return (
         <Modal
@@ -54,7 +60,7 @@ export default function ExerciseEditorModal({
             visible={visible}
             onRequestClose={onClose}
         >
-            <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#2a2a2a"}}>
+            <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#2a2a2a" }}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                     style={{
@@ -76,7 +82,6 @@ export default function ExerciseEditorModal({
                         <TouchableOpacity onPress={onClose} style={{ padding: 4, minWidth: 50 }}>
                             <AntDesign name="close" size={24} color="white" />
                         </TouchableOpacity>
-
                         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                             {exerciseNameBlurred && !!lockedExerciseTitle && (
                                 <Text
@@ -186,6 +191,8 @@ export default function ExerciseEditorModal({
                                         index={index}
                                         updateActionValue={updateActionValue}
                                         exerciseType={exerciseType}
+                                        isExpanded={expandedIndex === index}
+                                        onToggle={() => toggleExpand(index)}
                                     />
                                 ))}
                             </ScrollView>

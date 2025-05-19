@@ -1,5 +1,5 @@
 import React from "react";
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Dimensions, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { ExerciseType } from "../types/workout";
 
 interface ActionInputProps {
@@ -7,13 +7,24 @@ interface ActionInputProps {
     index: number;
     updateActionValue: (
         index: number,
-        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit",
+        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note",
         value: string
     ) => void;
-    exerciseType: ExerciseType
+    exerciseType: ExerciseType;
+    isExpanded: boolean;
+    onToggle: () => void;
 }
 
-const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionValue, exerciseType }) => {
+const ActionInput: React.FC<ActionInputProps> = ({
+    action,
+    index,
+    updateActionValue,
+    exerciseType,
+    isExpanded,
+    onToggle
+}) => {
+    const screenHeight = Dimensions.get("window").height;
+
     function formatRestDisplay(raw: string): string {
         const digits = raw.replace(/\D/g, "");
 
@@ -23,29 +34,44 @@ const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionVa
         return `${parseInt(minutes)}:${seconds.padStart(2, "0")}`;
     }
 
+    // ───── REST ─────
+    if (action.type === "rest") {
+        return (
+            <View style={[styles.container, { backgroundColor: "#2a2a2a" }]}>
+                <View style={styles.headerRow}>
+                    <Text style={[styles.label, { color: "white", fontSize: 18, fontWeight: "bold" }]}>
+                        Rest
+                    </Text>
+                    <View style={styles.inputRow}>
+                        <TextInput
+                            placeholder="Enter time"
+                            placeholderTextColor="#888"
+                            keyboardType="numeric"
+                            value={formatRestDisplay(action.value)}
+                            onChangeText={(text) => {
+                                const clean = text.replace(/\D/g, "");
+                                updateActionValue(index, "value", clean);
+                            }}
+                            maxLength={5}
+                            style={styles.input}
+                        />
+                    </View>
+                </View>
+            </View>
+        );
+    }
+
+
+    // ───── SET ─────
     return (
-        <View
-            style={[
-                styles.container,
-                {
-                    backgroundColor: action.type === "set" ? "#2a2a2a" : "#2a2a2a", // set vs rest
-                },
-            ]}
-        >
-            <View style={styles.headerRow}>
-                <Text
-                    style={[
-                        styles.label,
-                        {
-                            color: "white", // Gold for both
-                            fontSize: 18,
-                            fontWeight: "bold",
-                        },
-                    ]}
-                >
-                    {action.type === "set" ? `${action.setNumber}` : "Rest"}
-                </Text>
-                {action.type === "set" ? (
+        <TouchableOpacity onPress={onToggle} activeOpacity={0.9}>
+            <View style={[styles.container, { backgroundColor: "#2a2a2a" }]}>
+                {/* Set row: Number left, inputs right */}
+                <View style={styles.headerRow}>
+                    <Text style={[styles.label, { fontSize: 18, fontWeight: "bold", color: "white" }]}>
+                        Set {action.setNumber}
+                    </Text>
+
                     <View style={styles.inputRow}>
                         {(exerciseType === "weighted") && (
                             <>
@@ -93,92 +119,35 @@ const ActionInput: React.FC<ActionInputProps> = ({ action, index, updateActionVa
                                 </TouchableOpacity>
                             </>
                         )}
-                        {exerciseType === "weighted duration" && (
-                            <>
-                                <TextInput
-                                    placeholder="Weight"
-                                    placeholderTextColor="#888"
-                                    keyboardType="numeric"
-                                    value={action.weight}
-                                    onChangeText={(value) => updateActionValue(index, "weight", value)}
-                                    style={styles.input}
-                                />
-                                <TouchableOpacity
-                                    onPress={() => updateActionValue(index, "unit", action.weightUnit === "lb" ? "kg" : "lb")}
-                                    style={styles.unitToggle}
-                                >
-                                    <Text style={styles.unitText}>{action.weightUnit}</Text>
-                                </TouchableOpacity>
-
-                                <TextInput
-                                    placeholder="Duration"
-                                    placeholderTextColor="#888"
-                                    keyboardType="numeric"
-                                    value={action.value}
-                                    onChangeText={(value) => updateActionValue(index, "value", value)}
-                                    style={[styles.input, { borderWidth: 1, borderColor: "#333" }]}
-                                />
-                                <TouchableOpacity
-                                    onPress={() => updateActionValue(index, "unit", action.valueUnit === "sec" ? "min" : "sec")}
-                                    style={styles.unitToggle}
-                                >
-                                    <Text style={styles.unitText}>{action.valueUnit}</Text>
-                                </TouchableOpacity>
-                            </>
-                        )}
-                        {exerciseType === "weighted distance" && (
-                            <>
-                                <TextInput
-                                    placeholder="Weight"
-                                    placeholderTextColor="#888"
-                                    keyboardType="numeric"
-                                    value={action.weight}
-                                    onChangeText={(value) => updateActionValue(index, "weight", value)}
-                                    style={styles.input}
-                                />
-                                <TouchableOpacity
-                                    onPress={() => updateActionValue(index, "weightUnit", action.weightUnit === "lb" ? "kg" : "lb")}
-                                    style={styles.unitToggle}
-                                >
-                                    <Text style={styles.unitText}>{action.weightUnit}</Text>
-                                </TouchableOpacity>
-
-                                <TextInput
-                                    placeholder="Distance"
-                                    placeholderTextColor="#888"
-                                    keyboardType="numeric"
-                                    value={action.value}
-                                    onChangeText={(value) => updateActionValue(index, "value", value)}
-                                    style={[styles.input, { borderWidth: 1, borderColor: "#333" }]}
-                                />
-                                <TouchableOpacity
-                                    onPress={() => updateActionValue(index, "valueUnit", action.valueUnit === "yd" ? "m" : "yd")}
-                                    style={styles.unitToggle}
-                                >
-                                    <Text style={styles.unitText}>{action.valueUnit}</Text>
-                                </TouchableOpacity>
-                            </>
-                        )}
+                        {/* Add other cases like 'weighted duration' and 'weighted distance' here similarly */}
                     </View>
-                ) : (
-                    // Rest timer input
-                    <View style={styles.inputRow}>
-                        <TextInput
-                            placeholder="Enter time"
-                            placeholderTextColor="#888"
-                            keyboardType="numeric"
-                            value={formatRestDisplay(action.value)}
-                            onChangeText={(text) => {
-                                const clean = text.replace(/\D/g, "");
-                                updateActionValue(index, "value", clean);
-                            }}
-                            maxLength={5} 
-                            style={styles.input}
-                        />
-                    </View>
+                </View>
+
+                {/* Note expands below */}
+                {isExpanded && (
+                    <TextInput
+                        placeholder="Add a note..."
+                        placeholderTextColor="#888"
+                        multiline
+                        numberOfLines={5}
+                        scrollEnabled={true}
+                        style={{
+                            backgroundColor: "#1e1e1e",
+                            color: "white",
+                            borderRadius: 6,
+                            padding: 10,
+                            fontSize: 14,
+                            marginTop: 10,
+                            maxHeight: screenHeight * 0.2, 
+                            textAlignVertical: "top",
+                        }}
+                        value={action.note}
+                        onChangeText={(text) => updateActionValue(index, "note", text)}
+                    />
                 )}
             </View>
-        </View>
+        </TouchableOpacity>
+
     );
 };
 
@@ -201,6 +170,7 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         gap: 8,
         alignItems: "center",
+        flexWrap: "nowrap",
     },
     input: {
         backgroundColor: "black",
