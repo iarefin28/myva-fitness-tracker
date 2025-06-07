@@ -18,6 +18,7 @@ interface Props {
         field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note",
         value: string
     ) => void;
+    updateActionsList: (newList: ExerciseAction[]) => void;
     onClose: () => void;
     onSave: () => void;
     onSelectExercise: (exercise: string, type: ExerciseType) => void;
@@ -36,6 +37,7 @@ export default function ExerciseEditorModal({
     exerciseType,
     actionsList,
     updateActionValue,
+    updateActionsList,
     onClose,
     onSave,
     onSelectExercise,
@@ -49,13 +51,18 @@ export default function ExerciseEditorModal({
     const canAddRest = actionsList.length === 0 || actionsList[actionsList.length - 1].type !== "rest";
 
     const [expandedIndex, setExpandedIndex] = React.useState<number | null>(null);
-    
+
     useEffect(() => {
         setExpandedIndex(null);
     }, [resetExpansionTrigger]);
 
     const toggleExpand = (index: number) => {
         setExpandedIndex(prev => (prev === index ? null : index));
+    };
+
+    const deleteAction = (indexToDelete: number) => {
+        const updatedList = actionsList.filter((_, i) => i !== indexToDelete);
+        updateActionsList(updatedList);
     };
 
 
@@ -190,17 +197,25 @@ export default function ExerciseEditorModal({
                                 showsVerticalScrollIndicator={false}
                                 onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
                             >
-                                {actionsList.map((action, index) => (
-                                    <ActionInput
-                                        key={index}
-                                        action={action}
-                                        index={index}
-                                        updateActionValue={updateActionValue}
-                                        exerciseType={exerciseType}
-                                        isExpanded={expandedIndex === index}
-                                        onToggle={() => toggleExpand(index)}
-                                    />
-                                ))}
+                                {actionsList.map((action, index) => {
+                                    const setNumber =
+                                        action.type === "set"
+                                            ? actionsList.slice(0, index + 1).filter(a => a.type === "set").length
+                                            : null;
+
+                                    return (
+                                        <ActionInput
+                                            key={index}
+                                            action={{ ...action, setNumber }} // 🔥 inject dynamically
+                                            index={index}
+                                            updateActionValue={updateActionValue}
+                                            exerciseType={exerciseType}
+                                            isExpanded={expandedIndex === index}
+                                            onToggle={() => toggleExpand(index)}
+                                            onDismiss={deleteAction}
+                                        />
+                                    );
+                                })}
                             </ScrollView>
                         </>
                     )}

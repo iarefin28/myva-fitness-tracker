@@ -31,6 +31,7 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
     "Skull Crushers": "weighted",
     "Close Grip Bench Press": "weighted",
     "Machine Chest Press": "weighted",
+    "Flat Dumbbell Press": "weighted",
   
     "Pull Ups": "bodyweight",
     "Pull Ups (Weighted)": "weighted",
@@ -48,6 +49,8 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
     "Rack Pull": "weighted",
     "Cable Row": "weighted",
     "Reverse Fly": "weighted",
+    "Single Arm Dumbbell Row": "weighted",
+    
   
     "Squat": "weighted",
     "Front Squat": "weighted",

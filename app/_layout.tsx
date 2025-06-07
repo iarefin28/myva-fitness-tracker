@@ -7,6 +7,7 @@ import { TouchableOpacity, useColorScheme, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import AddWorkoutScreen from './add-workout';
 import CalendarScreen from './calendar';
 import ChartsScreen from './charts';
@@ -110,11 +111,13 @@ export default function RootLayout() {
   const scheme = useColorScheme();
 
   return (
-    <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack.Navigator>
-        <Stack.Screen name="Root" component={TabLayout} options={{ headerShown: false }} />
-        <Stack.Screen name="add-workout" component={AddWorkoutScreen} options={{ title: "Add Workout" }} />
-      </Stack.Navigator>
-    </ThemeProvider>
+    <GestureHandlerRootView>
+      <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <Stack.Navigator>
+          <Stack.Screen name="Root" component={TabLayout} options={{ headerShown: false }} />
+          <Stack.Screen name="add-workout" component={AddWorkoutScreen} options={{ title: "Add Workout" }} />
+        </Stack.Navigator>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

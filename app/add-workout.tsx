@@ -160,7 +160,7 @@ export default function AddWorkout() {
         }
 
         setActionsList(prev => [...prev, newSet]);
-        setSetCounter(prev => prev + 1);
+        //setSetCounter(prev => prev + 1);
     };
 
     const addRest = () => {
@@ -381,6 +381,7 @@ export default function AddWorkout() {
                 exerciseType={exerciseType}
                 actionsList={actionsList}
                 updateActionValue={updateActionValue}
+                updateActionsList={setActionsList}
                 onSelectExercise={(exercise, type) => {
                     setExerciseName(exercise);
                     setExerciseType(type);

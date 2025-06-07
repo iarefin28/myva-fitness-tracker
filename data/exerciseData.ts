@@ -33,7 +33,8 @@ export const EXERCISES_DB = [
     "Skull Crushers",
     "Close Grip Bench Press",
     "Machine Chest Press",
-  
+    "Flat Dumbbell Press",
+      
     // Upper Body - Pull
     "Pull Ups (Weighted)",
     "Chin Ups",
@@ -50,6 +51,7 @@ export const EXERCISES_DB = [
     "Rack Pull",
     "Cable Row",
     "Reverse Fly",
+    "Single Arm Dumbbell Row",
   
     // Legs
     "Squat",
