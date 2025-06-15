@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRouter } from "expo-router";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Keyboard, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
 
@@ -30,6 +30,7 @@ export default function AddWorkout() {
     const [modalVisible, setModalVisible] = useState(false);
     const [exerciseName, setExerciseName] = useState("");
     const [exercises, setExercises] = useState<Exercise[]>([]);
+    const exercisesRef = useRef<Exercise[]>([]);
     const [exerciseNameBlurred, setExerciseNameBlurred] = useState(false);
     const [lockedExerciseTitle, setLockedExerciseTitle] = useState("");
     const [exerciseType, setExerciseType] = useState<ExerciseType>("unknown");;
@@ -46,6 +47,24 @@ export default function AddWorkout() {
     const [triggerScrollToEnd, setTriggerScrollToEnd] = useState(false);
 
 
+    // // Developer Utility to delete all async storage items. 
+    // const clearAllStorage = async () => {
+    //     try {
+    //         await AsyncStorage.clear();
+    //         console.log("AsyncStorage has been cleared!");
+    //     } catch (e) {
+    //         console.error("Failed to clear AsyncStorage:", e);
+    //     }
+    // };
+
+    // useEffect(() => {
+    //     clearAllStorage();
+    // }, []);
+
+
+    useEffect(() => {
+        exercisesRef.current = exercises;
+    }, [exercises]);
 
     // ───── Layout Effect for Header Buttons ─────
     useLayoutEffect(() => {
@@ -83,24 +102,21 @@ export default function AddWorkout() {
         const newExercise: Exercise = {
             name: exerciseName,
             type: exerciseType,
-            actions: computeNumberedActions(actionsList)
+            actions: computeNumberedActions(actionsList),
         };
 
-        if (editIndex !== null) {
-            // Editing existing exercise
-            setExercises(prev => {
-                const updated = [...prev];
+        setExercises(prev => {
+            const updated = [...prev];
+            if (editIndex !== null) {
                 updated[editIndex] = newExercise;
-                return updated;
-            });
-        } else {
-            // Adding new exercise
-            setExercises(prev => [...prev, newExercise]);
-        }
+            } else {
+                updated.push(newExercise);
+            }
 
-        console.log(computeNumberedActions(actionsList));
-
-        closeModal();
+            exercisesRef.current = updated;
+            closeModal();
+            return updated;
+        });
     };
 
 
@@ -109,16 +125,16 @@ export default function AddWorkout() {
     const saveWorkout = async () => {
         console.log("");
         console.log("Workout Name:", workoutName);
-        console.log("Exercise co:", exercises.length);
+        console.log("Exercise length:", exercisesRef.current.length);
 
         if (!workoutName || exercises.length === 0) return;
 
         const workout = {
-            id: Date.now(), // or uuid
+            id: Date.now(),
             name: workoutName,
             notes,
             date: date.toISOString(),
-            exercises,
+            exercises: exercisesRef.current, 
         };
 
         try {
@@ -127,16 +143,16 @@ export default function AddWorkout() {
 
             parsed.push(workout);
 
-            const jsonString = JSON.stringify(parsed, null, 2); // pretty print
-            console.log("📝 JSON to be saved:");
-            console.log(jsonString); // 🔥
+            const jsonString = JSON.stringify(parsed, null, 2); //pretty print
+            console.log("JSON to be saved:");
+            console.log(jsonString); // 
 
             await AsyncStorage.setItem("savedWorkouts", jsonString);
 
-            console.log("✅ Workout saved successfully!");
+            console.log("Workout saved successfully!");
             navigation.goBack();
         } catch (error) {
-            console.error("❌ Failed to save workout:", error);
+            console.error("Failed to save workout:", error);
         }
     };
 
@@ -217,6 +233,7 @@ export default function AddWorkout() {
             }
         ]);
         setRestCounter(prev => prev + 1);
+        setTriggerScrollToEnd(true);
     };
 
     const updateActionValue = (
