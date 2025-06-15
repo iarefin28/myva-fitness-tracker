@@ -78,7 +78,18 @@ export default function ExerciseEditorModal({
     }, [resetExpansionTrigger]);
 
     const toggleExpand = (index: number) => {
-        setExpandedIndex(prev => (prev === index ? null : index));
+        setExpandedIndex(prev => {
+            const newIndex = prev === index ? null : index;
+
+            // Delay scroll until after state updates
+            if (newIndex !== null) {
+                setTimeout(() => {
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                }, 300); // You can tweak this delay based on testing
+            }
+
+            return newIndex;
+        });
     };
 
     const toggleAdvancedOptions = (index: number) => {
@@ -236,7 +247,7 @@ export default function ExerciseEditorModal({
                                         {actionsList.map((action, index) => (
                                             <ActionInput
                                                 key={index}
-                                                action={action} // 🔥 inject dynamically
+                                                action={action}
                                                 index={index}
                                                 updateActionValue={updateActionValue}
                                                 exerciseType={exerciseType}
@@ -245,6 +256,16 @@ export default function ExerciseEditorModal({
                                                 onToggle={() => toggleExpand(index)}
                                                 onDismiss={deleteAction}
                                                 onToggleAdvanced={() => toggleAdvancedOptions(index)}
+                                                onExpand={() => {
+                                                    // fallback scroll trigger if needed
+                                                    scrollViewRef.current?.scrollToEnd({ animated: true });
+                                                }}
+                                                onExpandAdvanced={() => {
+                                                    // Small timeout to wait for layout shift
+                                                    setTimeout(() => {
+                                                        scrollViewRef.current?.scrollToEnd({ animated: true });
+                                                    }, 200);
+                                                }}
                                             />
                                         ))}
                                     </ScrollView>

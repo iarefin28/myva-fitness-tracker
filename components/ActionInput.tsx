@@ -26,6 +26,8 @@ interface ActionInputProps {
     exerciseType: ExerciseType;
     isExpanded: boolean;
     onToggle: () => void;
+    onExpand?: () => void;
+    onExpandAdvanced?: () => void;
     showAdvanced: boolean;
     onToggleAdvanced: () => void;
     onDismiss?: (index: number) => void;
@@ -41,7 +43,8 @@ const ActionInput: React.FC<ActionInputProps> = ({
     showAdvanced,
     onToggleAdvanced,
     onToggle,
-
+    onExpand,
+    onExpandAdvanced,
     onDismiss
 }) => {
     const screenHeight = Dimensions.get("window").height;
@@ -254,7 +257,13 @@ const ActionInput: React.FC<ActionInputProps> = ({
                             {/* Add other cases like 'weighted duration' and 'weighted distance' here similarly */}
                         </View>
 
-                        <TouchableOpacity onPress={onToggle} style={styles.infoIcon}>
+                        <TouchableOpacity
+                            onPress={() => {
+                                onToggle();
+                                onExpand?.(); 
+                            }}
+                            style={styles.infoIcon}
+                            ß>
                             <Feather name="more-vertical" size={21} color="white" />
                         </TouchableOpacity>
                     </View>
@@ -285,7 +294,10 @@ const ActionInput: React.FC<ActionInputProps> = ({
 
                         {!action.isWarmup && (
                             <TouchableOpacity
-                                onPress={onToggleAdvanced}
+                                onPress={() => {
+                                    onToggleAdvanced();
+                                    onExpandAdvanced?.();
+                                }}
                                 style={{
                                     marginTop: 10,
                                     backgroundColor: '#1e90ff',
@@ -315,7 +327,7 @@ const ActionInput: React.FC<ActionInputProps> = ({
 
             </View>
 
-        </ReanimatedSwipeable>
+        </ReanimatedSwipeable >
     );
 };
 

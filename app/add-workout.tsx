@@ -107,6 +107,10 @@ export default function AddWorkout() {
 
     // ───── Workout Save (To Implement) ─────
     const saveWorkout = async () => {
+        console.log("");
+        console.log("Workout Name:", workoutName);
+        console.log("Exercise co:", exercises.length);
+
         if (!workoutName || exercises.length === 0) return;
 
         const workout = {
@@ -123,15 +127,17 @@ export default function AddWorkout() {
 
             parsed.push(workout);
 
-            await AsyncStorage.setItem("savedWorkouts", JSON.stringify(parsed));
-            console.log("Workout saved:", workout);
+            const jsonString = JSON.stringify(parsed, null, 2); // pretty print
+            console.log("📝 JSON to be saved:");
+            console.log(jsonString); // 🔥
 
-            router.back(); // or navigation.goBack();
+            await AsyncStorage.setItem("savedWorkouts", jsonString);
+
+            console.log("✅ Workout saved successfully!");
+            navigation.goBack();
         } catch (error) {
-            console.error("Failed to save workout:", error);
+            console.error("❌ Failed to save workout:", error);
         }
-
-        console.log(workout);
     };
 
     // ───── Action Handlers ─────
