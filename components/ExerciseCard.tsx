@@ -5,6 +5,8 @@ import type { Exercise } from "../types/workout";
 interface Props {
     exercise: Exercise;
     onPress?: () => void;
+    defaultExpanded?: boolean;
+    disableToggle?: boolean;
 }
 
 // Helper to format seconds into "X minutes and Y seconds"
@@ -26,8 +28,8 @@ const getRpeColor = (num: number): string => {
     return "#ff4d4d";
 };
 
-const ExerciseCard: React.FC<Props> = ({ exercise, onPress }) => {
-    const [expanded, setExpanded] = useState(false);
+const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = false, disableToggle = false }) => {
+    const [expanded, setExpanded] = useState(defaultExpanded);
 
     const totalSets = exercise.actions.filter((a) => a.type === "set").length;
     const avgReps =
@@ -87,9 +89,13 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress }) => {
 
     return (
         <TouchableOpacity
-            onPress={() => setExpanded(!expanded)}
+            onPress={() => {
+                if (!disableToggle) setExpanded(!expanded);
+            }}
             onLongPress={onPress}
             style={styles.card}
+            disabled={disableToggle}
+            activeOpacity={disableToggle ? 1 : 0.7}
         >
             <Text style={styles.name}>{exercise.name}</Text>
             <Text style={styles.details}>Sets: {totalSets} | Avg Reps: {avgReps}</Text>
