@@ -97,6 +97,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#2a2a2a",
     borderRadius: 10,
     paddingVertical: 4,
+    maxHeight: "80%",
   },
   dropdownItem: {
     paddingVertical: 10,

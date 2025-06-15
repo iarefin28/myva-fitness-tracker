@@ -116,6 +116,7 @@ export default function RootLayout() {
         <Stack.Navigator>
           <Stack.Screen name="Root" component={TabLayout} options={{ headerShown: false }} />
           <Stack.Screen name="add-workout" component={AddWorkoutScreen} options={{ title: "Add Workout" }} />
+          <Stack.Screen name="exercise-log" getComponent={() => require('./exercise-log').default} options={{ title: "" }} />
         </Stack.Navigator>
       </ThemeProvider>
     </GestureHandlerRootView>

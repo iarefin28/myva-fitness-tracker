@@ -1,7 +1,9 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRouter } from "expo-router";
 import { useLayoutEffect, useRef, useState } from "react";
 import { Keyboard, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
+
 
 import ExerciseCard from "../components/ExerciseCard";
 import type { Exercise, ExerciseAction, ExerciseType } from "../types/workout";
@@ -41,6 +43,8 @@ export default function AddWorkout() {
 
     const [editIndex, setEditIndex] = useState<number | null>(null);
     const [resetExpansionTrigger, setResetExpansionTrigger] = useState(0);
+    const [triggerScrollToEnd, setTriggerScrollToEnd] = useState(false);
+
 
 
     // ───── Layout Effect for Header Buttons ─────
@@ -59,6 +63,7 @@ export default function AddWorkout() {
         });
     }, [navigation]);
 
+
     // ───── Modal & Exercise Handlers ─────
     const closeModal = () => {
         setModalVisible(false);
@@ -74,13 +79,13 @@ export default function AddWorkout() {
 
     const handleSaveExercise = () => {
         if (!exerciseName || actionsList.length === 0) return;
-    
+
         const newExercise: Exercise = {
             name: exerciseName,
             type: exerciseType,
-            actions: actionsList
+            actions: computeNumberedActions(actionsList)
         };
-    
+
         if (editIndex !== null) {
             // Editing existing exercise
             setExercises(prev => {
@@ -92,13 +97,41 @@ export default function AddWorkout() {
             // Adding new exercise
             setExercises(prev => [...prev, newExercise]);
         }
-    
+
+        console.log(computeNumberedActions(actionsList));
+
         closeModal();
     };
 
+
+
     // ───── Workout Save (To Implement) ─────
     const saveWorkout = async () => {
-        // TODO: Save workout to storage
+        if (!workoutName || exercises.length === 0) return;
+
+        const workout = {
+            id: Date.now(), // or uuid
+            name: workoutName,
+            notes,
+            date: date.toISOString(),
+            exercises,
+        };
+
+        try {
+            const existing = await AsyncStorage.getItem("savedWorkouts");
+            const parsed = existing ? JSON.parse(existing) : [];
+
+            parsed.push(workout);
+
+            await AsyncStorage.setItem("savedWorkouts", JSON.stringify(parsed));
+            console.log("Workout saved:", workout);
+
+            router.back(); // or navigation.goBack();
+        } catch (error) {
+            console.error("Failed to save workout:", error);
+        }
+
+        console.log(workout);
     };
 
     // ───── Action Handlers ─────
@@ -116,7 +149,9 @@ export default function AddWorkout() {
                     weightUnit: "lb",
                     reps: "",
                     unit: "lb",
-                    note: ""
+                    note: "",
+                    isWarmup: false,
+                    RPE: 0
                 };
                 break;
             case "bodyweight":
@@ -159,6 +194,8 @@ export default function AddWorkout() {
                 };
         }
 
+        setTriggerScrollToEnd(true);
+
         setActionsList(prev => [...prev, newSet]);
         //setSetCounter(prev => prev + 1);
     };
@@ -169,7 +206,8 @@ export default function AddWorkout() {
             {
                 type: "rest",
                 restNumber: restCounter,
-                value: "", 
+                value: "",
+                restInSeconds: 0
             }
         ]);
         setRestCounter(prev => prev + 1);
@@ -177,14 +215,24 @@ export default function AddWorkout() {
 
     const updateActionValue = (
         index: number,
-        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note",
-        value: string
+        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note" | "isWarmup" | "RPE" | "restInSeconds",
+        value: string,
     ) => {
         setActionsList(prev =>
             prev.map((action, i) =>
                 i === index ? { ...action, [field]: value } : action
             )
         );
+    };
+
+    const computeNumberedActions = (actions) => {
+        let count = 1;
+        return actions.map((action) => {
+            if (action.type === "set" && !action.isWarmup) {
+                return { ...action, setNumber: count++ };
+            }
+            return { ...action, setNumber: null };
+        });
     };
 
     // ───── Date Picker Handler ─────
@@ -352,18 +400,18 @@ export default function AddWorkout() {
                             >
                                 {exercises.map((exercise, index) => (
                                     <ExerciseCard
-                                    key={index}
-                                    exercise={exercise}
-                                    onPress={() => {
-                                        setEditIndex(index);
-                                        setExerciseName(exercise.name);
-                                        setExerciseType(exercise.type);
-                                        setActionsList(exercise.actions);
-                                        setLockedExerciseTitle(exercise.name);
-                                        setExerciseNameBlurred(true);
-                                        setModalVisible(true);
-                                    }}
-                                />
+                                        key={index}
+                                        exercise={exercise}
+                                        onPress={() => {
+                                            setEditIndex(index);
+                                            setExerciseName(exercise.name);
+                                            setExerciseType(exercise.type);
+                                            setActionsList(exercise.actions);
+                                            setLockedExerciseTitle(exercise.name);
+                                            setExerciseNameBlurred(true);
+                                            setModalVisible(true);
+                                        }}
+                                    />
                                 ))}
                             </ScrollView>
                         </View>
@@ -379,7 +427,7 @@ export default function AddWorkout() {
                 exerciseNameBlurred={exerciseNameBlurred}
                 lockedExerciseTitle={lockedExerciseTitle}
                 exerciseType={exerciseType}
-                actionsList={actionsList}
+                actionsList={computeNumberedActions(actionsList)}
                 updateActionValue={updateActionValue}
                 updateActionsList={setActionsList}
                 onSelectExercise={(exercise, type) => {
@@ -396,6 +444,8 @@ export default function AddWorkout() {
                 addRest={addRest}
                 isEditing={editIndex !== null}
                 resetExpansionTrigger={resetExpansionTrigger}
+                scrollToBottom={triggerScrollToEnd}
+                onScrolledToBottom={() => setTriggerScrollToEnd(false)}
             />
         </>
     );

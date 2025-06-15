@@ -3,6 +3,7 @@ import React from "react";
 import { Dimensions, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable'; // at the top
 import { ExerciseType } from "../types/workout";
+import RpeSelector from "./RpeSelector";
 
 
 import {
@@ -19,12 +20,14 @@ interface ActionInputProps {
     index: number;
     updateActionValue: (
         index: number,
-        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note",
-        value: string
+        field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note" | "isWarmup" | "RPE" | "restInSeconds",
+        value: string,
     ) => void;
     exerciseType: ExerciseType;
     isExpanded: boolean;
     onToggle: () => void;
+    showAdvanced: boolean;
+    onToggleAdvanced: () => void;
     onDismiss?: (index: number) => void;
 
 }
@@ -35,7 +38,10 @@ const ActionInput: React.FC<ActionInputProps> = ({
     updateActionValue,
     exerciseType,
     isExpanded,
+    showAdvanced,
+    onToggleAdvanced,
     onToggle,
+
     onDismiss
 }) => {
     const screenHeight = Dimensions.get("window").height;
@@ -114,7 +120,21 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                     value={formatRestDisplay(action.value)}
                                     onChangeText={(text) => {
                                         const clean = text.replace(/\D/g, "");
+
+                                        let seconds = 0;
+                                        if (clean.length <= 2) {
+                                            seconds = parseInt(clean || "0");
+                                        } else {
+                                            const minutes = parseInt(clean.slice(0, -2));
+                                            const secs = parseInt(clean.slice(-2));
+                                            seconds = minutes * 60 + secs;
+                                        }
+
+                                        // 👇 Save raw digits for formatting (MMSS)
                                         updateActionValue(index, "value", clean);
+
+                                        // 👇 Save parsed seconds for logic use
+                                        updateActionValue(index, "restInSeconds", seconds.toString());
                                     }}
                                     maxLength={5}
                                     style={styles.input}
@@ -136,12 +156,46 @@ const ActionInput: React.FC<ActionInputProps> = ({
     // ───── SET ─────
     return (
         <ReanimatedSwipeable renderRightActions={renderRightActions}>
-            <View style={[styles.container, { backgroundColor: "#2a2a2a" }]}>
+
+            <View style={[
+                styles.container,
+                {
+                    backgroundColor: action.isWarmup ? "#394d5c" : "#2a2a2a",
+                    borderColor: action.isWarmup ? "#61dafb" : "#2a2a2a",
+                    borderWidth: 1,
+                }
+            ]}>
                 {/* Set row: Number left, inputs right */}
                 <View style={styles.headerRow}>
-                    <Text style={[styles.label, { fontSize: 18, fontWeight: "bold", color: "white" }]}>
-                        Set {action.setNumber}
-                    </Text>
+                    <TouchableOpacity
+                        onPress={() => {
+                            const newWarmup = !action.isWarmup;
+                            updateActionValue(index, "isWarmup", newWarmup);
+
+                            if (newWarmup) {
+                                updateActionValue(index, "RPE", ""); // reset RPE
+                            }
+                        }}
+                        style={{
+                            backgroundColor: "#1e1e1e", // slightly darker gray for contrast
+                            borderColor: "#555",
+                            borderWidth: 1,
+                            paddingVertical: 4,
+                            paddingHorizontal: 12,
+                            borderRadius: 8,
+                            justifyContent: "center"
+                        }}
+                    >
+                        <Text style={{
+                            fontSize: 14,
+                            color: "white",
+                            fontWeight: "bold",
+                            textAlign: "center",
+                        }}>
+                            {action.isWarmup ? "Warm-Up" : `Set ${action.setNumber}`}
+                        </Text>
+                    </TouchableOpacity>
+
 
                     <View style={styles.rightRow}>
                         <View style={styles.inputRow}>
@@ -157,10 +211,15 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                         style={styles.input}
                                     />
                                     <TouchableOpacity
-                                        onPress={() => updateActionValue(index, "unit", action.weightUnit === "lb" ? "kg" : "lb")}
-                                        style={styles.unitToggle}
+                                        onPress={() => updateActionValue(index, "weightUnit", action.weightUnit === "lb" ? "kg" : "lb")}
+                                        style={{
+                                            ...styles.unitToggle,
+                                            minWidth: 40, // safe fallback
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                        }}
                                     >
-                                        <Text style={styles.unitText}>{action.unit}</Text>
+                                        <Text style={styles.unitText}>{action.weightUnit}</Text>
                                     </TouchableOpacity>
                                 </>
                             )}
@@ -203,27 +262,59 @@ const ActionInput: React.FC<ActionInputProps> = ({
 
                 {/* Note expands below */}
                 {isExpanded && (
-                    <TextInput
-                        placeholder="Add a note..."
-                        placeholderTextColor="#888"
-                        multiline
-                        numberOfLines={5}
-                        scrollEnabled={true}
-                        style={{
-                            backgroundColor: "#1e1e1e",
-                            color: "white",
-                            borderRadius: 6,
-                            padding: 10,
-                            fontSize: 14,
-                            marginTop: 10,
-                            maxHeight: screenHeight * 0.2,
-                            textAlignVertical: "top",
-                        }}
-                        value={action.note}
-                        onChangeText={(text) => updateActionValue(index, "note", text)}
-                    />
+                    <>
+                        <TextInput
+                            placeholder="Add a note..."
+                            placeholderTextColor="#888"
+                            multiline
+                            numberOfLines={5}
+                            scrollEnabled={true}
+                            style={{
+                                backgroundColor: "#1e1e1e",
+                                color: "white",
+                                borderRadius: 6,
+                                padding: 10,
+                                fontSize: 14,
+                                marginTop: 10,
+                                maxHeight: screenHeight * 0.2,
+                                textAlignVertical: "top",
+                            }}
+                            value={action.note}
+                            onChangeText={(text) => updateActionValue(index, "note", text)}
+                        />
+
+                        {!action.isWarmup && (
+                            <TouchableOpacity
+                                onPress={onToggleAdvanced}
+                                style={{
+                                    marginTop: 10,
+                                    backgroundColor: '#1e90ff',
+                                    paddingVertical: 10,
+                                    borderRadius: 8,
+                                    alignItems: 'center',
+                                }}
+                            >
+                                <Text style={{ color: 'white', fontWeight: 'bold' }}>
+                                    {showAdvanced ? "Hide Advanced Options" : "Show Advanced Options"}
+                                </Text>
+                            </TouchableOpacity>
+                        )}
+                        {/* more advanced features tempo, RPE, focus, quality */}
+                        {showAdvanced && !action.isWarmup && (
+                            <View style={{ marginTop: 10 }}>
+
+                                <RpeSelector
+                                    selected={action.RPE}
+                                    onSelect={(num) => updateActionValue(index, "RPE", num)}
+                                />
+                            </View>
+                        )}
+                    </>
                 )}
+
+
             </View>
+
         </ReanimatedSwipeable>
     );
 };
@@ -250,11 +341,11 @@ const styles = StyleSheet.create({
         flexWrap: "nowrap",
     },
     input: {
-        backgroundColor: "black",
+        backgroundColor: "#1e1e1e",
         color: "white",
         borderRadius: 6,
         padding: 8,
-        width: 80,
+        width: 65,
         textAlign: "center",
         fontSize: 15,
     },
@@ -267,6 +358,7 @@ const styles = StyleSheet.create({
         borderColor: "#555",
         justifyContent: "center",
         alignItems: "center",
+
     },
     unitText: {
         color: "white",

@@ -18,12 +18,15 @@ export interface SetAction {
     value?: string;       // for duration or distance
     valueUnit?: string;   // e.g., sec/min or m/ft
     note?: string;
+    isWarmup?: false;
+    RPE?: -1;
 }
 
 export interface RestAction {
   type: "rest";
   restNumber: number;
   value: string, 
+  restInSeconds: number
 }
 
 export type ExerciseAction = SetAction | RestAction;
