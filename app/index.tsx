@@ -1,15 +1,17 @@
-import { AntDesign } from "@expo/vector-icons";
+import { FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation, useTheme } from "@react-navigation/native";
-import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useLayoutEffect, useState } from "react";
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from "expo-router";
+import { useEffect, useState } from "react";
+
+
 import {
-  FlatList,
   Text,
   TouchableOpacity,
   useColorScheme,
   View,
 } from "react-native";
+
 
 interface Workout {
   id: number;
@@ -19,99 +21,189 @@ interface Workout {
   date: string;
 }
 
-export default function Index() {
+export default function HomeScreen() {
   const router = useRouter();
-  const navigation = useNavigation();
-  const { colors } = useTheme();
   const scheme = useColorScheme();
+  const [workoutsThisWeek, setWorkoutsThisWeek] = useState(0);
 
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const backgroundColor = scheme === "dark" ? "#000" : "#fff";
+  const textColor = scheme === "dark" ? "#fff" : "#000";
+  const cardColor = scheme === "dark" ? "#1e1e1e" : "#f2f2f2";
+  const dividerColor = scheme === "dark" ? "#333" : "#ccc";
 
-  const backgroundColor = scheme === "dark" ? "#000000" : "#ffffff";
-  const textColor = scheme === "dark" ? "#ffffff" : "#000000";
-  const cardColor = scheme === "dark" ? "#1a1a1a" : "#ffffff";
+  const buttons = [
+    {
+      title: "View Completed Workouts",
+      path: "/completed-workouts",
+      icon: <MaterialIcons name="check-circle-outline" size={22} color={textColor} />,
+    },
+    {
+      title: "View Upcoming Workouts",
+      path: "/upcoming-workouts",
+      icon: <Ionicons name="calendar-outline" size={22} color={textColor} />,
+    },
+    {
+      title: "Saved Workout Templates",
+      path: "/workout-templates",
+      icon: <FontAwesome5 name="clipboard-list" size={20} color={textColor} />,
+    },
+  ];
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerTitle: "Workout Log",
-      headerRight: () => (
-        <TouchableOpacity onPress={() => router.push("/add-workout")}>
-          <AntDesign name="plus" size={20} color={colors.text} />
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, colors]);
+  // Load workout data and compute this week's count
+  useEffect(() => {
+    const loadWorkoutCount = async () => {
+      try {
+        const stored = await AsyncStorage.getItem("savedWorkouts");
+        if (!stored) return;
 
-  const loadWorkouts = useCallback(async () => {
-    try {
-      const storedWorkouts = await AsyncStorage.getItem("savedWorkouts");
-      if (storedWorkouts) {
-        const parsedWorkouts: Workout[] = JSON.parse(storedWorkouts);
-        const sorted = parsedWorkouts.sort((a, b) => b.id - a.id);
-        setWorkouts(sorted);
-      } else {
-        setWorkouts([]);
+        const parsed: Workout[] = JSON.parse(stored);
+        const count = getWorkoutsThisWeek(parsed);
+        setWorkoutsThisWeek(count);
+      } catch (err) {
+        console.error("Failed to load workout count", err);
       }
-    } catch (error) {
-      console.error("Failed to load workouts:", error);
-    }
+    };
+
+    loadWorkoutCount();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadWorkouts();
-    }, [loadWorkouts])
-  );
+  // Helper: Count workouts in past 7 days
+  function getWorkoutsThisWeek(workouts: Workout[]) {
+    const now = new Date();
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(now.getDate() - 6);
 
-  const formatDate = (isoDate: string) => {
-    const date = new Date(isoDate);
-    return isNaN(date.getTime()) ? "Unknown Date" : date.toLocaleDateString();
-  };
+    return workouts.filter((w) => {
+      const workoutDate = new Date(w.date);
+      return workoutDate >= sevenDaysAgo && workoutDate <= now;
+    }).length;
+  }
+
+  function getGradientColors(count: number): string[] {
+    if (count <= 1) return ["#ff5f6d", "#ffc371"];       // red-orange
+    if (count === 2) return ["#ff8800", "#ffd700"];      // orange-yellow
+    if (count === 3) return ["#ffd700", "#a0e426"];      // yellow-green
+    if (count === 4) return ["#70e000", "#00c853"];      // lime to bright green
+    if (count >= 5) return ["#00b894", "#00cec9"];       // emerald to teal
+    return ["#666", "#999"]; // fallback gray
+  }
+
 
   return (
-    <View style={{ flex: 1, padding: 20, backgroundColor }}>
-      {workouts.length === 0 ? (
-        <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-          <Text style={{ fontSize: 18, color: textColor }}>No workouts available</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={workouts}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => {
-                globalThis.tempExercises = item.exercises;
-                router.push("/exercise-log");
-              }}
-              style={{
-                backgroundColor: cardColor,
-                padding: 16,
-                borderRadius: 12,
-                marginBottom: 15,
-                elevation: 3,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 6,
-              }}
-            >
-              <Text style={{ fontSize: 20, fontWeight: "bold", color: textColor }}>
-                {item.name}
-              </Text>
-              <Text style={{ color: textColor, marginTop: 4 }}>
-                {formatDate(item.date)}
-              </Text>
+    <View style={{ flex: 1, backgroundColor, padding: 24 }}>
+      {/* Header Row: Today + Date */}
+      <View
+        style={{
+          flexDirection: "row",
+          justifyContent: "center",
+          alignItems: "center",
+          marginBottom: 6,
+          flexWrap: "wrap",
+        }}
+      >
+        <Text
+          style={{
+            fontSize: 22,
+            fontWeight: "600",
+            color: textColor,
+            marginRight: 6,
+          }}
+        >
+          Today ·
+        </Text>
+        <Text
+          style={{
+            fontSize: 16,
+            color: "#888",
+            fontWeight: "400",
+          }}
+        >
+          {new Date().toLocaleDateString(undefined, {
+            weekday: "long",
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })}
+        </Text>
+      </View>
 
-              {!!item.notes?.trim() && (
-                <Text style={{ color: "#888", fontStyle: "italic", marginTop: 6 }}>
-                  “{item.notes.trim()}”
-                </Text>
-              )}
-            </TouchableOpacity>
-          )}
-        />
-      )}
+      <View style={{ alignItems: "center", marginBottom: 30 }}>
+        <LinearGradient
+          colors={getGradientColors(workoutsThisWeek)}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{
+            paddingVertical: 10,
+            paddingHorizontal: 18,
+            borderRadius: 999,
+            elevation: 3,
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.15,
+            shadowRadius: 3,
+          }}
+        >
+          <Text style={{
+            color: "#fff",
+            fontWeight: "bold",
+            fontSize: 14,
+          }}>
+            {workoutsThisWeek} Workouts This Week
+          </Text>
+        </LinearGradient>
+      </View>
+
+      {/* Grouped Navigation Panel */}
+      <View
+        style={{
+          backgroundColor: cardColor,
+          borderRadius: 12,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.15,
+          shadowRadius: 4,
+          elevation: 2,
+          overflow: "hidden",
+        }}
+      >
+        {buttons.map(({ title, path }, idx) => (
+          <TouchableOpacity
+            key={idx}
+            onPress={() => router.push(path)}
+            style={{
+              paddingVertical: 22,
+              paddingHorizontal: 24,
+              backgroundColor: cardColor,
+              borderTopLeftRadius: idx === 0 ? 12 : 0,
+              borderTopRightRadius: idx === 0 ? 12 : 0,
+              borderBottomLeftRadius: idx === buttons.length - 1 ? 12 : 0,
+              borderBottomRightRadius: idx === buttons.length - 1 ? 12 : 0,
+            }}
+          >
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <View style={{ marginRight: 10 }}>{buttons[idx].icon}</View>
+              <Text style={{ fontSize: 17, color: textColor }}>
+                {buttons[idx].title}
+              </Text>
+            </View>
+
+            {/* Divider */}
+            {idx < buttons.length - 1 && (
+              <View
+                style={{
+                  height: 1,
+                  backgroundColor: dividerColor,
+                  opacity: 0.4,
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                }}
+              />
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
     </View>
   );
 }

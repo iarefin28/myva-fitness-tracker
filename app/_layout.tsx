@@ -63,7 +63,7 @@ function TabLayout() {
       }}
     >
       <Tab.Screen
-        name="Home"
+        name="MYVA Fitness"
         component={IndexScreen}
         options={{
           tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
@@ -97,7 +97,7 @@ function TabLayout() {
         }}
       />
       <Tab.Screen
-        name="MYVA"
+        name="MYVA Insights"
         component={MyvaInsightsScreen}
         options={{
           tabBarIcon: ({ color, size }) => <Ionicons name="sparkles" size={size} color={color} />,
@@ -114,9 +114,26 @@ export default function RootLayout() {
     <GestureHandlerRootView>
       <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
         <Stack.Navigator>
-          <Stack.Screen name="Root" component={TabLayout} options={{ headerShown: false }} />
-          <Stack.Screen name="add-workout" component={AddWorkoutScreen} options={{ title: "Add Workout" }} />
-          <Stack.Screen name="exercise-log" getComponent={() => require('./exercise-log').default} options={{ title: "" }} />
+          <Stack.Screen
+            name="Root"
+            component={TabLayout}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name="add-workout"
+            component={AddWorkoutScreen}
+            options={{ title: "Add Workout" }}
+          />
+          <Stack.Screen
+            name="exercise-log"
+            getComponent={() => require('./exercise-log').default}
+            options={{ title: "" }}
+          />
+          <Stack.Screen
+            name="completed-workouts"
+            getComponent={() => require('./completed-workouts').default}
+            options={{ title: "Completed Workouts" }}
+          />
         </Stack.Navigator>
       </ThemeProvider>
     </GestureHandlerRootView>
