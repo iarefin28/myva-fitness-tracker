@@ -124,7 +124,7 @@ export default function AddWorkout() {
     // ───── Workout Save (To Implement) ─────
     const saveWorkout = async () => {
         console.log("");
-        console.log("Workout Name:", workoutName);
+        console.log("Workout Nam:", workoutName);
         console.log("Exercise length:", exercisesRef.current.length);
 
         if (!workoutName || exercises.length === 0) return;

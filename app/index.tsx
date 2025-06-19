@@ -3,6 +3,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
+import { ScrollView } from 'react-native';
 
 
 import {
@@ -90,120 +91,122 @@ export default function HomeScreen() {
 
 
   return (
-    <View style={{ flex: 1, backgroundColor, padding: 24 }}>
-      {/* Header Row: Today + Date */}
-      <View
-        style={{
-          flexDirection: "row",
-          justifyContent: "center",
-          alignItems: "center",
-          marginBottom: 6,
-          flexWrap: "wrap",
-        }}
-      >
-        <Text
+    <ScrollView style={{ flex: 1, backgroundColor }} contentContainerStyle={{ padding: 16 }}>
+      <View>
+        {/* Header Row: Today + Date */}
+        <View
           style={{
-            fontSize: 22,
-            fontWeight: "600",
-            color: textColor,
-            marginRight: 6,
+            flexDirection: "row",
+            justifyContent: "center",
+            alignItems: "center",
+            marginBottom: 6,
+            flexWrap: "wrap",
           }}
         >
-          Today ·
-        </Text>
-        <Text
-          style={{
-            fontSize: 16,
-            color: "#888",
-            fontWeight: "400",
-          }}
-        >
-          {new Date().toLocaleDateString(undefined, {
-            weekday: "long",
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })}
-        </Text>
-      </View>
+          <Text
+            style={{
+              fontSize: 22,
+              fontWeight: "600",
+              color: textColor,
+              marginRight: 6,
+            }}
+          >
+            Today ·
+          </Text>
+          <Text
+            style={{
+              fontSize: 16,
+              color: "#888",
+              fontWeight: "400",
+            }}
+          >
+            {new Date().toLocaleDateString(undefined, {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })}
+          </Text>
+        </View>
 
-      <View style={{ alignItems: "center", marginBottom: 30 }}>
-        <LinearGradient
-          colors={getGradientColors(workoutsThisWeek)}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
+        <View style={{ alignItems: "center", marginBottom: 30 }}>
+          <LinearGradient
+            colors={getGradientColors(workoutsThisWeek)}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              paddingVertical: 10,
+              paddingHorizontal: 18,
+              borderRadius: 999,
+              elevation: 3,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.15,
+              shadowRadius: 3,
+            }}
+          >
+            <Text style={{
+              color: "#fff",
+              fontWeight: "bold",
+              fontSize: 14,
+            }}>
+              {workoutsThisWeek} Workouts This Week
+            </Text>
+          </LinearGradient>
+        </View>
+
+        {/* Grouped Navigation Panel */}
+        <View
           style={{
-            paddingVertical: 10,
-            paddingHorizontal: 18,
-            borderRadius: 999,
-            elevation: 3,
+            backgroundColor: cardColor,
+            borderRadius: 12,
             shadowColor: "#000",
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.15,
-            shadowRadius: 3,
+            shadowRadius: 4,
+            elevation: 2,
+            overflow: "hidden",
           }}
         >
-          <Text style={{
-            color: "#fff",
-            fontWeight: "bold",
-            fontSize: 14,
-          }}>
-            {workoutsThisWeek} Workouts This Week
-          </Text>
-        </LinearGradient>
-      </View>
+          {buttons.map(({ title, path }, idx) => (
+            <TouchableOpacity
+              key={idx}
+              onPress={() => router.push(path)}
+              style={{
+                paddingVertical: 22,
+                paddingHorizontal: 24,
+                backgroundColor: cardColor,
+                borderTopLeftRadius: idx === 0 ? 12 : 0,
+                borderTopRightRadius: idx === 0 ? 12 : 0,
+                borderBottomLeftRadius: idx === buttons.length - 1 ? 12 : 0,
+                borderBottomRightRadius: idx === buttons.length - 1 ? 12 : 0,
+              }}
+            >
+              <View style={{ flexDirection: "row", alignItems: "center" }}>
+                <View style={{ marginRight: 10 }}>{buttons[idx].icon}</View>
+                <Text style={{ fontSize: 17, color: textColor }}>
+                  {buttons[idx].title}
+                </Text>
+              </View>
 
-      {/* Grouped Navigation Panel */}
-      <View
-        style={{
-          backgroundColor: cardColor,
-          borderRadius: 12,
-          shadowColor: "#000",
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.15,
-          shadowRadius: 4,
-          elevation: 2,
-          overflow: "hidden",
-        }}
-      >
-        {buttons.map(({ title, path }, idx) => (
-          <TouchableOpacity
-            key={idx}
-            onPress={() => router.push(path)}
-            style={{
-              paddingVertical: 22,
-              paddingHorizontal: 24,
-              backgroundColor: cardColor,
-              borderTopLeftRadius: idx === 0 ? 12 : 0,
-              borderTopRightRadius: idx === 0 ? 12 : 0,
-              borderBottomLeftRadius: idx === buttons.length - 1 ? 12 : 0,
-              borderBottomRightRadius: idx === buttons.length - 1 ? 12 : 0,
-            }}
-          >
-            <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <View style={{ marginRight: 10 }}>{buttons[idx].icon}</View>
-              <Text style={{ fontSize: 17, color: textColor }}>
-                {buttons[idx].title}
-              </Text>
-            </View>
-
-            {/* Divider */}
-            {idx < buttons.length - 1 && (
-              <View
-                style={{
-                  height: 1,
-                  backgroundColor: dividerColor,
-                  opacity: 0.4,
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                }}
-              />
-            )}
-          </TouchableOpacity>
-        ))}
+              {/* Divider */}
+              {idx < buttons.length - 1 && (
+                <View
+                  style={{
+                    height: 1,
+                    backgroundColor: dividerColor,
+                    opacity: 0.4,
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                  }}
+                />
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }

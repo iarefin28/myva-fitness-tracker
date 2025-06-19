@@ -3,19 +3,21 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useRouter } from "expo-router";
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
-    FlatList,
-    Modal,
-    SafeAreaView,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  FlatList,
+  Modal,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from "react-native";
 import { CalendarList, DateObject } from "react-native-calendars";
 
 export default function CalendarScreen() {
-  const [selectedDate, setSelectedDate] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string>(
+    new Date().toLocaleDateString('en-CA')
+  );
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [savedWorkouts, setSavedWorkouts] = useState<any[]>([]);
