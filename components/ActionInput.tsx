@@ -6,13 +6,6 @@ import { ExerciseType } from "../types/workout";
 import RpeSelector from "./RpeSelector";
 
 
-import {
-    runOnJS,
-    useAnimatedGestureHandler,
-    useAnimatedStyle,
-    useSharedValue,
-    withSpring,
-} from 'react-native-reanimated';
 
 
 interface ActionInputProps {
@@ -58,26 +51,6 @@ const ActionInput: React.FC<ActionInputProps> = ({
         return `${parseInt(minutes)}:${seconds.padStart(2, "0")}`;
     }
 
-    const translateX = useSharedValue(0);
-    const SWIPE_THRESHOLD = 100;
-
-    const panGesture = useAnimatedGestureHandler({
-        onActive: (event) => {
-            translateX.value = event.translationX;
-        },
-        onEnd: () => {
-            if (translateX.value < -SWIPE_THRESHOLD) {
-                runOnJS(onDismiss)?.(index);
-            } else {
-                translateX.value = withSpring(0);
-            }
-        },
-    });
-
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateX: translateX.value }],
-    }));
-
     const renderRightActions = () => (
         <View style={[styles.container, {
             backgroundColor: '#ff3b30',
@@ -93,19 +66,6 @@ const ActionInput: React.FC<ActionInputProps> = ({
 
     // ───── REST ─────
     if (action.type === "rest") {
-        const renderRightActions = () => (
-            <View style={[styles.container, {
-                backgroundColor: '#ff3b30',
-                justifyContent: 'center',
-                alignItems: 'flex-end',
-                width: 60
-            }]}>
-                <TouchableOpacity onPress={() => onDismiss?.(index)} style={styles.iconDeleteButton}>
-                    <Feather name="trash-2" size={20} color="white" />
-                </TouchableOpacity>
-            </View>
-        );
-
         return (
             <ReanimatedSwipeable renderRightActions={renderRightActions}>
                 <View style={[styles.container, { backgroundColor: "#2a2a2a" }]}>
