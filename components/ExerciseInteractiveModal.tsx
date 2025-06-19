@@ -2,11 +2,13 @@ import { AntDesign } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
-import { Keyboard } from "react-native";
+import { ActionSheetIOS, Alert, Keyboard } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { ExerciseAction, ExerciseType } from "../types/workout";
 import ActionInput from "./ActionInput";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
+
+
 
 
 interface Props {
@@ -103,6 +105,34 @@ export default function ExerciseEditorModal({
         updateActionsList(updatedList);
     };
 
+    const confirmClose = () => {
+        if (Platform.OS === "ios") {
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    message: "Are you sure you want to delete this exercise? This action cannot be undone.",
+                    options: ["Cancel", "Delete"],
+                    cancelButtonIndex: 0,
+                    destructiveButtonIndex: 1,
+                    userInterfaceStyle: "dark", 
+                },
+                (buttonIndex) => {
+                    if (buttonIndex === 1) {
+                        onClose(); // Confirm deletion
+                    }
+                }
+            );
+        } else {
+            Alert.alert(
+                "Delete Exercise?",
+                "Are you sure you want to delete this exercise? This action cannot be undone.",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Delete", style: "destructive", onPress: onClose },
+                ]
+            );
+        }
+    };
+
 
     return (
         <Modal
@@ -132,7 +162,7 @@ export default function ExerciseEditorModal({
                                 justifyContent: "space-between",
                                 marginBottom: 20,
                             }}>
-                                <TouchableOpacity onPress={onClose} style={{ padding: 4, minWidth: 50 }}>
+                                <TouchableOpacity onPress={confirmClose} style={{ padding: 4, minWidth: 50 }}>
                                     <AntDesign name="close" size={24} color="white" />
                                 </TouchableOpacity>
                                 <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>

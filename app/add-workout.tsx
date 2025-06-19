@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Keyboard, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
+import { ActionSheetIOS, Alert, Keyboard, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
 
 import ExerciseCard from "../components/ExerciseCard";
@@ -75,7 +75,7 @@ export default function AddWorkout() {
                 </TouchableOpacity>
             ),
             headerLeft: () => (
-                <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 15 }}>
+                <TouchableOpacity onPress={confirmClose} style={{ marginLeft: 15 }}>
                     <Text style={{ fontSize: 16, color: textColor }}>Cancel</Text>
                 </TouchableOpacity>
             )
@@ -94,6 +94,34 @@ export default function AddWorkout() {
         setLockedExerciseTitle("");
         setEditIndex(null);
         setResetExpansionTrigger(prev => prev + 1);
+    };
+
+    const confirmClose = () => {
+        if (Platform.OS === "ios") {
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    message: "Are you sure you want to discard this workout? Your current progress will be lost.",
+                    options: ["Cancel", "Delete"],
+                    cancelButtonIndex: 0,
+                    destructiveButtonIndex: 1,
+                    userInterfaceStyle: "dark",
+                },
+                (buttonIndex) => {
+                    if (buttonIndex === 1) {
+                        navigation.goBack();
+                    }
+                }
+            );
+        } else {
+            Alert.alert(
+                "Delete Exercise?",
+                "Are you sure you want to delete this exercise? This action cannot be undone.",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Delete", style: "destructive", onPress: onClose },
+                ]
+            );
+        }
     };
 
     const handleSaveExercise = () => {
@@ -134,7 +162,7 @@ export default function AddWorkout() {
             name: workoutName,
             notes,
             date: date.toISOString(),
-            exercises: exercisesRef.current, 
+            exercises: exercisesRef.current,
         };
 
         try {
