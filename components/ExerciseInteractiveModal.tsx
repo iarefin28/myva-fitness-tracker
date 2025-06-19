@@ -27,6 +27,7 @@ interface Props {
     onChangeExerciseName: (text: string) => void;
     addSet: () => void;
     addRest: () => void;
+    onDeleteAction: (index: number) => void;
     isEditing?: boolean;
     resetExpansionTrigger: number;
     scrollToBottom: boolean;
@@ -48,6 +49,7 @@ export default function ExerciseEditorModal({
     onChangeExerciseName,
     addSet,
     addRest,
+    onDeleteAction,
     isEditing,
     resetExpansionTrigger,
     scrollToBottom,
@@ -95,13 +97,6 @@ export default function ExerciseEditorModal({
         );
     };
 
-    const deleteAction = (indexToDelete: number) => {
-        const updatedList = actionsList.filter((_, i) => i !== indexToDelete);
-        updateActionsList(updatedList);
-
-        console.log(`Deleted action at index ${indexToDelete}`);
-        console.log(updatedList);
-    };
 
     const confirmClose = () => {
         if (Platform.OS === "ios") {
@@ -281,7 +276,7 @@ export default function ExerciseEditorModal({
                                                 isExpanded={expandedIndex === index}
                                                 showAdvanced={advancedOptionsIndices.includes(index)}
                                                 onToggle={() => toggleExpand(index)}
-                                                onDismiss={deleteAction}
+                                                onDismiss={onDeleteAction}
                                                 onToggleAdvanced={() => toggleAdvancedOptions(index)}
                                                 onExpand={() => {
                                                     // fallback scroll trigger if needed

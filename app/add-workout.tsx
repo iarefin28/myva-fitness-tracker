@@ -37,8 +37,6 @@ export default function AddWorkout() {
 
     // ───── Action Management State ─────
     const [actionsList, setActionsList] = useState<ExerciseAction[]>([]);
-    const [setCounter, setSetCounter] = useState(1);
-    const [restCounter, setRestCounter] = useState(1);
 
 
     const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -48,7 +46,7 @@ export default function AddWorkout() {
     useEffect(() => {
         exercisesRef.current = exercises;
     }, [exercises]);
-    
+
 
     // ───── Layout Effect for Header Buttons ─────
     useLayoutEffect(() => {
@@ -72,8 +70,6 @@ export default function AddWorkout() {
         setModalVisible(false);
         setActionsList([]);
         setExerciseName("");
-        setSetCounter(1);
-        setRestCounter(1);
         setExerciseNameBlurred(false);
         setLockedExerciseTitle("");
         setEditIndex(null);
@@ -172,7 +168,6 @@ export default function AddWorkout() {
     const addSet = () => {
         let newSet: any = {
             type: "set",
-            setNumber: setCounter,
         };
 
         switch (exerciseType) {
@@ -228,30 +223,38 @@ export default function AddWorkout() {
                 };
         }
 
-        const updatedList = [...actionsList, newSet];
-        setTriggerScrollToEnd(true);
+        const updatedList = computeNumberedActions([...actionsList, newSet]);
         setActionsList(updatedList);
+        setTriggerScrollToEnd(true);
 
-        console.log("Added Set:");
-        console.log(updatedList);
+        console.log("Updated Set List:", JSON.stringify(updatedList, null, 2));
+
     };
 
     const addRest = () => {
         const newRest = {
             type: "rest",
-            restNumber: restCounter,
             value: "",
             restInSeconds: 0
         } as const;
 
-        const updatedList = [...actionsList, newRest];
+        const updatedList = computeNumberedActions([...actionsList, newRest]);
         setActionsList(updatedList);
-        setRestCounter(prev => prev + 1);
         setTriggerScrollToEnd(true);
 
-        console.log("😴 Added Rest:");
-        console.log(updatedList);
+        console.log("Updated Rest List:", JSON.stringify(updatedList, null, 2));
+
     };
+
+    const deleteAction = (indexToDelete: number) => {
+        const filtered = actionsList.filter((_, i) => i !== indexToDelete);
+        const updated = computeNumberedActions(filtered);
+        setActionsList(updated);
+
+        console.log(`Deleted action at index ${indexToDelete}`);
+        console.log("Updated Actions List:", JSON.stringify(updated, null, 2));
+    };
+
     const updateActionValue = (
         index: number,
         field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note" | "isWarmup" | "RPE" | "restInSeconds",
@@ -486,6 +489,7 @@ export default function AddWorkout() {
                 }}
                 addSet={addSet}
                 addRest={addRest}
+                onDeleteAction={deleteAction}
                 isEditing={editIndex !== null}
                 resetExpansionTrigger={resetExpansionTrigger}
                 scrollToBottom={triggerScrollToEnd}
