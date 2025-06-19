@@ -16,9 +16,9 @@ interface Props {
     exerciseType: ExerciseType;
     actionsList: ExerciseAction[];
     updateActionValue: (
-        index: number,
+        id: string,
         field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note" | "isWarmup" | "RPE" | "restInSeconds",
-        value: string,
+        value: string
     ) => void;
     updateActionsList: (newList: ExerciseAction[]) => void;
     onClose: () => void;
@@ -27,7 +27,7 @@ interface Props {
     onChangeExerciseName: (text: string) => void;
     addSet: () => void;
     addRest: () => void;
-    onDeleteAction: (index: number) => void;
+    onDeleteAction: (id: string) => void;
     isEditing?: boolean;
     resetExpansionTrigger: number;
     scrollToBottom: boolean;
@@ -268,9 +268,9 @@ export default function ExerciseEditorModal({
                                     >
                                         {actionsList.map((action, index) => (
                                             <ActionInput
-                                                key={index}
+                                                key={action.id}
                                                 action={action}
-                                                index={index}
+                                                actionId={action.id}
                                                 updateActionValue={updateActionValue}
                                                 exerciseType={exerciseType}
                                                 isExpanded={expandedIndex === index}

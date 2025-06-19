@@ -9,6 +9,8 @@ import type { Exercise, ExerciseAction, ExerciseType } from "../types/workout";
 
 import ExerciseInteractiveModal from "../components/ExerciseInteractiveModal";
 
+import { nanoid } from 'nanoid/non-secure';
+
 export default function AddWorkout() {
     // ───── Theme & Navigation ─────
     const scheme = useColorScheme();
@@ -167,6 +169,7 @@ export default function AddWorkout() {
     // ───── Action Handlers ─────
     const addSet = () => {
         let newSet: any = {
+            id: nanoid(), // 🆕
             type: "set",
         };
 
@@ -187,7 +190,7 @@ export default function AddWorkout() {
                 newSet = {
                     ...newSet,
                     reps: "",
-                    unit: "" // No toggle needed
+                    unit: ""
                 };
                 break;
             case "duration":
@@ -226,58 +229,55 @@ export default function AddWorkout() {
         const updatedList = computeNumberedActions([...actionsList, newSet]);
         setActionsList(updatedList);
         setTriggerScrollToEnd(true);
-
-        console.log("Updated Set List:", JSON.stringify(updatedList, null, 2));
-
+        console.log("Updated Actions List:", JSON.stringify(updatedList, null, 2));
     };
 
     const addRest = () => {
         const newRest = {
+            id: nanoid(), // 🆕
             type: "rest",
             value: "",
             restInSeconds: 0
-        } as const;
+        };
 
         const updatedList = computeNumberedActions([...actionsList, newRest]);
         setActionsList(updatedList);
         setTriggerScrollToEnd(true);
-
-        console.log("Updated Rest List:", JSON.stringify(updatedList, null, 2));
-
+        console.log("Updated Actions List:", JSON.stringify(updatedList, null, 2));
     };
 
-    const deleteAction = (indexToDelete: number) => {
-        const filtered = actionsList.filter((_, i) => i !== indexToDelete);
+    const deleteActionById = (idToDelete: string) => {
+        const filtered = actionsList.filter(action => action.id !== idToDelete);
         const updated = computeNumberedActions(filtered);
         setActionsList(updated);
 
-        console.log(`Deleted action at index ${indexToDelete}`);
+        console.log(`Deleted action with ID ${idToDelete}`);
         console.log("Updated Actions List:", JSON.stringify(updated, null, 2));
     };
-
     const updateActionValue = (
-        index: number,
+        id: string,
         field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note" | "isWarmup" | "RPE" | "restInSeconds",
-        value: string,
+        value: string
     ) => {
         setActionsList(prev =>
-            prev.map((action, i) =>
-                i === index ? { ...action, [field]: value } : action
+            prev.map(action =>
+                action.id === id ? { ...action, [field]: value } : action
             )
         );
     };
-
     const computeNumberedActions = (actions) => {
         let setCount = 1;
         let restCount = 1;
 
         return actions.map((action) => {
+            const base = { ...action }; // preserve all fields including id
+
             if (action.type === "set" && !action.isWarmup) {
-                return { ...action, setNumber: setCount++ };
+                return { ...base, setNumber: setCount++ };
             } else if (action.type === "rest") {
-                return { ...action, restNumber: restCount++ };
+                return { ...base, restNumber: restCount++ };
             } else {
-                return { ...action, setNumber: null };
+                return { ...base, setNumber: null };
             }
         });
     };
@@ -381,7 +381,7 @@ export default function AddWorkout() {
                         {/* Workout Name */}
                         <TextInput
                             value={workoutName}
-                            onChangeText={setWorkoutName}
+                            onChangeText={(text) => setWorkoutName(text)}
                             placeholder="e.g., Push Day, Leg Day"
                             placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
                             style={{
@@ -474,7 +474,7 @@ export default function AddWorkout() {
                 exerciseNameBlurred={exerciseNameBlurred}
                 lockedExerciseTitle={lockedExerciseTitle}
                 exerciseType={exerciseType}
-                actionsList={computeNumberedActions(actionsList)}
+                actionsList={actionsList}
                 updateActionValue={updateActionValue}
                 updateActionsList={setActionsList}
                 onSelectExercise={(exercise, type) => {
@@ -489,7 +489,7 @@ export default function AddWorkout() {
                 }}
                 addSet={addSet}
                 addRest={addRest}
-                onDeleteAction={deleteAction}
+                onDeleteAction={deleteActionById}
                 isEditing={editIndex !== null}
                 resetExpansionTrigger={resetExpansionTrigger}
                 scrollToBottom={triggerScrollToEnd}

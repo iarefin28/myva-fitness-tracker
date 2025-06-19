@@ -1,7 +1,7 @@
 export type UnitWeight = "lb" | "kg";
 export type UnitTime = "sec" | "min";
 
-export type ExerciseType = 
+export type ExerciseType =
   | "weighted"
   | "bodyweight"
   | "duration"
@@ -10,31 +10,33 @@ export type ExerciseType =
   | "weighted duration";
 
 export interface SetAction {
-    type: "set";
-    setNumber: number;
-    reps: string;
-    weight?: string;
-    weightUnit?: string;  // e.g., lb/kg
-    value?: string;       // for duration or distance
-    valueUnit?: string;   // e.g., sec/min or m/ft
-    note?: string;
-    isWarmup?: false;
-    RPE?: -1;
+  id: string;
+  type: "set";
+  setNumber: number;
+  reps: string;
+  weight?: string;
+  weightUnit?: string;  // e.g., lb/kg
+  value?: string;       // for duration or distance
+  valueUnit?: string;   // e.g., sec/min or m/ft
+  note?: string;
+  isWarmup?: false;
+  RPE?: -1;
 }
 
 export interface RestAction {
+  id: string;
   type: "rest";
   restNumber: number;
-  value: string, 
+  value: string,
   restInSeconds: number
 }
 
 export type ExerciseAction = SetAction | RestAction;
 
 export interface Exercise {
-    name: string;
-    type: ExerciseType;
-    actions: ExerciseAction[];
+  name: string;
+  type: ExerciseType;
+  actions: ExerciseAction[];
 }
 
 export interface Workout {
