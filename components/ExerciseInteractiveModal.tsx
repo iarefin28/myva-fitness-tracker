@@ -8,9 +8,6 @@ import type { ExerciseAction, ExerciseType } from "../types/workout";
 import ActionInput from "./ActionInput";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
 
-
-
-
 interface Props {
     visible: boolean;
     exerciseName: string;
@@ -63,8 +60,6 @@ export default function ExerciseEditorModal({
     const [advancedOptionsIndices, setAdvancedOptionsIndices] = React.useState<number[]>([]);
     const [keyboardVisible, setKeyboardVisible] = React.useState(false);
 
-
-
     useEffect(() => {
         setExpandedIndex(null);
         const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
@@ -103,6 +98,9 @@ export default function ExerciseEditorModal({
     const deleteAction = (indexToDelete: number) => {
         const updatedList = actionsList.filter((_, i) => i !== indexToDelete);
         updateActionsList(updatedList);
+
+        console.log(`Deleted action at index ${indexToDelete}`);
+        console.log(updatedList);
     };
 
     const confirmClose = () => {
@@ -113,7 +111,7 @@ export default function ExerciseEditorModal({
                     options: ["Cancel", "Delete"],
                     cancelButtonIndex: 0,
                     destructiveButtonIndex: 1,
-                    userInterfaceStyle: "dark", 
+                    userInterfaceStyle: "dark",
                 },
                 (buttonIndex) => {
                     if (buttonIndex === 1) {
@@ -132,7 +130,6 @@ export default function ExerciseEditorModal({
             );
         }
     };
-
 
     return (
         <Modal
@@ -299,8 +296,6 @@ export default function ExerciseEditorModal({
                                             />
                                         ))}
                                     </ScrollView>
-
-
 
                                     {/* Save button at bottom for user ease */}
                                     {!keyboardVisible && (

@@ -5,9 +5,6 @@ import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeabl
 import { ExerciseType } from "../types/workout";
 import RpeSelector from "./RpeSelector";
 
-
-
-
 interface ActionInputProps {
     action: any;
     index: number;

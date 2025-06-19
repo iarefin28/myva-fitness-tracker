@@ -4,7 +4,6 @@ import { useNavigation, useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ActionSheetIOS, Alert, Keyboard, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
-
 import ExerciseCard from "../components/ExerciseCard";
 import type { Exercise, ExerciseAction, ExerciseType } from "../types/workout";
 
@@ -46,25 +45,10 @@ export default function AddWorkout() {
     const [resetExpansionTrigger, setResetExpansionTrigger] = useState(0);
     const [triggerScrollToEnd, setTriggerScrollToEnd] = useState(false);
 
-
-    // // Developer Utility to delete all async storage items. 
-    // const clearAllStorage = async () => {
-    //     try {
-    //         await AsyncStorage.clear();
-    //         console.log("AsyncStorage has been cleared!");
-    //     } catch (e) {
-    //         console.error("Failed to clear AsyncStorage:", e);
-    //     }
-    // };
-
-    // useEffect(() => {
-    //     clearAllStorage();
-    // }, []);
-
-
     useEffect(() => {
         exercisesRef.current = exercises;
     }, [exercises]);
+    
 
     // ───── Layout Effect for Header Buttons ─────
     useLayoutEffect(() => {
@@ -244,26 +228,30 @@ export default function AddWorkout() {
                 };
         }
 
+        const updatedList = [...actionsList, newSet];
         setTriggerScrollToEnd(true);
+        setActionsList(updatedList);
 
-        setActionsList(prev => [...prev, newSet]);
-        //setSetCounter(prev => prev + 1);
+        console.log("Added Set:");
+        console.log(updatedList);
     };
 
     const addRest = () => {
-        setActionsList(prev => [
-            ...prev,
-            {
-                type: "rest",
-                restNumber: restCounter,
-                value: "",
-                restInSeconds: 0
-            }
-        ]);
+        const newRest = {
+            type: "rest",
+            restNumber: restCounter,
+            value: "",
+            restInSeconds: 0
+        } as const;
+
+        const updatedList = [...actionsList, newRest];
+        setActionsList(updatedList);
         setRestCounter(prev => prev + 1);
         setTriggerScrollToEnd(true);
-    };
 
+        console.log("😴 Added Rest:");
+        console.log(updatedList);
+    };
     const updateActionValue = (
         index: number,
         field: "reps" | "weight" | "value" | "unit" | "weightUnit" | "valueUnit" | "note" | "isWarmup" | "RPE" | "restInSeconds",
@@ -277,12 +265,17 @@ export default function AddWorkout() {
     };
 
     const computeNumberedActions = (actions) => {
-        let count = 1;
+        let setCount = 1;
+        let restCount = 1;
+
         return actions.map((action) => {
             if (action.type === "set" && !action.isWarmup) {
-                return { ...action, setNumber: count++ };
+                return { ...action, setNumber: setCount++ };
+            } else if (action.type === "rest") {
+                return { ...action, restNumber: restCount++ };
+            } else {
+                return { ...action, setNumber: null };
             }
-            return { ...action, setNumber: null };
         });
     };
 

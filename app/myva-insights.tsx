@@ -1,9 +1,34 @@
+import SwipeToDeleteCard from '@/components/SwipeToDeleteCard';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+
 
 export default function MyvaInsightsScreen() {
   const [selectedPlan, setSelectedPlan] = useState<'pro' | 'proPlus'>('pro');
+  const swipeableRef = useRef(null);
+  const [cardVisible, setCardVisible] = useState(true);
+
+  const handleSwipeOpen = () => {
+    setCardVisible(false);
+  };
+
+  const renderRightActions = () => (
+    <TouchableOpacity
+      style={{
+        backgroundColor: 'red',
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 100,
+        height: '100%',
+        borderRadius: 16,
+      }}
+      onPress={() => setCardVisible(false)}
+    >
+      <Text style={{ color: 'white', fontWeight: 'bold' }}>Delete</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
@@ -55,6 +80,25 @@ export default function MyvaInsightsScreen() {
           </Text>
         </LinearGradient>
       )}
+
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
+      <SwipeToDeleteCard></SwipeToDeleteCard>
 
       {/* Description */}
       <Text style={styles.title}>MYVA Insights</Text>
