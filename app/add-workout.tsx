@@ -1,7 +1,6 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useNavigation, useRouter } from "expo-router";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ActionSheetIOS, Alert, Keyboard, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
 import ExerciseCard from "../components/ExerciseCard";
@@ -9,6 +8,7 @@ import type { Exercise, ExerciseAction, ExerciseType } from "../types/workout";
 
 import ExerciseInteractiveModal from "../components/ExerciseInteractiveModal";
 
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { nanoid } from 'nanoid/non-secure';
 
 export default function AddWorkout() {
@@ -49,22 +49,57 @@ export default function AddWorkout() {
         exercisesRef.current = exercises;
     }, [exercises]);
 
+    // ───── Workout Save (To Implement) ─────
+    const saveWorkout = useCallback(async () => {
+        console.log("");
+        console.log("Workout Name:", workoutName);
+        console.log("Exercise length:", exercisesRef.current.length);
+
+        if (!workoutName || exercises.length === 0) return;
+
+        const workout = {
+            id: Date.now(),
+            name: workoutName,
+            notes,
+            date: date.toISOString(),
+            exercises: exercisesRef.current,
+        };
+
+        try {
+            const existing = await AsyncStorage.getItem("savedWorkouts");
+            const parsed = existing ? JSON.parse(existing) : [];
+
+            parsed.push(workout);
+
+            const jsonString = JSON.stringify(parsed, null, 2); //pretty print
+            console.log("JSON to be saved:");
+            console.log(jsonString); // 
+
+            await AsyncStorage.setItem("savedWorkouts", jsonString);
+
+            console.log("Workout saved successfully!");
+            navigation.goBack();
+        } catch (error) {
+            console.error("Failed to save workout:", error);
+        }
+    }, [workoutName, notes, date, exercises]);
+
 
     // ───── Layout Effect for Header Buttons ─────
     useLayoutEffect(() => {
         navigation.setOptions({
             headerRight: () => (
-                <TouchableOpacity onPress={saveWorkout} style={{ marginRight: 15 }}>
+                <TouchableOpacity onPress={saveWorkout}>
                     <Text style={{ fontSize: 16, fontWeight: "bold", color: textColor }}>Done</Text>
                 </TouchableOpacity>
             ),
             headerLeft: () => (
-                <TouchableOpacity onPress={confirmClose} style={{ marginLeft: 15 }}>
+                <TouchableOpacity onPress={confirmClose}>
                     <Text style={{ fontSize: 16, color: textColor }}>Cancel</Text>
                 </TouchableOpacity>
             )
         });
-    }, [navigation]);
+    }, [navigation, textColor, saveWorkout]);
 
 
     // ───── Modal & Exercise Handlers ─────
@@ -129,42 +164,6 @@ export default function AddWorkout() {
         });
     };
 
-
-
-    // ───── Workout Save (To Implement) ─────
-    const saveWorkout = async () => {
-        console.log("");
-        console.log("Workout Nam:", workoutName);
-        console.log("Exercise length:", exercisesRef.current.length);
-
-        if (!workoutName || exercises.length === 0) return;
-
-        const workout = {
-            id: Date.now(),
-            name: workoutName,
-            notes,
-            date: date.toISOString(),
-            exercises: exercisesRef.current,
-        };
-
-        try {
-            const existing = await AsyncStorage.getItem("savedWorkouts");
-            const parsed = existing ? JSON.parse(existing) : [];
-
-            parsed.push(workout);
-
-            const jsonString = JSON.stringify(parsed, null, 2); //pretty print
-            console.log("JSON to be saved:");
-            console.log(jsonString); // 
-
-            await AsyncStorage.setItem("savedWorkouts", jsonString);
-
-            console.log("Workout saved successfully!");
-            navigation.goBack();
-        } catch (error) {
-            console.error("Failed to save workout:", error);
-        }
-    };
 
     // ───── Action Handlers ─────
     const addSet = () => {
