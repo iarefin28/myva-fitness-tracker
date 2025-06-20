@@ -9,7 +9,6 @@ interface Props {
     disableToggle?: boolean;
 }
 
-// Helper to format seconds into "X minutes and Y seconds"
 function secondsToReadableTime(sec: number): string {
     const minutes = Math.floor(sec / 60);
     const seconds = sec % 60;
@@ -19,7 +18,6 @@ function secondsToReadableTime(sec: number): string {
     return parts.join(" ");
 }
 
-// Color logic for RPE
 const getRpeColor = (num: number): string => {
     if (num <= 2) return "#4da6ff";
     if (num <= 4) return "#70e000";
@@ -46,35 +44,52 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
             if (action.type === "set") {
                 const next = exercise.actions[i + 1];
 
-                const restText =
-                    next && next.type === "rest" && next.restInSeconds
+                let restText = null;
+                if (next && next.type === "rest") {
+                    restText = Number(next.restInSeconds)
                         ? `Rest: ${secondsToReadableTime(Number(next.restInSeconds))}`
                         : "No Rest";
+                }
 
                 rows.push(
                     <View key={`set-${action.setNumber}`} style={styles.row}>
-                        {/* Left: Set Info */}
-                        <Text style={styles.setText}>
-                            {action.isWarmup ? "Warm up:" : `Set #${action.setNumber}:`}{" "}
-                            {(() => {
-                                if (action.weight && action.value) {
-                                    return `${action.weight} ${action.weightUnit} for ${action.value} ${action.valueUnit}`;
-                                } else if (action.weight) {
-                                    return `${action.weight} ${action.weightUnit} × ${action.reps || 0} reps`;
-                                } else if (action.value) {
-                                    return `${action.value} ${action.valueUnit}`;
-                                } else {
-                                    return `${action.reps || 0} reps`;
-                                }
-                            })()}
-                        </Text>
+                        <View style={styles.setTextContainer}>
+                            <Text style={styles.setText}>
+                                {action.isWarmup ? "W. Up:" : `Set #${action.setNumber}:`}{" "}
+                                {(() => {
+                                    if (action.weight && action.value) {
+                                        return `${action.weight} ${action.weightUnit} for ${action.value} ${action.valueUnit}`;
+                                    } else if (action.weight) {
+                                        return `${action.weight} ${action.weightUnit} × ${action.reps || 0} reps`;
+                                    } else if (action.value) {
+                                        return `${action.value} ${action.valueUnit}`;
+                                    } else {
+                                        return `${action.reps || 0} reps`;
+                                    }
+                                })()}
+                            </Text>
+                        </View>
 
-                        {/* Right: Rest + RPE */}
-                        <View style={styles.restRpeGroup}>
-                            <Text style={styles.restText}>{restText}</Text>
-                            {!action.isWarmup && action.RPE != null && (
-                                <View style={[styles.rpeBadge, { backgroundColor: getRpeColor(action.RPE) }]}>
-                                    <Text style={styles.rpeBadgeText}>RPE: {action.RPE}</Text>
+                        <View style={styles.restContainer}>
+                            {restText && (
+                                <Text style={styles.restText}>{restText}</Text>
+                            )}
+                        </View>
+
+                        <View style={styles.rpeBadgeContainer}>
+                            {!action.isWarmup && (
+                                <View
+                                    style={[
+                                        styles.rpeBadge,
+                                        {
+                                            backgroundColor: Number(action.RPE) > 0
+                                                ? getRpeColor(Number(action.RPE))
+                                                : "transparent",
+                                            opacity: Number(action.RPE) > 0 ? 1 : 0,
+                                        },
+                                    ]}
+                                >
+                                    <Text style={styles.rpeBadgeText}>RPE: {Number(action.RPE)}</Text>
                                 </View>
                             )}
                         </View>
@@ -89,9 +104,7 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
 
     return (
         <TouchableOpacity
-            onPress={() => {
-                if (!disableToggle) setExpanded(!expanded);
-            }}
+            onPress={() => !disableToggle && setExpanded(!expanded)}
             onLongPress={onPress}
             style={styles.card}
             disabled={disableToggle}
@@ -124,51 +137,54 @@ const styles = StyleSheet.create({
     detailList: {
         marginTop: 10,
     },
-    row: {
-        flexDirection: "row",
-        justifyContent: "space-between",
+    rpeBadge: {
+        paddingVertical: 2.5,
+        paddingHorizontal: 6,
+        borderRadius: 999,
         alignItems: "center",
-        marginBottom: 6,
-        flexWrap: "nowrap",
+        justifyContent: "center"
     },
-    restRpeGroup: {
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "flex-end",
-        gap: 6,
-        flexShrink: 0,
-        flexGrow: 0,
+    rpeBadgeText: {
+        color: "#000",
+        fontWeight: "bold",
+        fontSize: 10.5,
+    },
+    rpeBadgeContainer: {
+        width: 55,
+        alignItems: "flex-end",
+        justifyContent: "center",
     },
 
-    rpeValue: {
-        fontSize: 13,
-        fontWeight: "bold",
+
+
+    row: {
+        flexDirection: "row",
+        alignItems: "flex-start", // align all top-aligned (instead of center)
+        minHeight: 22,
     },
+
+    setTextContainer: {
+        flex: 1,
+        justifyContent: "center",
+        paddingTop: 2,
+    },
+
+    restContainer: {
+        width: 130,
+        justifyContent: "center",
+        paddingTop: 2,
+    },
+
     setText: {
         color: "white",
-        fontSize: 12.5,  // ⬇️ from 14
+        fontSize: 12.5,
         flexShrink: 1,
         flexGrow: 1,
-        paddingRight: 4,
     },
 
     restText: {
         color: "#1e90ff",
-        fontSize: 11.5,  // ⬇️ from 13
-    },
-
-    rpeBadge: {
-        paddingVertical: 2.5,     // tighter
-        paddingHorizontal: 6,
-        borderRadius: 999,
-        alignItems: "center",
-        justifyContent: "center",
-    },
-
-    rpeBadgeText: {
-        color: "#000",
-        fontWeight: "bold",
-        fontSize: 10.5,  // ⬇️ from 12
+        fontSize: 11.5,
     },
 });
 

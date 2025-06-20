@@ -189,7 +189,10 @@ export default function AddWorkout() {
                 newSet = {
                     ...newSet,
                     reps: "",
-                    unit: ""
+                    unit: "",
+                    note: "",
+                    isWarmup: false,
+                    RPE: 0
                 };
                 break;
             case "duration":
