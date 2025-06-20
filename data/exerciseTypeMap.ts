@@ -43,18 +43,18 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
   "Pull Ups (Neutral Close Grip)": "bodyweight",
   "Pull Ups (Neutral Shoulder Width Grip)": "bodyweight",
   "Pull Ups (Neutral Wide Grip)": "bodyweight",
-  "Weighted Pull Ups (Overhand Close Grip)":"weighted",
-  "Weighted Pull Ups (Overhand Shoulder Width Grip)":"weighted",
-  "Weighted Pull Ups (Overhand Wide Grip)":"weighted",
-  "Weighted Pull Ups (Neutral Close Grip)":"weighted",
-  "Weighted Pull Ups (Neutral Shoulder Width Grip)":"weighted",
-  "Weighted Pull Ups (Neutral Wide Grip)":"weighted",
-  "Chin Up (Close Grip)":"bodyweight",
-  "Chin Up (Shoulder Width Grip)":"bodyweight",
-  "Chin Up (Wide Grip)":"bodyweight",
-  "Weighted Chin Up (Close Grip)":"weighted",
-  "Weighted Chin Up (Shoulder Width Grip)":"weighted",
-  "Weighted Chin Up (Wide Grip)":"weighted",
+  "Weighted Pull Ups (Overhand Close Grip)": "weighted",
+  "Weighted Pull Ups (Overhand Shoulder Width Grip)": "weighted",
+  "Weighted Pull Ups (Overhand Wide Grip)": "weighted",
+  "Weighted Pull Ups (Neutral Close Grip)": "weighted",
+  "Weighted Pull Ups (Neutral Shoulder Width Grip)": "weighted",
+  "Weighted Pull Ups (Neutral Wide Grip)": "weighted",
+  "Chin Up (Close Grip)": "bodyweight",
+  "Chin Up (Shoulder Width Grip)": "bodyweight",
+  "Chin Up (Wide Grip)": "bodyweight",
+  "Weighted Chin Up (Close Grip)": "weighted",
+  "Weighted Chin Up (Shoulder Width Grip)": "weighted",
+  "Weighted Chin Up (Wide Grip)": "weighted",
 
   // Machines 
   "Lat Pulldown (Close Grip)": "weighted",
@@ -130,7 +130,7 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
   "Cossack Squat": "bodyweight",
 
   //Ishan's Exercises 
-  
+
   "Hip Thrust Machine": "weighted",
   "French Press (Seated) (Dumbbell)": "weighted",
   "Alternating Bicep Curl (Standing)": "bodyweight",
@@ -170,7 +170,7 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
   "Suitcase Carry (Time)": "weighted duration",
   "Suitcase Carry (Distance)": "weighted distance",
   "Farmer Carry (Time)": "weighted duration",
-  "Farmer Carry (Distance)": "weighted distance"
-
-
+  "Farmer Carry (Distance)": "weighted distance",
+  "Hip Flexor Raises (Monkey Feet)": "weighted",
+  "Lying Hip Flexor Raise (Orange Band)":"bodyweight"
 };

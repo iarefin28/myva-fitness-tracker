@@ -101,28 +101,41 @@ export default function ExerciseEditorModal({
 
 
     const confirmClose = () => {
-        if (Platform.OS === "ios") {
+        const isIOS = Platform.OS === "ios";
+
+        const message = isEditing
+            ? "Are you sure you want to go back? Any updates made will not be saved."
+            : "Are you sure you want to delete this exercise? This action cannot be undone.";
+
+        const options = isEditing ? ["Cancel", "Confirm"] : ["Cancel", "Delete"];
+        const destructiveButtonIndex = isEditing ? 1 : 1;
+
+        if (isIOS) {
             ActionSheetIOS.showActionSheetWithOptions(
                 {
-                    message: "Are you sure you want to delete this exercise? This action cannot be undone.",
-                    options: ["Cancel", "Delete"],
+                    message,
+                    options,
                     cancelButtonIndex: 0,
-                    destructiveButtonIndex: 1,
+                    destructiveButtonIndex,
                     userInterfaceStyle: "dark",
                 },
                 (buttonIndex) => {
                     if (buttonIndex === 1) {
-                        onClose(); // Confirm deletion
+                        onClose();
                     }
                 }
             );
         } else {
             Alert.alert(
-                "Delete Exercise?",
-                "Are you sure you want to delete this exercise? This action cannot be undone.",
+                isEditing ? "Discard Changes?" : "Delete Exercise?",
+                message,
                 [
                     { text: "Cancel", style: "cancel" },
-                    { text: "Delete", style: "destructive", onPress: onClose },
+                    {
+                        text: isEditing ? "Confirm" : "Delete",
+                        style: isEditing ? "default" : "destructive",
+                        onPress: onClose,
+                    },
                 ]
             );
         }
