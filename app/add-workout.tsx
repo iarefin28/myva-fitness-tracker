@@ -141,6 +141,34 @@ export default function AddWorkout() {
         }
     };
 
+    const confirmDeleteExercise = (indexToDelete: number) => {
+        if (Platform.OS === "ios") {
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    options: ["Cancel", "Delete Exercise"],
+                    destructiveButtonIndex: 1,
+                    cancelButtonIndex: 0,
+                    message: "Are you sure you want to delete this exercise from the workout? You will lose all of the data associated with it. This action cannot be undone.",
+                    userInterfaceStyle: "dark",
+                },
+                (buttonIndex) => {
+                    if (buttonIndex === 1) {
+                        handleDeleteExercise(indexToDelete);
+                    }
+                }
+            );
+        } else {
+            Alert.alert(
+                "Delete Exercise?",
+                "Are you sure you want to delete this exercise from the workout? You will lose all of the data associated with it. This action cannot be undone.",
+                [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Delete", style: "destructive", onPress: () => handleDeleteExercise(indexToDelete) }
+                ]
+            );
+        }
+    };
+
     const handleSaveExercise = () => {
         if (!exerciseName || actionsList.length === 0) return;
 
@@ -284,6 +312,19 @@ export default function AddWorkout() {
         });
     };
 
+    const handleDeleteExercise = (indexToDelete: number) => {
+        console.log("Exercises BEFORE delete:");
+        console.log(JSON.stringify(exercises, null, 2));
+
+        const updated = exercises.filter((_, idx) => idx !== indexToDelete);
+
+        console.log(`Deleting exercise at index: ${indexToDelete}`);
+        console.log("Exercises AFTER delete:");
+        console.log(JSON.stringify(updated, null, 2));
+
+        setExercises(updated);
+        exercisesRef.current = updated;
+    };
     // ───── Date Picker Handler ─────
     const onChangeDate = (event: any, selectedDate?: Date) => {
         setShowDatePicker(Platform.OS === "ios");
@@ -460,6 +501,8 @@ export default function AddWorkout() {
                                             setExerciseNameBlurred(true);
                                             setModalVisible(true);
                                         }}
+                                        onDelete={() => confirmDeleteExercise(index)}
+                                        defaultExpanded={false}
                                     />
                                 ))}
                             </ScrollView>

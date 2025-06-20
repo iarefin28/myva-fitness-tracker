@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import type { Exercise } from "../types/workout";
@@ -7,6 +8,7 @@ interface Props {
     onPress?: () => void;
     defaultExpanded?: boolean;
     disableToggle?: boolean;
+    onDelete?: () => void;
 }
 
 function secondsToReadableTime(sec: number): string {
@@ -26,8 +28,9 @@ const getRpeColor = (num: number): string => {
     return "#ff4d4d";
 };
 
-const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = false, disableToggle = false }) => {
+const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = false, disableToggle = false, onDelete }) => {
     const [expanded, setExpanded] = useState(defaultExpanded);
+    const [showNotes, setShowNotes] = useState(false);
 
     const totalSets = exercise.actions.filter((a) => a.type === "set").length;
     const avgReps =
@@ -104,21 +107,87 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
 
     return (
         <TouchableOpacity
-            onPress={() => !disableToggle && setExpanded(!expanded)}
-            onLongPress={onPress}
+            onLongPress={onPress} // Only long press triggers edit
             style={styles.card}
-            disabled={disableToggle}
-            activeOpacity={disableToggle ? 1 : 0.7}
+            activeOpacity={0.85}
         >
-            <Text style={styles.name}>{exercise.name}</Text>
-            <Text style={styles.details}>Sets: {totalSets} | Avg Reps: {avgReps}</Text>
+            <View style={styles.headerRow}>
+                {/* Left Column: Exercise Name & Details */}
+                <View style={{ flex: 1, paddingRight: 10 }}>
+                    <Text style={styles.name}>{exercise.name}</Text>
+                    <Text style={styles.details}>Sets: {totalSets} | Avg Reps: {avgReps}</Text>
+                </View>
 
+                {/* Right Column: Buttons (always stay top right) */}
+                <View style={styles.iconRow}>
+                    {expanded ? (
+                        <>
+                            <TouchableOpacity
+                                onPress={() => setExpanded(false)}
+                                style={styles.iconButton}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                                <Ionicons name="chevron-up-outline" size={20} color="white" />
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() => setShowNotes(prev => !prev)}
+                                style={styles.iconButton}
+                                activeOpacity={0.6}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                                <Ionicons
+                                    name="document-text-outline"
+                                    size={20}
+                                    color={showNotes ? "#FFD700" : "white"}
+                                />
+                            </TouchableOpacity>
+                            {/* Delete */}
+                            {onDelete && (
+                                <TouchableOpacity
+                                    onPress={() => onDelete?.()}
+                                    style={styles.iconButton}
+                                    activeOpacity={0.6}
+                                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                >
+                                    <Ionicons name="trash-outline" size={20} color="red" />
+                                </TouchableOpacity>
+                            )}
+                        </>
+                    ) : (
+                            <TouchableOpacity
+                                onPress={() => setExpanded(true)}
+                                style={styles.iconButton}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                                <Ionicons name="chevron-down-outline" size={20} color="white" />
+                            </TouchableOpacity>
+                    )}
+                </View>
+            </View>
             {expanded && <View style={styles.detailList}>{renderSetRestRows()}</View>}
         </TouchableOpacity>
     );
 };
 
 const styles = StyleSheet.create({
+    headerRow: {
+        flexDirection: "row",
+        alignItems: "flex-start", // important to prevent row drop
+        justifyContent: "space-between",
+    },
+
+    iconRow: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingTop: 2,
+        gap: 10, // 👈 clean spacing between icons
+    },
+    iconButton: {
+        padding: 6,
+        borderRadius: 6,
+        justifyContent: "center",
+        alignItems: "center",
+    },
     card: {
         backgroundColor: "#2a2a2a",
         borderRadius: 8,
