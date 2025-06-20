@@ -44,7 +44,7 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
             if (action.type === "set") {
                 const next = exercise.actions[i + 1];
 
-                let restText = null;
+                let restText = "Rest: Not tracked";
                 if (next && next.type === "rest") {
                     restText = Number(next.restInSeconds)
                         ? `Rest: ${secondsToReadableTime(Number(next.restInSeconds))}`
