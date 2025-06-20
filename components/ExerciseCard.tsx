@@ -55,47 +55,70 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                 }
 
                 rows.push(
-                    <View key={`set-${action.setNumber}`} style={styles.row}>
-                        <View style={styles.setTextContainer}>
-                            <Text style={styles.setText}>
-                                {action.isWarmup ? "W. Up:" : `Set #${action.setNumber}:`}{" "}
-                                {(() => {
-                                    if (action.weight && action.value) {
-                                        return `${action.weight} ${action.weightUnit} for ${action.value} ${action.valueUnit}`;
-                                    } else if (action.weight) {
-                                        return `${action.weight} ${action.weightUnit} × ${action.reps || 0} reps`;
-                                    } else if (action.value) {
-                                        return `${action.value} ${action.valueUnit}`;
-                                    } else {
-                                        return `${action.reps || 0} reps`;
-                                    }
-                                })()}
-                            </Text>
+                    <View key={`set-${action.setNumber}`} style={{ marginBottom: showNotes && action.note?.trim() !== "" ? 10 : 2 }}>
+                        <View style={styles.row}>
+                            <View style={styles.setTextContainer}>
+                                <Text style={styles.setText}>
+                                    {action.isWarmup ? "W. Up:" : `Set #${action.setNumber}:`}{" "}
+                                    {(() => {
+                                        if (action.weight && action.value) {
+                                            return `${action.weight} ${action.weightUnit} for ${action.value} ${action.valueUnit}`;
+                                        } else if (action.weight) {
+                                            return `${action.weight} ${action.weightUnit} × ${action.reps || 0} reps`;
+                                        } else if (action.value) {
+                                            return `${action.value} ${action.valueUnit}`;
+                                        } else {
+                                            return `${action.reps || 0} reps`;
+                                        }
+                                    })()}
+                                </Text>
+                            </View>
+
+                            <View style={styles.restContainer}>
+                                {restText && <Text style={styles.restText}>{restText}</Text>}
+                            </View>
+
+                            <View style={styles.rpeBadgeContainer}>
+                                {!action.isWarmup && (
+                                    <View
+                                        style={[
+                                            styles.rpeBadge,
+                                            {
+                                                backgroundColor:
+                                                    Number(action.RPE) > 0
+                                                        ? getRpeColor(Number(action.RPE))
+                                                        : "transparent",
+                                                opacity: Number(action.RPE) > 0 ? 1 : 0,
+                                            },
+                                        ]}
+                                    >
+                                        <Text style={styles.rpeBadgeText}>RPE: {Number(action.RPE)}</Text>
+                                    </View>
+                                )}
+                            </View>
                         </View>
 
-                        <View style={styles.restContainer}>
-                            {restText && (
-                                <Text style={styles.restText}>{restText}</Text>
-                            )}
-                        </View>
-
-                        <View style={styles.rpeBadgeContainer}>
-                            {!action.isWarmup && (
-                                <View
-                                    style={[
-                                        styles.rpeBadge,
-                                        {
-                                            backgroundColor: Number(action.RPE) > 0
-                                                ? getRpeColor(Number(action.RPE))
-                                                : "transparent",
-                                            opacity: Number(action.RPE) > 0 ? 1 : 0,
-                                        },
-                                    ]}
+                        {showNotes && (
+                            <View
+                                style={{
+                                    marginTop: 2,
+                                    marginLeft: 8,
+                                    paddingLeft: 4,
+                                    borderLeftWidth: 1,
+                                    borderColor: action.note?.trim() ? "#FFD700" : "#444",
+                                }}
+                            >
+                                <Text
+                                    style={{
+                                        fontSize: 11,
+                                        fontStyle: "italic",
+                                        color: action.note?.trim() ? "#FFD700" : "#888",
+                                    }}
                                 >
-                                    <Text style={styles.rpeBadgeText}>RPE: {Number(action.RPE)}</Text>
-                                </View>
-                            )}
-                        </View>
+                                    {action.note?.trim() ? `📝 ${action.note}` : "No note added."}
+                                </Text>
+                            </View>
+                        )}
                     </View>
                 );
 
@@ -122,25 +145,26 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                 <View style={styles.iconRow}>
                     {expanded ? (
                         <>
+                            {/* Collapse */}
                             <TouchableOpacity
                                 onPress={() => setExpanded(false)}
                                 style={styles.iconButton}
+                                activeOpacity={0.6}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <Ionicons name="chevron-up-outline" size={20} color="white" />
+                                <Ionicons name="chevron-up-outline" size={20} color="#ccc" />
                             </TouchableOpacity>
+
+                            {/* Notes Toggle */}
                             <TouchableOpacity
                                 onPress={() => setShowNotes(prev => !prev)}
                                 style={styles.iconButton}
                                 activeOpacity={0.6}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <Ionicons
-                                    name="document-text-outline"
-                                    size={20}
-                                    color={showNotes ? "#FFD700" : "white"}
-                                />
+                                <Ionicons name="document-text-outline" size={20} color="#FFD700" />
                             </TouchableOpacity>
+
                             {/* Delete */}
                             {onDelete && (
                                 <TouchableOpacity
@@ -154,13 +178,15 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                             )}
                         </>
                     ) : (
-                            <TouchableOpacity
-                                onPress={() => setExpanded(true)}
-                                style={styles.iconButton}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                                <Ionicons name="chevron-down-outline" size={20} color="white" />
-                            </TouchableOpacity>
+                        // Expand
+                        <TouchableOpacity
+                            onPress={() => setExpanded(true)}
+                            style={styles.iconButton}
+                            activeOpacity={0.6}
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                        >
+                            <Ionicons name="chevron-down-outline" size={20} color="#ccc" />
+                        </TouchableOpacity>
                     )}
                 </View>
             </View>
