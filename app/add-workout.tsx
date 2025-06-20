@@ -3,11 +3,11 @@ import { useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ActionSheetIOS, Alert, Keyboard, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
-import ExerciseCard from "../components/ExerciseCard";
 import type { Exercise, ExerciseAction, ExerciseType } from "../types/workout";
 
 import ExerciseInteractiveModal from "../components/ExerciseInteractiveModal";
 
+import DraggableExercisePanel from "@/components/DraggableExercisePanel";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { nanoid } from 'nanoid/non-secure';
 
@@ -454,7 +454,7 @@ export default function AddWorkout() {
                             </Text>
                         </TouchableOpacity>
                     </View>
-                    {exercises.length > 0 && (
+                    {/* {exercises.length > 0 && (
                         <View style={{
                             flex: 1,
                             backgroundColor: "#1e1e1e",
@@ -507,7 +507,8 @@ export default function AddWorkout() {
                                 ))}
                             </ScrollView>
                         </View>
-                    )}
+                    )} */}
+                    <DraggableExercisePanel></DraggableExercisePanel>
                 </View>
             </TouchableWithoutFeedback>
 
