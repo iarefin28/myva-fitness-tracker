@@ -146,14 +146,17 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                     {expanded ? (
                         <>
                             {/* Collapse */}
-                            <TouchableOpacity
-                                onPress={() => setExpanded(false)}
-                                style={styles.iconButton}
-                                activeOpacity={0.6}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                                <Ionicons name="chevron-up-outline" size={20} color="#ccc" />
-                            </TouchableOpacity>
+                            {!disableToggle && (
+                                <TouchableOpacity
+                                    onPress={() => setExpanded(false)}
+                                    style={styles.iconButton}
+                                    activeOpacity={0.6}
+                                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                >
+                                    <Ionicons name="chevron-up-outline" size={20} color="#ccc" />
+                                </TouchableOpacity>
+                            )}
+
 
                             {/* Notes Toggle */}
                             <TouchableOpacity
@@ -179,14 +182,16 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                         </>
                     ) : (
                         // Expand
-                        <TouchableOpacity
-                            onPress={() => setExpanded(true)}
-                            style={styles.iconButton}
-                            activeOpacity={0.6}
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                        >
-                            <Ionicons name="chevron-down-outline" size={20} color="#ccc" />
-                        </TouchableOpacity>
+                        !disableToggle && (
+                            <TouchableOpacity
+                                onPress={() => setExpanded(true)}
+                                style={styles.iconButton}
+                                activeOpacity={0.6}
+                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            >
+                                <Ionicons name="chevron-down-outline" size={20} color="#ccc" />
+                            </TouchableOpacity>
+                        )
                     )}
                 </View>
             </View>
