@@ -7,10 +7,12 @@ import RpeSelector from "./RpeSelector";
 import * as Haptics from 'expo-haptics';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
+    interpolate,
+    interpolateColor,
     runOnJS,
     useAnimatedStyle,
     useSharedValue,
-    withTiming,
+    withTiming
 } from 'react-native-reanimated';
 
 
@@ -63,19 +65,31 @@ const ActionInput: React.FC<ActionInputProps> = ({
 
 
     const SCREEN_WIDTH = Dimensions.get('window').width;
-    const SWIPE_THRESHOLD = -SCREEN_WIDTH * 0.6;
+    const SWIPE_THRESHOLD = -SCREEN_WIDTH * 0.4;
 
     const translateX = useSharedValue(0);
     const cardHeight = useSharedValue(1); // 1 to avoid initial height of 0
     const cardOpacity = useSharedValue(1);
 
+    const hasTriggeredHaptic = useSharedValue(false);
+
+
     const pan = Gesture.Pan()
-        .activeOffsetX([-10, 10])        // 🧠 Only activate on meaningful horizontal swipes
-        .failOffsetY([-5, 5])            // 💡 Cancel if vertical movement is detected
-        .minDistance(10)                 // 👌 Prevent ghost touches
+        .activeOffsetX([-10, 10])        // only activate on meaningful horizontal swipes
+        .failOffsetY([-5, 5])            // cancel if vertical movement is detected
+        .minDistance(10)                 // prevent ghost touches
         .onUpdate((event) => {
             if (event.translationX < 0) {
                 translateX.value = event.translationX;
+
+                // Fire haptic once if nearing threshold
+                if (
+                    translateX.value < SWIPE_THRESHOLD &&
+                    !hasTriggeredHaptic.value
+                ) {
+                    hasTriggeredHaptic.value = true;
+                    runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Light);
+                }
             }
         })
         .onEnd(() => {
@@ -89,14 +103,46 @@ const ActionInput: React.FC<ActionInputProps> = ({
                     runOnJS(Haptics.impactAsync)(Haptics.ImpactFeedbackStyle.Heavy);
                 });
             } else {
+                hasTriggeredHaptic.value = false;
                 translateX.value = withTiming(0);
             }
         });
 
-    const animatedCardStyle = useAnimatedStyle(() => ({
-        transform: [{ translateX: translateX.value }],
-        opacity: cardOpacity.value,
-    }));
+    const animatedCardStyle = useAnimatedStyle(() => {
+        return {
+            transform: [{ translateX: translateX.value }],
+            opacity: cardOpacity.value,
+            borderRadius: 8,
+            overflow: "hidden",
+            width: "100%",
+        };
+    });
+
+    const animatedIconStyle = useAnimatedStyle(() => {
+        const scale = interpolate(
+            translateX.value,
+            [-SCREEN_WIDTH * 0.6, -SCREEN_WIDTH * 0.2],
+            [1.4, 1],
+            {
+                extrapolateLeft: 'clamp',
+                extrapolateRight: 'clamp',
+            }
+        );
+
+        return {
+            transform: [{ scale }],
+        };
+    });
+
+    const animatedContainerStyle = useAnimatedStyle(() => {
+        return {
+            backgroundColor: interpolateColor(
+                translateX.value,
+                [-SCREEN_WIDTH * 0.6, 0],
+                ['#ff3b30', action.type === "rest" ? "#2a2a2a" : action.isWarmup ? "#394d5c" : "#2a2a2a"]
+            ),
+        };
+    });
 
     const containerStyle = useAnimatedStyle(() => ({
         height: cardHeight.value === 0 ? 0 : undefined,
@@ -114,12 +160,14 @@ const ActionInput: React.FC<ActionInputProps> = ({
 
             <Animated.View style={[styles.swipeContainer, containerStyle]}>
                 <Animated.View style={[styles.deleteBackground, deleteBackgroundStyle]}>
-                    <Text style={styles.deleteText}>Delete</Text>
+                    <Animated.View style={animatedIconStyle}>
+                        <Feather name="trash-2" size={22} color="white" />
+                    </Animated.View>
                 </Animated.View>
 
                 <GestureDetector gesture={pan}>
-                    <Animated.View style={animatedCardStyle} collapsable={false}>
-                        <View style={[styles.container, { backgroundColor: "#2a2a2a" }]}>
+                    <Animated.View style={[animatedCardStyle, { borderRadius: 8, overflow: "hidden", width: "100%" }]} collapsable={false}>
+                        <Animated.View style={[styles.container, {backgroundColor: "#2a2a2a"}]}>
                             <View style={styles.headerRow}>
                                 <Text style={[styles.label, { fontSize: 18, fontWeight: "bold", color: "white" }]}>
                                     Rest
@@ -144,10 +192,10 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                                     seconds = minutes * 60 + secs;
                                                 }
 
-                                                // 👇 Save raw digits for formatting (MMSS)
+                                                // save raw digits for formatting (MMSS)
                                                 updateActionValue(actionId, "value", clean);
 
-                                                // 👇 Save parsed seconds for logic use
+                                                // save parsed seconds for logic use
                                                 updateActionValue(actionId, "restInSeconds", seconds.toString());
                                             }}
                                             maxLength={5}
@@ -160,7 +208,7 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                     </View>
                                 </View>
                             </View>
-                        </View>
+                        </Animated.View>
                     </Animated.View>
                 </GestureDetector>
             </Animated.View>
@@ -171,17 +219,19 @@ const ActionInput: React.FC<ActionInputProps> = ({
     return (
         <Animated.View style={[styles.swipeContainer, containerStyle]}>
             <Animated.View style={[styles.deleteBackground, deleteBackgroundStyle]}>
-                <Text style={styles.deleteText}>Delete</Text>
+                <Animated.View style={animatedIconStyle}>
+                    <Feather name="trash-2" size={22} color="white" />
+                </Animated.View>
             </Animated.View>
 
             <GestureDetector gesture={pan}>
-                <Animated.View style={animatedCardStyle} collapsable={false}>
-                    <View style={[
+                <Animated.View style={[animatedCardStyle, { borderRadius: 8, overflow: "hidden", width: "100%" }]} collapsable={false}>
+                    <Animated.View style={[
                         styles.container,
                         {
-                            backgroundColor: action.isWarmup ? "#394d5c" : "#2a2a2a",
                             borderColor: action.isWarmup ? "#61dafb" : "#2a2a2a",
                             borderWidth: 1,
+                            backgroundColor: "#2a2a2a"
                         }
                     ]}>
                         {/* Header */}
@@ -329,7 +379,7 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                 )}
                             </>
                         )}
-                    </View>
+                    </Animated.View>
                 </Animated.View>
             </GestureDetector>
         </Animated.View>
@@ -340,7 +390,6 @@ const styles = StyleSheet.create({
     container: {
         borderRadius: 8,
         padding: 12,
-        marginBottom: 8,
     },
     headerRow: {
         flexDirection: "row",
@@ -443,4 +492,3 @@ const styles = StyleSheet.create({
 
 export default ActionInput;
 
-//closest thing I have to it working. 
