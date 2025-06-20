@@ -5,9 +5,9 @@ import { ActionSheetIOS, Alert, Keyboard, Platform, ScrollView, Text, TextInput,
 
 import type { Exercise, ExerciseAction, ExerciseType } from "../types/workout";
 
+import DraggableExercisePanel from "@/components/DraggableExercisePanel";
 import ExerciseInteractiveModal from "../components/ExerciseInteractiveModal";
 
-import DraggableExercisePanel from "@/components/DraggableExercisePanel";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { nanoid } from 'nanoid/non-secure';
 
@@ -454,61 +454,23 @@ export default function AddWorkout() {
                             </Text>
                         </TouchableOpacity>
                     </View>
-                    {/* {exercises.length > 0 && (
-                        <View style={{
-                            flex: 1,
-                            backgroundColor: "#1e1e1e",
-                            borderTopLeftRadius: 24,
-                            borderTopRightRadius: 24,
-                            paddingTop: 16,
-                            paddingHorizontal: 16,
-                            position: "absolute",
-                            bottom: 0,
-                            left: 0,
-                            right: 0,
-                            top: 350, // adjust this value depending on where you want the overlay to *start*
-                            shadowColor: "#000",
-                            shadowOffset: { width: 0, height: -6 },
-                            shadowOpacity: 0.3,
-                            shadowRadius: 12,
-                            elevation: 10,
-                            zIndex: 2
-                        }}>
-                            <Text style={{
-                                color: textColor,
-                                fontSize: 18,
-                                fontWeight: "bold",
-                                marginBottom: 12,
-                                textAlign: "center"
-                            }}>
-                                Your Exercises
-                            </Text>
-
-                            <ScrollView
-                                showsVerticalScrollIndicator={false}
-                                contentContainerStyle={{ paddingBottom: 100 }}
-                            >
-                                {exercises.map((exercise, index) => (
-                                    <ExerciseCard
-                                        key={index}
-                                        exercise={exercise}
-                                        onPress={() => {
-                                            setEditIndex(index);
-                                            setExerciseName(exercise.name);
-                                            setExerciseType(exercise.type);
-                                            setActionsList(exercise.actions);
-                                            setLockedExerciseTitle(exercise.name);
-                                            setExerciseNameBlurred(true);
-                                            setModalVisible(true);
-                                        }}
-                                        onDelete={() => confirmDeleteExercise(index)}
-                                        defaultExpanded={false}
-                                    />
-                                ))}
-                            </ScrollView>
-                        </View>
-                    )} */}
-                    <DraggableExercisePanel></DraggableExercisePanel>
+                    {/* Draggable Exercise Panel with List of Exercises */}
+                    {exercises.length > 0 && (
+                        <DraggableExercisePanel
+                            exercises={exercises}
+                            onPressExercise={(index) => {
+                                const exercise = exercises[index];
+                                setEditIndex(index);
+                                setExerciseName(exercise.name);
+                                setExerciseType(exercise.type);
+                                setActionsList(exercise.actions);
+                                setLockedExerciseTitle(exercise.name);
+                                setExerciseNameBlurred(true);
+                                setModalVisible(true);
+                            }}
+                            onDeleteExercise={confirmDeleteExercise}
+                        />
+                    )}
                 </View>
             </TouchableWithoutFeedback>
 

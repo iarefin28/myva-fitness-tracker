@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+// DraggableExercisePanel.tsx
+import React from 'react';
 import { Dimensions, ScrollView, Text, View } from 'react-native';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, {
@@ -9,21 +10,30 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 
-import MiniExerciseCard from './MiniExerciseCard';
+import type { Exercise } from "../types/workout";
+import ExerciseCard from './ExerciseCard'; // full version
+
+type Props = {
+    exercises: Exercise[];
+    onPressExercise: (index: number) => void;
+    onDeleteExercise: (index: number) => void;
+};
 
 const screenHeight = Dimensions.get('window').height;
 
-export default function DraggableExercisePanel() {
+export default function DraggableExercisePanel({
+    exercises,
+    onPressExercise,
+    onDeleteExercise,
+}: Props) {
     const headerOffset = 150;
     const topSnap = headerOffset;
     const midSnap = screenHeight * 0.55;
     const bottomSnap = screenHeight - 75;
-    const exercises = ['Bench Press', 'Deadlift', 'Squat', 'Pull Ups', 'Overhead Press'];
-
 
     const translateY = useSharedValue(bottomSnap);
 
-    useEffect(() => {
+    React.useEffect(() => {
         translateY.value = withTiming(midSnap, {
             duration: 250,
             easing: Easing.out(Easing.ease),
@@ -86,7 +96,6 @@ export default function DraggableExercisePanel() {
                 animatedStyle,
             ]}
         >
-            {/* DRAG HANDLE ONLY */}
             <PanGestureHandler onGestureEvent={gestureHandler}>
                 <Animated.View style={{ paddingTop: 16, paddingBottom: 8 }}>
                     <View
@@ -112,14 +121,19 @@ export default function DraggableExercisePanel() {
                 </Animated.View>
             </PanGestureHandler>
 
-            {/* SCROLLABLE CONTENT */}
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 100 }}
                 keyboardShouldPersistTaps="handled"
             >
                 {exercises.map((exercise, index) => (
-                    <MiniExerciseCard key={index} title={exercise} />
+                    <ExerciseCard
+                        key={index}
+                        exercise={exercise}
+                        onPress={() => onPressExercise(index)}
+                        onDelete={() => onDeleteExercise(index)}
+                        defaultExpanded={false}
+                    />
                 ))}
             </ScrollView>
         </Animated.View>
