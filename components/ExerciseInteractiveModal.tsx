@@ -3,10 +3,12 @@ import React, { useEffect, useRef } from "react";
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 import { ActionSheetIOS, Alert, Keyboard } from "react-native";
+import Animated, { Layout } from 'react-native-reanimated';
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { ExerciseAction, ExerciseType } from "../types/workout";
 import ActionInput from "./ActionInput";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
+
 
 interface Props {
     visible: boolean;
@@ -266,29 +268,35 @@ export default function ExerciseEditorModal({
                                             }
                                         }}
                                     >
+
                                         {actionsList.map((action, index) => (
-                                            <ActionInput
+                                            <Animated.View
+                                                layout={Layout.springify()}
                                                 key={action.id}
-                                                action={action}
-                                                actionId={action.id}
-                                                updateActionValue={updateActionValue}
-                                                exerciseType={exerciseType}
-                                                isExpanded={expandedIndex === index}
-                                                showAdvanced={advancedOptionsIndices.includes(index)}
-                                                onToggle={() => toggleExpand(index)}
-                                                onDismiss={onDeleteAction}
-                                                onToggleAdvanced={() => toggleAdvancedOptions(index)}
-                                                onExpand={() => {
-                                                    // fallback scroll trigger if needed
-                                                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                                                }}
-                                                onExpandAdvanced={() => {
-                                                    // Small timeout to wait for layout shift
-                                                    setTimeout(() => {
+                                            >
+                                                <ActionInput
+                                                    key={action.id}
+                                                    action={action}
+                                                    actionId={action.id}
+                                                    updateActionValue={updateActionValue}
+                                                    exerciseType={exerciseType}
+                                                    isExpanded={expandedIndex === index}
+                                                    showAdvanced={advancedOptionsIndices.includes(index)}
+                                                    onToggle={() => toggleExpand(index)}
+                                                    onDismiss={onDeleteAction}
+                                                    onToggleAdvanced={() => toggleAdvancedOptions(index)}
+                                                    onExpand={() => {
+                                                        // fallback scroll trigger if needed
                                                         scrollViewRef.current?.scrollToEnd({ animated: true });
-                                                    }, 200);
-                                                }}
-                                            />
+                                                    }}
+                                                    onExpandAdvanced={() => {
+                                                        // Small timeout to wait for layout shift
+                                                        setTimeout(() => {
+                                                            scrollViewRef.current?.scrollToEnd({ animated: true });
+                                                        }, 200);
+                                                    }}
+                                                />
+                                            </Animated.View>
                                         ))}
                                     </ScrollView>
 
