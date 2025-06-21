@@ -19,6 +19,12 @@ const Stack = createNativeStackNavigator();
 
 function CustomAddButton() {
   const navigation = useNavigation();
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
+
+  const buttonBg = isDark ? "#1A1A1A" : "#e0e0e0";
+  const iconColor = isDark ? "#fff" : "#000";
+  const shadowColor = isDark ? "#000" : "#aaa";
 
   return (
     <TouchableOpacity
@@ -27,17 +33,18 @@ function CustomAddButton() {
         top: -20,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: "#1A1A1A",
+        backgroundColor: buttonBg,
         width: 60,
         height: 60,
         borderRadius: 30,
-        shadowColor: '#000',
+        shadowColor: shadowColor,
         shadowOpacity: 0.2,
         shadowOffset: { width: 0, height: 2 },
         shadowRadius: 4,
+        elevation: 5,
       }}
     >
-      <Ionicons name="add" size={32} color="#fff" />
+      <Ionicons name="add" size={32} color={iconColor} />
     </TouchableOpacity>
   );
 }

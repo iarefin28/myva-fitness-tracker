@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRef, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
+
 
 
 
@@ -8,6 +9,16 @@ export default function MyvaInsightsScreen() {
   const [selectedPlan, setSelectedPlan] = useState<'pro' | 'proPlus'>('pro');
   const swipeableRef = useRef(null);
   const [cardVisible, setCardVisible] = useState(true);
+
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
+
+  const backgroundColor = isDark ? "#0e0e0e" : "#ffffff";
+  const textColor = isDark ? "#ffffff" : "#000000";
+  const secondaryText = isDark ? "#cfcfcf" : "#444444";
+  const cardBg = isDark ? "#1a1a1a" : "#f2f2f2";
+  const dividerColor = isDark ? "#333" : "#ccc";
+  const toggleBg = isDark ? "#1a1a1a" : "#e8e8e8";
 
   const handleSwipeOpen = () => {
     setCardVisible(false);
@@ -30,12 +41,14 @@ export default function MyvaInsightsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor }]}>
+
       {/* Full-Width Top Toggle */}
       <View style={styles.topToggleContainer}>
         <TouchableOpacity
           style={[
             styles.topToggleButton,
+            { backgroundColor: toggleBg },
             selectedPlan === 'pro' && styles.topToggleSelectedLeft,
           ]}
           onPress={() => setSelectedPlan('pro')}
@@ -45,6 +58,7 @@ export default function MyvaInsightsScreen() {
         <TouchableOpacity
           style={[
             styles.topToggleButton,
+            { backgroundColor: toggleBg },
             selectedPlan === 'proPlus' && styles.topToggleSelectedRight,
           ]}
           onPress={() => setSelectedPlan('proPlus')}
@@ -81,31 +95,31 @@ export default function MyvaInsightsScreen() {
       )}
 
       {/* Description */}
-      <Text style={styles.title}>MYVA Insights</Text>
-      <Text style={styles.description}>
+      <Text style={[styles.title, { color: textColor }]}>MYVA Insights</Text>
+      <Text style={[styles.description, { color: secondaryText }]}>
         Powered by advanced AI, MYVA Insights is your personal fitness analyst. It studies your workouts, trends, and progress to offer:
       </Text>
 
       {/* Feature List */}
-      <View style={styles.cardGroup}>
+      <View style={[styles.cardGroup, { backgroundColor: cardBg, borderColor: dividerColor }]}>
         <View style={styles.infoCard}>
-          <Text style={styles.cardText}>Weekly performance breakdowns</Text>
+          <Text style={[styles.cardText, { color: textColor }]}>Weekly performance breakdowns</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: dividerColor }]} />
         <View style={styles.infoCard}>
-          <Text style={styles.cardText}>Muscle group workload summaries</Text>
+          <Text style={[styles.cardText, { color: textColor }]}>Muscle group workload summaries</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: dividerColor }]} />
         <View style={styles.infoCard}>
-          <Text style={styles.cardText}>AI-generated recommendations</Text>
+          <Text style={[styles.cardText, { color: textColor }]}>AI-generated recommendations</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: dividerColor }]} />
         <View style={styles.infoCard}>
-          <Text style={styles.cardText}>Recovery suggestions & volume warnings</Text>
+          <Text style={[styles.cardText, { color: textColor }]}>Recovery suggestions & volume warnings</Text>
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: dividerColor }]} />
         <View style={styles.infoCard}>
-          <Text style={styles.cardText}>Smart insights tailored to your goals</Text>
+          <Text style={[styles.cardText, { color: textColor }]}>Smart insights tailored to your goals</Text>
         </View>
       </View>
 

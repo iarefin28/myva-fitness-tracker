@@ -8,14 +8,16 @@ export default function ExerciseLogScreen() {
     const navigation = useNavigation();
 
     useLayoutEffect(() => {
+        const isDark = scheme === "dark";
+
         navigation.setOptions({
             title: "",
-            headerTintColor: "#fff",
+            headerTintColor: isDark ? "#fff" : "#000",
             headerStyle: {
-                backgroundColor: "#000",
+                backgroundColor: isDark ? "#000" : "#fff",
             },
         });
-    }, [navigation]);
+    }, [navigation, scheme]);
 
     const backgroundColor = scheme === "dark" ? "#000" : "#fff";
     const textColor = scheme === "dark" ? "#fff" : "#000";
