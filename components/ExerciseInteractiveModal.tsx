@@ -2,7 +2,7 @@ import { AntDesign } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
-import { ActionSheetIOS, Alert, Keyboard } from "react-native";
+import { ActionSheetIOS, Alert, Keyboard, useColorScheme } from "react-native";
 import Animated, { Layout } from 'react-native-reanimated';
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { ExerciseAction, ExerciseType } from "../types/workout";
@@ -64,6 +64,17 @@ export default function ExerciseEditorModal({
     const [advancedOptionsIndices, setAdvancedOptionsIndices] = React.useState<number[]>([]);
     const [keyboardVisible, setKeyboardVisible] = React.useState(false);
 
+    const scheme = useColorScheme();
+    const isDark = scheme === "dark";
+
+    const modalOverlay = isDark ? "#2a2a2a" : "rgba(0, 0, 0, 0.2)";
+    const modalBg = isDark ? "#000" : "#f7f7f7";
+    const cardBg = isDark ? "#1e1e1e" : "#ffffff";
+    const textPrimary = isDark ? "#fff" : "#000";
+    const textSecondary = isDark ? "#aaa" : "#444";
+    const blueAccent = isDark ? "#1e90ff" : "#007aff";
+    const borderColor = isDark ? "#444" : "#ccc";
+
     useEffect(() => {
         setExpandedIndex(null);
         const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
@@ -117,7 +128,7 @@ export default function ExerciseEditorModal({
                     options,
                     cancelButtonIndex: 0,
                     destructiveButtonIndex,
-                    userInterfaceStyle: "dark",
+                    userInterfaceStyle: scheme ?? "light",
                 },
                 (buttonIndex) => {
                     if (buttonIndex === 1) {
@@ -148,12 +159,11 @@ export default function ExerciseEditorModal({
             visible={visible}
             onRequestClose={onClose}
         >
-            <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: "#2a2a2a" }}>
+            <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: modalOverlay }}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
                     style={{
-
-                        backgroundColor: "black",
+                        backgroundColor: modalBg,
                         height: "95%",
                         borderTopLeftRadius: 20,
                         borderTopRightRadius: 20,
@@ -170,7 +180,7 @@ export default function ExerciseEditorModal({
                                 marginBottom: 20,
                             }}>
                                 <TouchableOpacity onPress={confirmClose} style={{ padding: 4, minWidth: 50 }}>
-                                    <AntDesign name="close" size={24} color="white" />
+                                    <AntDesign name="close" size={24} color={textPrimary} />
                                 </TouchableOpacity>
                                 <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                                     {exerciseNameBlurred && !!lockedExerciseTitle && (
@@ -178,7 +188,7 @@ export default function ExerciseEditorModal({
                                             numberOfLines={1}
                                             ellipsizeMode="tail"
                                             style={{
-                                                color: "white",
+                                                color: textPrimary,
                                                 fontSize: 16,
                                                 fontWeight: "bold",
                                                 textAlign: "center",
@@ -203,7 +213,7 @@ export default function ExerciseEditorModal({
                             {/* Autocomplete or Locked Name */}
                             {exerciseNameBlurred && !!lockedExerciseTitle ? (
                                 <View style={{
-                                    backgroundColor: "#1e1e1e",
+                                    backgroundColor: cardBg,
                                     borderRadius: 16,
                                     paddingVertical: 14,
                                     paddingHorizontal: 16,
@@ -214,7 +224,7 @@ export default function ExerciseEditorModal({
                                     elevation: 6,
                                     marginBottom: 8,
                                 }}>
-                                    <Text style={{ color: "white", fontSize: 16, fontWeight: "400" }}>
+                                    <Text style={{ color: textPrimary, fontSize: 16, fontWeight: "400" }}>
                                         {lockedExerciseTitle}
                                     </Text>
                                 </View>
@@ -233,14 +243,14 @@ export default function ExerciseEditorModal({
                                         <TouchableOpacity
                                             style={{
                                                 flex: 1,
-                                                backgroundColor: "#1e90ff",
+                                                backgroundColor: blueAccent,
                                                 paddingVertical: 16,
                                                 borderRadius: 12,
                                                 marginRight: 4,
                                                 alignItems: "center",
                                                 justifyContent: "center",
                                                 borderWidth: 1,
-                                                borderColor: "#444",
+                                                borderColor: borderColor
                                             }}
                                             onPress={addSet}
                                         >
@@ -318,13 +328,13 @@ export default function ExerciseEditorModal({
                                         <TouchableOpacity
                                             onPress={onSave}
                                             style={{
-                                                backgroundColor: "#1e90ff",
+                                                backgroundColor: blueAccent,
                                                 paddingVertical: 16,
                                                 borderRadius: 12,
                                                 alignItems: "center",
                                                 justifyContent: "center",
                                                 borderWidth: 1,
-                                                borderColor: "#444",
+                                                borderColor: borderColor,
                                                 marginTop: 10,
                                             }}
                                         >

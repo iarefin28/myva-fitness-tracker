@@ -15,6 +15,9 @@ import Animated, {
     withTiming
 } from 'react-native-reanimated';
 
+import { useColorScheme } from "react-native";
+
+
 
 
 
@@ -50,6 +53,18 @@ const ActionInput: React.FC<ActionInputProps> = ({
     onExpandAdvanced,
     onDismiss
 }) => {
+    const isDark = useColorScheme() === "dark";
+    const cardBg = isDark ? "#2a2a2a" : "#d1d1d1";
+    const innerBg = isDark ? "#1e1e1e" : "#ffffff";
+    const textPrimary = isDark ? "#ffffff" : "#000000";
+    const textSecondary = isDark ? "#888" : "#666";
+    const unitBg = isDark ? "#444" : "#e5e5e5";
+    const unitBorder = isDark ? "#555" : "#ccc";
+    const inputBg = isDark ? "#1e1e1e" : "#ffffff";
+    const inputText = isDark ? "#fff" : "#000";
+    const iconColorPrimary = isDark ? "#ccc" : "#555";
+
+
     const screenHeight = Dimensions.get("window").height;
 
     function formatRestDisplay(raw: string): string {
@@ -161,15 +176,15 @@ const ActionInput: React.FC<ActionInputProps> = ({
             <Animated.View style={[styles.swipeContainer, containerStyle]}>
                 <Animated.View style={[styles.deleteBackground, deleteBackgroundStyle]}>
                     <Animated.View style={animatedIconStyle}>
-                        <Feather name="trash-2" size={22} color="white" />
+                        <Feather name="trash-2" size={22} color={iconColorPrimary} />
                     </Animated.View>
                 </Animated.View>
 
                 <GestureDetector gesture={pan}>
                     <Animated.View style={[animatedCardStyle, { borderRadius: 8, overflow: "hidden", width: "100%" }]} collapsable={false}>
-                        <Animated.View style={[styles.container, {backgroundColor: "#2a2a2a"}]}>
+                        <Animated.View style={[styles.container, { backgroundColor: cardBg }]}>
                             <View style={styles.headerRow}>
-                                <Text style={[styles.label, { fontSize: 18, fontWeight: "bold", color: "white" }]}>
+                                <Text style={[styles.label, { fontSize: 18, fontWeight: "bold", color: textPrimary }]}>
                                     Rest
                                 </Text>
 
@@ -177,7 +192,7 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                     <View style={styles.inputRow}>
                                         <TextInput
                                             placeholder="Time"
-                                            placeholderTextColor="#888"
+                                            placeholderTextColor={textSecondary}
                                             keyboardType="numeric"
                                             value={formatRestDisplay(action.value)}
                                             onChangeText={(text) => {
@@ -199,12 +214,19 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                                 updateActionValue(actionId, "restInSeconds", seconds.toString());
                                             }}
                                             maxLength={5}
-                                            style={styles.input}
+                                            style={[
+                                                styles.input,
+                                                {
+                                                    backgroundColor: inputBg,
+                                                    color: inputText,
+                                                    borderColor: unitBorder,
+                                                }
+                                            ]}
                                         />
                                     </View>
 
                                     <View style={styles.infoIcon}>
-                                        <Feather name="clock" size={20} color="white" />
+                                        <Feather name="clock" size={20} color={iconColorPrimary} />
                                     </View>
                                 </View>
                             </View>
@@ -229,9 +251,9 @@ const ActionInput: React.FC<ActionInputProps> = ({
                     <Animated.View style={[
                         styles.container,
                         {
-                            borderColor: action.isWarmup ? "#61dafb" : "#2a2a2a",
+                            borderColor: action.isWarmup ? "#61dafb" : "transparent",
                             borderWidth: 1,
-                            backgroundColor: "#2a2a2a"
+                            backgroundColor: cardBg 
                         }
                     ]}>
                         {/* Header */}
@@ -245,18 +267,19 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                     }
                                 }}
                                 style={{
-                                    backgroundColor: "#1e1e1e",
                                     borderColor: "#555",
                                     borderWidth: 1,
                                     paddingVertical: 4,
                                     paddingHorizontal: 12,
                                     borderRadius: 8,
-                                    justifyContent: "center"
+                                    justifyContent: "center",
+                                    backgroundColor: innerBg,
+                                    borderColor: unitBorder,
                                 }}
                             >
                                 <Text style={{
                                     fontSize: 14,
-                                    color: "white",
+                                    color: textPrimary,
                                     fontWeight: "bold",
                                     textAlign: "center",
                                 }}>
@@ -270,45 +293,78 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                         <>
                                             <TextInput
                                                 placeholder="Weight"
-                                                placeholderTextColor="#888"
+                                                placeholderTextColor={textSecondary}
                                                 keyboardType="numeric"
                                                 value={action.weight}
                                                 onChangeText={(value) => updateActionValue(actionId, "weight", value)}
-                                                style={styles.input}
+                                                style={[
+                                                    styles.input,
+                                                    {
+                                                        backgroundColor: inputBg,
+                                                        color: inputText,
+                                                        borderColor: unitBorder,
+                                                    }
+                                                ]}
                                             />
                                             <TouchableOpacity
                                                 onPress={() => updateActionValue(actionId, "weightUnit", action.weightUnit === "lb" ? "kg" : "lb")}
-                                                style={styles.unitToggle}
+                                                style={[
+                                                    styles.unitToggle,
+                                                    {
+                                                        backgroundColor: unitBg,
+                                                        borderColor: unitBorder,
+                                                    }
+                                                ]}
                                             >
-                                                <Text style={styles.unitText}>{action.weightUnit}</Text>
+                                                <Text style={[styles.unitText, { color: textPrimary }]}>{action.weightUnit}</Text>
                                             </TouchableOpacity>
                                         </>
                                     )}
                                     {(exerciseType === "bodyweight" || exerciseType === "weighted") && (
                                         <TextInput
                                             placeholder="Reps"
-                                            placeholderTextColor="#888"
+                                            placeholderTextColor={textSecondary}
                                             keyboardType="numeric"
                                             value={action.reps}
                                             onChangeText={(value) => updateActionValue(actionId, "reps", value)}
-                                            style={styles.input}
+                                            style={[
+                                                styles.input,
+                                                {
+                                                    backgroundColor: inputBg,
+                                                    color: inputText,
+                                                    borderColor: unitBorder,
+                                                }
+                                            ]}
                                         />
                                     )}
                                     {exerciseType === "duration" && (
                                         <>
                                             <TextInput
                                                 placeholder="Duration"
-                                                placeholderTextColor="#888"
+                                                placeholderTextColor={textSecondary}
                                                 keyboardType="numeric"
                                                 value={action.value}
                                                 onChangeText={(value) => updateActionValue(actionId, "value", value)}
-                                                style={[styles.input, { borderWidth: 1, borderColor: "#333" }]}
+                                                style={[
+                                                    styles.input,
+                                                    {
+                                                        backgroundColor: inputBg,
+                                                        color: inputText,
+                                                        borderColor: unitBorder,
+                                                    }
+                                                ]}
                                             />
                                             <TouchableOpacity
                                                 onPress={() => updateActionValue(actionId, "unit", action.unit === "sec" ? "min" : "sec")}
-                                                style={styles.unitToggle}
+                                                style={[
+                                                    styles.unitToggle,
+                                                    {
+                                                        backgroundColor: unitBg,
+                                                        borderColor: unitBorder,
+                                                    }
+                                                ]}
                                             >
-                                                <Text style={styles.unitText}>{action.unit}</Text>
+                                                <Text style={[styles.unitText, { color: textPrimary }]}>{action.unit}</Text>
                                             </TouchableOpacity>
                                         </>
                                     )}
@@ -321,7 +377,7 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                     }}
                                     style={styles.infoIcon}
                                 >
-                                    <Feather name="more-vertical" size={21} color="white" />
+                                    <Feather name="more-vertical" size={21} color={iconColorPrimary} />
                                 </TouchableOpacity>
                             </View>
                         </View>
@@ -331,13 +387,13 @@ const ActionInput: React.FC<ActionInputProps> = ({
                             <>
                                 <TextInput
                                     placeholder="Add a note..."
-                                    placeholderTextColor="#888"
+                                    placeholderTextColor={textPrimary}
                                     multiline
                                     numberOfLines={5}
                                     scrollEnabled={true}
                                     style={{
-                                        backgroundColor: "#1e1e1e",
-                                        color: "white",
+                                        backgroundColor: innerBg,
+                                        color: textPrimary,
                                         borderRadius: 6,
                                         padding: 10,
                                         fontSize: 14,

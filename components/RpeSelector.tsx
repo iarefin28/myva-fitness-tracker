@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { LayoutChangeEvent, Text, TouchableOpacity, View } from "react-native";
+import { LayoutChangeEvent, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+
 
 // const rpeDescriptions = {
 //   1: "Very Light – Barely any effort",
@@ -39,6 +40,14 @@ const RpeSelector = ({ selected, onSelect }) => {
   const numColumns = 5;
   const gap = 8;
 
+  const isDark = useColorScheme() === "dark";
+
+  const containerBg = isDark ? "#1a1a1a" : "#f4f4f4";
+  const unselectedButtonBg = isDark ? "#333" : "#ddd";
+  const textColor = isDark ? "#fff" : "#000";
+  const secondaryTextColor = isDark ? "#bbb" : "#444";
+  const defaultInfoBg = isDark ? "#2a2a2a" : "#e6e6e6";
+
   const onContainerLayout = (e: LayoutChangeEvent) => {
     setContainerWidth(e.nativeEvent.layout.width);
   };
@@ -56,13 +65,13 @@ const RpeSelector = ({ selected, onSelect }) => {
             onPress={() => onSelect(num)}
             style={{
               width: buttonWidth,
-              backgroundColor: isSelected ? getRpeColor(num) : "#333",
+              backgroundColor: isSelected ? getRpeColor(num) : unselectedButtonBg,
               borderRadius: 6,
               paddingVertical: 12,
               alignItems: "center",
             }}
           >
-            <Text style={{ color: isSelected ? "#000" : "#fff", fontWeight: "600" }}>{num}</Text>
+            <Text style={{ color: isSelected ? "#000" : textColor, fontWeight: "600" }}>{num}</Text>
           </TouchableOpacity>
         );
       })}
@@ -74,7 +83,7 @@ const RpeSelector = ({ selected, onSelect }) => {
       onLayout={onContainerLayout}
       style={{
         padding: 16,
-        backgroundColor: "#1a1a1a",
+        backgroundColor: containerBg,
         borderRadius: 10,
         width: "100%",
       }}
@@ -89,18 +98,24 @@ const RpeSelector = ({ selected, onSelect }) => {
       {/* RPE Info */}
       <View
         style={{
-          backgroundColor: selected ? getRpeColor(selected) : "#2a2a2a",
+          backgroundColor: selected ? getRpeColor(selected) : defaultInfoBg,
           padding: 12,
           borderRadius: 8,
           alignItems: "center",
         }}
       >
-        <Text style={{ color: selected ? "#000" : "#fff", fontWeight: "bold", fontSize: 16 }}>
+        <Text
+          style={{
+            color: selected ? "#000" : textColor,
+            fontWeight: "bold",
+            fontSize: 16,
+          }}
+        >
           RPE: {selected ?? "-"}
         </Text>
         <Text
           style={{
-            color: selected ? "#222" : "#bbb",
+            color: selected ? "#222" : secondaryTextColor,
             marginTop: 4,
             fontSize: 14,
             textAlign: "center",
