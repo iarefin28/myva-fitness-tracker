@@ -4,11 +4,17 @@ import { Dimensions, ScrollView, Text, View } from 'react-native';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import Animated, {
     Easing,
+    Extrapolate,
+    interpolate,
     useAnimatedGestureHandler,
     useAnimatedStyle,
     useSharedValue,
     withTiming,
 } from 'react-native-reanimated';
+
+
+
+const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
 
 import type { Exercise } from "../types/workout";
 import ExerciseCard from './ExerciseCard'; // full version
@@ -26,12 +32,14 @@ export default function DraggableExercisePanel({
     onPressExercise,
     onDeleteExercise,
 }: Props) {
-    const headerOffset = 150;
+    const headerOffset = 100;
     const topSnap = headerOffset;
-    const midSnap = screenHeight * 0.55;
+    const midSnap = screenHeight * 0.51;
     const bottomSnap = screenHeight - 75;
 
     const translateY = useSharedValue(bottomSnap);
+    const borderRadius = useSharedValue(24);
+
 
     React.useEffect(() => {
         translateY.value = withTiming(midSnap, {
@@ -74,9 +82,27 @@ export default function DraggableExercisePanel({
         },
     });
 
-    const animatedStyle = useAnimatedStyle(() => ({
-        transform: [{ translateY: translateY.value }],
-    }));
+    const animatedStyle = useAnimatedStyle(() => {
+        const radius = interpolate(
+            translateY.value,
+            [midSnap, bottomSnap],
+            [24, 0],
+            Extrapolate.CLAMP
+        );
+
+        return {
+            transform: [{ translateY: translateY.value }],
+            borderTopLeftRadius: radius,
+            borderTopRightRadius: radius,
+        };
+    });
+
+    const scrollContainerStyle = useAnimatedStyle(() => {
+        const visibleHeight = screenHeight - translateY.value;
+        return {
+            height: visibleHeight - 100, // adjust padding/margins as needed
+        };
+    });
 
     return (
         <Animated.View
@@ -88,8 +114,6 @@ export default function DraggableExercisePanel({
                     bottom: 0,
                     height: screenHeight,
                     backgroundColor: '#1e1e1e',
-                    borderTopLeftRadius: 24,
-                    borderTopRightRadius: 24,
                     paddingHorizontal: 16,
                     zIndex: 99,
                 },
@@ -121,21 +145,24 @@ export default function DraggableExercisePanel({
                 </Animated.View>
             </PanGestureHandler>
 
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 100 }}
-                keyboardShouldPersistTaps="handled"
-            >
-                {exercises.map((exercise, index) => (
-                    <ExerciseCard
-                        key={index}
-                        exercise={exercise}
-                        onPress={() => onPressExercise(index)}
-                        onDelete={() => onDeleteExercise(index)}
-                        defaultExpanded={false}
-                    />
-                ))}
-            </ScrollView>
+
+            <Animated.View style={[{ overflow: 'hidden' }, scrollContainerStyle]}>
+                <ScrollView
+                    contentContainerStyle={{ paddingBottom: 50, paddingTop: 20 }}
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    {exercises.map((exercise, index) => (
+                        <ExerciseCard
+                            key={index}
+                            exercise={exercise}
+                            onPress={() => onPressExercise(index)}
+                            onDelete={() => onDeleteExercise(index)}
+                            defaultExpanded={false}
+                        />
+                    ))}
+                </ScrollView>
+            </Animated.View>
         </Animated.View>
     );
 }
