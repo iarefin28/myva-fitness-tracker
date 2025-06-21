@@ -12,6 +12,8 @@ import Animated, {
     withTiming,
 } from 'react-native-reanimated';
 
+import { useColorScheme } from 'react-native';
+
 
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
@@ -39,6 +41,13 @@ export default function DraggableExercisePanel({
 
     const translateY = useSharedValue(bottomSnap);
     const borderRadius = useSharedValue(24);
+
+    const scheme = useColorScheme();
+    const isDark = scheme === "dark";
+
+    const panelBg = isDark ? "#1e1e1e" : "#d1d1d1";
+    const textColor = isDark ? "#fff" : "#000";
+    const handleColor = isDark ? "#555" : "#bbb";
 
 
     React.useEffect(() => {
@@ -113,7 +122,7 @@ export default function DraggableExercisePanel({
                     right: 0,
                     bottom: 0,
                     height: screenHeight,
-                    backgroundColor: '#1e1e1e',
+                    backgroundColor: panelBg,
                     paddingHorizontal: 16,
                     zIndex: 99,
                 },
@@ -127,14 +136,14 @@ export default function DraggableExercisePanel({
                             width: 40,
                             height: 4,
                             borderRadius: 2,
-                            backgroundColor: '#555',
+                            backgroundColor: handleColor,
                             alignSelf: 'center',
                             marginBottom: 8,
                         }}
                     />
                     <Text
                         style={{
-                            color: '#fff',
+                            color: textColor,
                             fontSize: 18,
                             fontWeight: 'bold',
                             textAlign: 'center',

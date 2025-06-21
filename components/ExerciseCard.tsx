@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from "react-native";
 import type { Exercise } from "../types/workout";
 
 interface Props {
@@ -28,7 +28,20 @@ const getRpeColor = (num: number): string => {
     return "#ff4d4d";
 };
 
+
+
 const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = false, disableToggle = false, onDelete }) => {
+    const scheme = useColorScheme();
+    const isDark = scheme === "dark";
+
+    const cardBg = isDark ? "#2a2a2a" : "#f2f2f2";
+    const primaryText = isDark ? "#fff" : "#000";
+    const secondaryText = isDark ? "#aaa" : "#444";
+    const restTextColor = isDark ? "#1e90ff" : "#0066cc";
+    const iconColor = isDark ? "#ccc" : "#555";
+    const noteText = isDark ? "#FFD700" : "#bb8800";
+    const noteBorder = isDark ? "#FFD700" : "#ccc";
+
     const [expanded, setExpanded] = useState(defaultExpanded);
     const [showNotes, setShowNotes] = useState(false);
 
@@ -58,7 +71,7 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                     <View key={`set-${action.setNumber}`} style={{ marginBottom: showNotes && action.note?.trim() !== "" ? 10 : 2 }}>
                         <View style={styles.row}>
                             <View style={styles.setTextContainer}>
-                                <Text style={styles.setText}>
+                                <Text style={[styles.setText, { color: primaryText }]}>
                                     {action.isWarmup ? "W. Up:" : `Set #${action.setNumber}:`}{" "}
                                     {(() => {
                                         if (action.weight && action.value) {
@@ -75,7 +88,7 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                             </View>
 
                             <View style={styles.restContainer}>
-                                {restText && <Text style={styles.restText}>{restText}</Text>}
+                                {restText && <Text style={[styles.restText, { color: restTextColor }]}>{restText}</Text>}
                             </View>
 
                             <View style={styles.rpeBadgeContainer}>
@@ -105,14 +118,14 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                                     marginLeft: 8,
                                     paddingLeft: 4,
                                     borderLeftWidth: 1,
-                                    borderColor: action.note?.trim() ? "#FFD700" : "#444",
+                                    borderColor: action.note?.trim() ? noteBorder : "#ccc",
                                 }}
                             >
                                 <Text
                                     style={{
                                         fontSize: 11,
                                         fontStyle: "italic",
-                                        color: action.note?.trim() ? "#FFD700" : "#888",
+                                        color: action.note?.trim() ? noteText : secondaryText,
                                     }}
                                 >
                                     {action.note?.trim() ? `📝 ${action.note}` : "No note added."}
@@ -131,14 +144,14 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
     return (
         <TouchableOpacity
             onLongPress={onPress} // Only long press triggers edit
-            style={styles.card}
+            style={[styles.card, { backgroundColor: cardBg }]}
             activeOpacity={0.85}
         >
             <View style={styles.headerRow}>
                 {/* Left Column: Exercise Name & Details */}
                 <View style={{ flex: 1, paddingRight: 10 }}>
-                    <Text style={styles.name}>{exercise.name}</Text>
-                    <Text style={styles.details}>Sets: {totalSets} | Avg Reps: {avgReps}</Text>
+                    <Text style={[styles.name, { color: primaryText }]}>{exercise.name}</Text>
+                    <Text style={[styles.details, { color: secondaryText }]}>Sets: {totalSets} | Avg Reps: {avgReps}</Text>
                 </View>
 
                 {/* Right Column: Buttons (always stay top right) */}
@@ -153,7 +166,7 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                                     activeOpacity={0.6}
                                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                                 >
-                                    <Ionicons name="chevron-up-outline" size={20} color="#ccc" />
+                                    <Ionicons name="chevron-up-outline" size={20} color={iconColor} />
                                 </TouchableOpacity>
                             )}
 
@@ -189,7 +202,7 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                                 activeOpacity={0.6}
                                 hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             >
-                                <Ionicons name="chevron-down-outline" size={20} color="#ccc" />
+                                <Ionicons name="chevron-down-outline" size={20} color={iconColor} />
                             </TouchableOpacity>
                         )
                     )}

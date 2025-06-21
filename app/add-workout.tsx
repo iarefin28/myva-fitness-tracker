@@ -20,6 +20,9 @@ export default function AddWorkout() {
     const backgroundColor = scheme === "dark" ? "#000000" : "#ffffff";
     const textColor = scheme === "dark" ? "#ffffff" : "#000000";
     const borderColor = scheme === "dark" ? "#444" : "#ccc";
+    const cardColor = scheme === "dark" ? "#1e1e1e" : "#f2f2f2";
+    const inputBg = scheme === "dark" ? "#2a2a2a" : "#fff";
+    const dividerColor = scheme === "dark" ? "#333" : "#ccc";
 
     // ───── Workout Info State ─────
     const [workoutName, setWorkoutName] = useState("");
@@ -348,15 +351,17 @@ export default function AddWorkout() {
                     </Text>
                     {/* Workout Info */}
                     <View style={{
-                        backgroundColor: "#1e1e1e",
+                        backgroundColor: cardColor,
                         borderRadius: 12,
                         padding: 12,
                         marginBottom: 20,
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.15,
+                        shadowColor: scheme === "dark" ? "#000" : "#aaa",
+                        shadowOpacity: scheme === "dark" ? 0.15 : 0.3,
                         shadowRadius: 4,
-                        elevation: 2
+                        shadowOffset: { width: 0, height: 2 },
+                        elevation: 3,
+                        borderColor: scheme === "dark" ? "transparent" : "#ddd",
+                        borderWidth: scheme === "dark" ? 0 : 1,
                     }}>
                         {/* Pre-Workout Notes */}
                         <TextInput
@@ -369,7 +374,7 @@ export default function AddWorkout() {
                             blurOnSubmit={false}
                             style={{
                                 color: textColor,
-                                backgroundColor: "#2a2a2a",
+                                backgroundColor: inputBg,
                                 borderRadius: 8,
                                 paddingHorizontal: 10,
                                 paddingTop: 12,
@@ -383,7 +388,7 @@ export default function AddWorkout() {
                         {/* Divider */}
                         <View style={{
                             height: 1,
-                            backgroundColor: scheme === "dark" ? "#333" : "#ccc",
+                            backgroundColor: dividerColor,
                             opacity: 0.4,
                             marginVertical: 7
                         }} />
@@ -416,7 +421,7 @@ export default function AddWorkout() {
                         {/* Divider */}
                         <View style={{
                             height: 1,
-                            backgroundColor: scheme === "dark" ? "#333" : "#ccc",
+                            backgroundColor: dividerColor,
                             opacity: 0.4,
                             marginVertical: 7
                         }} />
@@ -429,7 +434,7 @@ export default function AddWorkout() {
                             placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
                             style={{
                                 color: textColor,
-                                backgroundColor: "#2a2a2a",
+                                backgroundColor: inputBg,
                                 borderRadius: 8,
                                 padding: 10,
                                 fontSize: 14
