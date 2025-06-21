@@ -44,22 +44,36 @@ function CustomAddButton() {
 
 function TabLayout() {
   const insets = useSafeAreaInsets();
+  const scheme = useColorScheme();
+  const isDarkMode = scheme === 'dark';
+
+  const headerBg = isDarkMode ? 'black' : '#fff';
+  const tabBarBg = isDarkMode ? '#111' : '#f2f2f2';
+  const iconColor = isDarkMode ? '#fff' : '#000';
+
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: true,
+        headerStyle: {
+          backgroundColor: headerBg,
+        },
+        headerTitleStyle: {
+          color: iconColor,
+        },
         tabBarShowLabel: false,
         tabBarStyle: {
           height: 60 + insets.bottom,
-          backgroundColor: '#111',
+          backgroundColor: tabBarBg,
+          borderTopColor: isDarkMode ? '#222' : '#ddd',
+          borderTopWidth: 1,
         },
-        headerStyle: {
-          backgroundColor: 'black'
-        },
+        tabBarActiveTintColor: isDarkMode ? '#fff' : '#000',
+        tabBarInactiveTintColor: isDarkMode ? '#888' : '#888',
         tabBarIconStyle: {
-          marginTop: 10, // pushes the icon lower
-        }
+          marginTop: 10,
+        },
       }}
     >
       <Tab.Screen

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import {
   FlatList,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
+  useColorScheme,
 } from "react-native";
 
 import { EXERCISES_DB } from "../data/exerciseData";
@@ -14,7 +14,16 @@ import { EXERCISE_TYPE_MAP } from "../data/exerciseTypeMap";
 interface ExerciseAutocompleteProps {
   value: string;
   onChangeText: (text: string) => void;
-  onSelect: (exercise: string, type: "bodyweight" | "weighted" | "duration" | "unknown" | "weighted distance" | "weighted duration") => void;
+  onSelect: (
+    exercise: string,
+    type:
+      | "bodyweight"
+      | "weighted"
+      | "duration"
+      | "unknown"
+      | "weighted distance"
+      | "weighted duration"
+  ) => void;
 }
 
 const ExerciseAutocomplete: React.FC<ExerciseAutocompleteProps> = ({
@@ -23,6 +32,8 @@ const ExerciseAutocomplete: React.FC<ExerciseAutocompleteProps> = ({
   onSelect,
 }) => {
   const [filteredExercises, setFilteredExercises] = useState<string[]>([]);
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
 
   const handleChange = (text: string) => {
     onChangeText(text);
@@ -42,11 +53,49 @@ const ExerciseAutocomplete: React.FC<ExerciseAutocompleteProps> = ({
     setFilteredExercises([]);
   };
 
+  const styles = {
+    container: {
+      marginBottom: 12,
+    },
+    input: {
+      backgroundColor: isDark ? "#2d2d2d" : "#f0f0f0",
+      color: isDark ? "#fff" : "#000",
+      borderRadius: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      fontSize: 15,
+      fontWeight: "500" as const,
+      borderColor: isDark ? "#444" : "#ccc",
+      borderWidth: 1,
+    },
+    dropdown: {
+      marginTop: 6,
+      backgroundColor: isDark ? "#2a2a2a" : "#fff",
+      borderRadius: 10,
+      paddingVertical: 4,
+      maxHeight: "80%",
+      borderColor: isDark ? "#444" : "#ccc",
+      borderWidth: 1,
+    },
+    dropdownItem: {
+      paddingVertical: 10,
+      paddingHorizontal: 14,
+      borderBottomColor: isDark ? "#444" : "#ddd",
+      borderBottomWidth: 0.5,
+    },
+    dropdownText: {
+      color: isDark ? "#fff" : "#000",
+      fontSize: 14,
+      fontWeight: "400" as const,
+    },
+    placeholderColor: isDark ? "#aaa" : "#666",
+  };
+
   return (
     <View style={styles.container}>
       <TextInput
         placeholder="Enter an exercise name"
-        placeholderTextColor="#aaa"
+        placeholderTextColor={styles.placeholderColor}
         value={value}
         onChangeText={handleChange}
         onSubmitEditing={() => {
@@ -76,40 +125,5 @@ const ExerciseAutocomplete: React.FC<ExerciseAutocompleteProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    marginBottom: 12,
-  },
-  input: {
-    backgroundColor: "#2d2d2d",
-    color: "white",
-    borderRadius: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    fontSize: 15,
-    fontWeight: "500",
-    borderColor: "#444",
-    borderWidth: 1,
-  },
-  dropdown: {
-    marginTop: 6,
-    backgroundColor: "#2a2a2a",
-    borderRadius: 10,
-    paddingVertical: 4,
-    maxHeight: "80%",
-  },
-  dropdownItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-    borderBottomColor: "#444",
-    borderBottomWidth: 0.5,
-  },
-  dropdownText: {
-    color: "white",
-    fontSize: 14,
-    fontWeight: "400",
-  },
-});
 
 export default ExerciseAutocomplete;

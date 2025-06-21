@@ -1,9 +1,19 @@
 import React, { useState } from 'react';
-import { Dimensions, Keyboard, TouchableWithoutFeedback, View } from 'react-native';
+import { Dimensions, Keyboard, TouchableWithoutFeedback, useColorScheme, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
 import ExerciseAutocomplete from '../components/ExerciseAutocomplete'; // adjust path as needed
 
+
 export default function ChartsScreen() {
+    const scheme = useColorScheme();
+    const isDark = scheme === 'dark';
+
+    const backgroundColor = isDark ? '#000' : '#fff';
+    const cardColor = isDark ? '#1a1a1a' : '#f2f2f2';
+    const textSecondary = isDark ? '#888' : '#666';
+    const axisColor = isDark ? '#333' : '#ccc';
+    const ruleColor = isDark ? '#222' : '#eee';
+
     const screenWidth = Dimensions.get('window').width;
 
     const [exerciseInput, setExerciseInput] = useState('');
@@ -26,7 +36,7 @@ export default function ChartsScreen() {
 
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <View style={{ flex: 1, backgroundColor: '#000', paddingHorizontal: 20, paddingTop: 40 }}>
+            <View style={{ flex: 1, backgroundColor, paddingHorizontal: 20, paddingTop: 40 }}>
                 <ExerciseAutocomplete
                     value={exerciseInput}
                     onChangeText={(text) => {
@@ -45,12 +55,12 @@ export default function ChartsScreen() {
                 {shouldShowChart && (
                     <View
                         style={{
-                            backgroundColor: '#1a1a1a',
+                            backgroundColor: cardColor,
                             borderRadius: 20,
                             paddingVertical: 20,
                             paddingHorizontal: 12,
                             marginTop: 20,
-                            shadowColor: '#000',
+                            shadowColor: isDark ? '#000' : '#999',
                             shadowOffset: { width: 0, height: 4 },
                             shadowOpacity: 0.3,
                             shadowRadius: 6,
@@ -63,16 +73,11 @@ export default function ChartsScreen() {
                             thickness={3}
                             color={pink}
                             maxValue={120}
-                            yAxisTextStyle={{ color: '#888' }}
-                            xAxisLabelTextStyle={{ color: '#888' }}
                             hideDataPoints={false}
                             hideRules={false}
                             showVerticalLines
                             noOfSections={6}
-                            yAxisColor="#333"
-                            xAxisColor="#333"
                             dataPointsColor={pink}
-                            rulesColor="#222"
                             curved
                             isAnimated
                             animationDuration={800}
@@ -81,6 +86,11 @@ export default function ChartsScreen() {
                             areaChart={false}
                             startFillColor="transparent"
                             endFillColor="transparent"
+                            yAxisTextStyle={{ color: textSecondary }}
+                            xAxisLabelTextStyle={{ color: textSecondary }}
+                            yAxisColor={axisColor}
+                            xAxisColor={axisColor}
+                            rulesColor={ruleColor}
                         />
                     </View>
                 )}
