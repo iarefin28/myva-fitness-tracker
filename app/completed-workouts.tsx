@@ -4,11 +4,11 @@ import { useNavigation, useTheme } from "@react-navigation/native";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useLayoutEffect, useState } from "react";
 import {
-    FlatList,
-    Text,
-    TouchableOpacity,
-    useColorScheme,
-    View,
+  FlatList,
+  Text,
+  TouchableOpacity,
+  useColorScheme,
+  View,
 } from "react-native";
 
 interface Workout {
@@ -33,14 +33,13 @@ export default function CompletedWorkouts() {
 
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: "Workout Log",
       headerRight: () => (
         <TouchableOpacity onPress={() => router.push("/add-workout")}>
           <AntDesign name="plus" size={20} color={colors.text} />
         </TouchableOpacity>
       ),
     });
-  }, [navigation, colors]);
+  }, [navigation, colors, textColor]);
 
   const loadWorkouts = useCallback(async () => {
     try {

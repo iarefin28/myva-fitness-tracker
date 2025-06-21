@@ -16,6 +16,7 @@ export default function ExerciseLogScreen() {
             headerStyle: {
                 backgroundColor: isDark ? "#000" : "#fff",
             },
+            headerBackTitleVisible: false, 
         });
     }, [navigation, scheme]);
 
