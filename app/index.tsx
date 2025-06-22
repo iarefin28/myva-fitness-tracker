@@ -40,7 +40,7 @@ export default function HomeScreen() {
     },
     {
       title: "View Upcoming Workouts",
-      path: "/upcoming-workouts",
+      path: "/upcomingworkouts",
       icon: <Ionicons name="calendar-outline" size={22} color={textColor} />,
     },
     {

@@ -9,6 +9,7 @@ interface Props {
     defaultExpanded?: boolean;
     disableToggle?: boolean;
     onDelete?: () => void;
+    showNotesButton?: boolean
 }
 
 function secondsToReadableTime(sec: number): string {
@@ -30,7 +31,7 @@ const getRpeColor = (num: number): string => {
 
 
 
-const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = false, disableToggle = false, onDelete }) => {
+const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = false, disableToggle = false, onDelete, showNotesButton = true }) => {
     const scheme = useColorScheme();
     const isDark = scheme === "dark";
 
@@ -172,14 +173,16 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
 
 
                             {/* Notes Toggle */}
-                            <TouchableOpacity
-                                onPress={() => setShowNotes(prev => !prev)}
-                                style={styles.iconButton}
-                                activeOpacity={0.6}
-                                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                            >
-                                <Ionicons name="document-text-outline" size={20} color="#FFD700" />
-                            </TouchableOpacity>
+                            {showNotesButton && (
+                                <TouchableOpacity
+                                    onPress={() => setShowNotes(prev => !prev)}
+                                    style={styles.iconButton}
+                                    activeOpacity={0.6}
+                                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                                >
+                                    <Ionicons name="document-text-outline" size={20} color="#FFD700" />
+                                </TouchableOpacity>
+                            )}
 
                             {/* Delete */}
                             {onDelete && (

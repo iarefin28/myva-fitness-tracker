@@ -21,29 +21,31 @@ export default function CustomAddButton({ expanded, setExpanded, ...props }) {
     const navigation = useNavigation();
     const rotateAnim = useRef(new Animated.Value(0)).current;
 
-    const actions = [
-        () => {
-            // collapse the buttons
-            Animated.parallel(
-                animations.map(anim =>
-                    Animated.timing(anim, {
-                        toValue: 0,
-                        duration: 100,
-                        useNativeDriver: true,
-                    })
-                )
-            ).start(() => {
-                // reset rotation
-                Animated.timing(rotateAnim, {
+    const collapseAndNavigate = (mode: string) => {
+        Animated.parallel(
+            animations.map(anim =>
+                Animated.timing(anim, {
                     toValue: 0,
-                    duration: 200,
+                    duration: 100,
                     useNativeDriver: true,
-                }).start();
+                })
+            )
+        ).start(() => {
+            Animated.timing(rotateAnim, {
+                toValue: 0,
+                duration: 200,
+                useNativeDriver: true,
+            }).start();
 
-                setExpanded(false);
-                navigation.navigate('add-workout');
-            });
-        }
+            setExpanded(false);
+            navigation.navigate("add-workout", { mode });
+        });
+    };
+
+    const actions = [
+        () => collapseAndNavigate("live"),     // Start live workout
+        () => collapseAndNavigate("scheduled"), // Schedule a Workout (future feature)
+        () => collapseAndNavigate("template"), // Create Workout Template
     ];
 
     const animations = [

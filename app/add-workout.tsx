@@ -1,4 +1,5 @@
 import DateTimePicker from "@react-native-community/datetimepicker";
+import { useRoute } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ActionSheetIOS, Alert, Keyboard, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
@@ -12,6 +13,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { nanoid } from 'nanoid/non-secure';
 
 export default function AddWorkout() {
+    const route = useRoute();
+    const { mode = "live", templateId } = route.params || {};
+
+
     // ───── Theme & Navigation ─────
     const scheme = useColorScheme();
     const navigation = useNavigation();
@@ -49,43 +54,74 @@ export default function AddWorkout() {
     const [triggerScrollToEnd, setTriggerScrollToEnd] = useState(false);
 
     useEffect(() => {
-        exercisesRef.current = exercises;
-    }, [exercises]);
+        const loadTemplate = async () => {
+            if (mode === "live" && templateId) {
+                const stored = await AsyncStorage.getItem("savedTemplates");
+                if (!stored) return;
+
+                const parsed = JSON.parse(stored);
+                const found = parsed.find((t: any) => t.id.toString() === templateId.toString());
+                if (found) {
+                    setExercises(found.exercises);
+                    exercisesRef.current = found.exercises;
+                    setWorkoutName(found.name + " Copy");
+                }
+            }
+        };
+
+        loadTemplate();
+    }, [mode, templateId]);
 
     // ───── Workout Save (To Implement) ─────
     const saveWorkout = useCallback(async () => {
-        console.log("");
         console.log("Workout Name:", workoutName);
         console.log("Exercise length:", exercisesRef.current.length);
 
         if (!workoutName || exercises.length === 0) return;
 
-        const workout = {
+        // base workout object
+        let workout: any = {
             id: Date.now(),
             name: workoutName,
-            notes,
-            date: date.toISOString(),
             exercises: exercisesRef.current,
         };
 
+        let key = "savedWorkouts";
+
+        if (mode === "template") {
+            workout = {
+                ...workout,
+                createdBy: "Ishan Arefin",
+                createdOn: new Date().toISOString(),
+                usageCount: 0
+            };
+            key = "savedTemplates";
+        } else {
+            workout = {
+                ...workout,
+                notes,
+                date: date.toISOString(),
+            };
+        }
+
         try {
-            const existing = await AsyncStorage.getItem("savedWorkouts");
+            const existing = await AsyncStorage.getItem(key);
             const parsed = existing ? JSON.parse(existing) : [];
 
             parsed.push(workout);
 
-            const jsonString = JSON.stringify(parsed, null, 2); //pretty print
-            console.log("JSON to be saved:");
-            console.log(jsonString); // 
+            const jsonString = JSON.stringify(parsed, null, 2);
+            console.log(`JSON to be saved to ${key}:`);
+            console.log(jsonString);
 
-            await AsyncStorage.setItem("savedWorkouts", jsonString);
+            await AsyncStorage.setItem(key, jsonString);
 
-            console.log("Workout saved successfully!");
+            console.log(`${mode === "template" ? "Template" : "Workout"} saved successfully!`);
             navigation.goBack();
         } catch (error) {
             console.error("Failed to save workout:", error);
         }
-    }, [workoutName, notes, date, exercises]);
+    }, [mode, workoutName, notes, date, exercises]);
 
 
     // ───── Layout Effect for Header Buttons ─────
@@ -364,67 +400,75 @@ export default function AddWorkout() {
                         borderWidth: scheme === "dark" ? 0 : 1,
                     }}>
                         {/* Pre-Workout Notes */}
-                        <TextInput
-                            value={notes}
-                            onChangeText={setNotes}
-                            placeholder="Write a pre-workout note for reflection"
-                            placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
-                            multiline
-                            scrollEnabled
-                            blurOnSubmit={false}
-                            style={{
-                                color: textColor,
-                                backgroundColor: inputBg,
-                                borderRadius: 8,
-                                paddingHorizontal: 10,
-                                paddingTop: 12,
-                                paddingBottom: 10,
-                                height: 65,
-                                fontSize: 14,
-                                textAlignVertical: "top"
-                            }}
-                        />
+                        {mode === "live" && (
+                            <TextInput
+                                value={notes}
+                                onChangeText={setNotes}
+                                placeholder="Write a pre-workout note for reflection"
+                                placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
+                                multiline
+                                scrollEnabled
+                                blurOnSubmit={false}
+                                style={{
+                                    color: textColor,
+                                    backgroundColor: inputBg,
+                                    borderRadius: 8,
+                                    paddingHorizontal: 10,
+                                    paddingTop: 12,
+                                    paddingBottom: 10,
+                                    height: 65,
+                                    fontSize: 14,
+                                    textAlignVertical: "top"
+                                }}
+                            />
+                        )}
+
 
                         {/* Divider */}
-                        <View style={{
-                            height: 1,
-                            backgroundColor: dividerColor,
-                            opacity: 0.4,
-                            marginVertical: 7
-                        }} />
+                        {mode === "live" && (
+                            <View style={{
+                                height: 1,
+                                backgroundColor: dividerColor,
+                                opacity: 0.4,
+                                marginVertical: 7
+                            }} />
+                        )}
 
                         {/* Workout Date */}
-                        <View style={{
-                            flexDirection: "row",
-                            justifyContent: "space-between",
-                            alignItems: "center",
-                            marginBottom: 10,
-                            minHeight: 35
-                        }}>
-                            <Text style={{ fontSize: 15, color: textColor }}>Workout Date</Text>
+                        {mode === "live" && (
                             <View style={{
-                                height: 30,
-                                justifyContent: "center"
+                                flexDirection: "row",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                marginBottom: 10,
+                                minHeight: 35
                             }}>
-                                <DateTimePicker
-                                    value={date}
-                                    mode="date"
-                                    display="default"
-                                    onChange={(event, selectedDate) => {
-                                        if (selectedDate) setDate(selectedDate);
-                                    }}
-                                    style={{ transform: [{ scale: 0.85 }] }}
-                                />
+                                <Text style={{ fontSize: 15, color: textColor }}>Workout Date</Text>
+                                <View style={{
+                                    height: 30,
+                                    justifyContent: "center"
+                                }}>
+                                    <DateTimePicker
+                                        value={date}
+                                        mode="date"
+                                        display="default"
+                                        onChange={(event, selectedDate) => {
+                                            if (selectedDate) setDate(selectedDate);
+                                        }}
+                                        style={{ transform: [{ scale: 0.85 }] }}
+                                    />
+                                </View>
                             </View>
-                        </View>
-
+                        )}
                         {/* Divider */}
-                        <View style={{
-                            height: 1,
-                            backgroundColor: dividerColor,
-                            opacity: 0.4,
-                            marginVertical: 7
-                        }} />
+                        {mode === "live" && (
+                            <View style={{
+                                height: 1,
+                                backgroundColor: dividerColor,
+                                opacity: 0.4,
+                                marginVertical: 7
+                            }} />
+                        )}
 
                         {/* Workout Name */}
                         <TextInput

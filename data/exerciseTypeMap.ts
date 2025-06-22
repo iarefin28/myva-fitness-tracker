@@ -172,5 +172,6 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
   "Farmer Carry (Time)": "weighted duration",
   "Farmer Carry (Distance)": "weighted distance",
   "Hip Flexor Raises (Monkey Feet)": "weighted",
-  "Lying Hip Flexor Raise (Orange Band)":"bodyweight"
+  "Lying Hip Flexor Raise (Orange Band)":"bodyweight",
+  "Reverse Squat (Orange Band)":"bodyweight"
 };

@@ -180,5 +180,6 @@ export const EXERCISES_DB = [
   "Farmer Carry (Time)",
   "Farmer Carry (Distance)",
   "Hip Flexor Raises (Monkey Feet)",
-  "Lying Hip Flexor Raise (Orange Band)" 
+  "Lying Hip Flexor Raise (Orange Band)",
+  "Reverse Squat (Orange Band)"
 ];

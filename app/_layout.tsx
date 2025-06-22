@@ -155,6 +155,21 @@ export default function RootLayout() {
             getComponent={() => require('./completed-workouts').default}
             options={{ title: "Completed Workouts", headerBackTitle: 'Back', headerTintColor: iconColor }}
           />
+          <Stack.Screen
+            name="workout-templates"
+            getComponent={() => require('./workout-templates').default}
+            options={{ title: "Workout Templates", headerBackTitle: 'Back', headerTintColor: iconColor }}
+          />
+          <Stack.Screen
+            name="template-detail"
+            getComponent={() => require('./template-detail').default}
+            options={{ title: "Template Details", headerBackTitle: 'Back', headerTintColor: iconColor }}
+          />
+          <Stack.Screen
+            name="upcomingworkouts"
+            getComponent={() => require('./upcomingworkouts').default}
+            options={{ title: "Upcoming Workouts", headerBackTitle: 'Back', headerTintColor: iconColor }}
+          />
         </Stack.Navigator>
       </ThemeProvider>
     </GestureHandlerRootView>

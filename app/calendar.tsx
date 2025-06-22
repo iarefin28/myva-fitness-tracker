@@ -21,6 +21,8 @@ export default function CalendarScreen() {
   const [selectedMuscleGroup, setSelectedMuscleGroup] = useState<string | null>(null);
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [savedWorkouts, setSavedWorkouts] = useState<any[]>([]);
+  const [scheduledWorkouts, setScheduledWorkouts] = useState<any[]>([]);
+
 
   const navigation = useNavigation();
   const router = useRouter();
@@ -41,10 +43,11 @@ export default function CalendarScreen() {
   useEffect(() => {
     const loadWorkouts = async () => {
       try {
-        const stored = await AsyncStorage.getItem("savedWorkouts");
-        if (stored) {
-          setSavedWorkouts(JSON.parse(stored));
-        }
+        const saved = await AsyncStorage.getItem("savedWorkouts");
+        const scheduled = await AsyncStorage.getItem("scheduledWorkouts");
+
+        if (saved) setSavedWorkouts(JSON.parse(saved));
+        if (scheduled) setScheduledWorkouts(JSON.parse(scheduled));
       } catch (e) {
         console.error("❌ Failed to load workouts:", e);
       }
@@ -58,13 +61,28 @@ export default function CalendarScreen() {
     const date = workout.date?.split("T")[0];
     if (!date) return;
 
-    if (!selectedMuscleGroup || workout.name?.toLowerCase().includes(selectedMuscleGroup.toLowerCase())) {
+    if (
+      !selectedMuscleGroup ||
+      workout.name?.toLowerCase().includes(selectedMuscleGroup.toLowerCase())
+    ) {
       markedDates[date] = {
-        selected: true,
-        selectedColor: "#ff6f61",
-        selectedTextColor: "#fff",
+        ...(markedDates[date] || {}),
+        marked: true,
+        dotColor: "#ff6f61", // 🔴 red for completed
       };
     }
+  });
+
+  // Mark scheduled workouts (upcoming)
+  scheduledWorkouts.forEach((workout) => {
+    const date = workout.scheduledFor?.split("T")[0];
+    if (!date) return;
+
+    markedDates[date] = {
+      ...(markedDates[date] || {}),
+      marked: true,
+      dotColor: markedDates[date]?.dotColor === "#ff6f61" ? "#00ffcc" : "#00adf5", // 🔵 blue-green if not both
+    };
   });
 
   if (selectedDate && !markedDates[selectedDate]) {
@@ -75,8 +93,12 @@ export default function CalendarScreen() {
     };
   }
 
-  const workoutsOnSelectedDate = savedWorkouts.filter(
+  const completed = savedWorkouts.filter(
     (w) => w.date?.split("T")[0] === selectedDate
+  );
+
+  const upcoming = scheduledWorkouts.filter(
+    (w) => w.scheduledFor?.split("T")[0] === selectedDate
   );
 
   const formatDate = (dateString: string) => {
@@ -117,31 +139,45 @@ export default function CalendarScreen() {
       {/* Workout Display Section */}
       <View style={styles.bottomHalf}>
         <ScrollView contentContainerStyle={styles.scrollContainer} showsVerticalScrollIndicator={false}>
-          {selectedDate ? (
+          {completed.length > 0 && (
             <>
-              <Text style={styles.selectedDateFormatted}>{formatDate(selectedDate)}</Text>
-              {workoutsOnSelectedDate.length === 0 ? (
-                <Text style={styles.selectedText}>No workouts found for this date.</Text>
-              ) : (
-                workoutsOnSelectedDate.map((workout, index) => (
-                  <TouchableOpacity
-                    key={index}
-                    style={styles.workoutCard}
-                    onPress={() => {
-                      globalThis.tempExercises = workout.exercises;
-                      router.push("/exercise-log");
-                    }}
-                  >
-                    <Text style={styles.workoutText}>{workout.name}</Text>
-                    {!!workout.notes?.trim() && (
-                      <Text style={styles.workoutNotes}>“{workout.notes.trim()}”</Text>
-                    )}
-                  </TouchableOpacity>
-                ))
-              )}
+              <Text style={styles.selectedText}>Completed Workouts</Text>
+              {completed.map((workout, index) => (
+                <TouchableOpacity
+                  key={`c-${index}`}
+                  style={styles.workoutCard}
+                  onPress={() => {
+                    globalThis.tempExercises = workout.exercises;
+                    router.push("/exercise-log");
+                  }}
+                >
+                  <Text style={styles.workoutText}>{workout.name}</Text>
+                  {!!workout.notes?.trim() && (
+                    <Text style={styles.workoutNotes}>“{workout.notes.trim()}”</Text>
+                  )}
+                </TouchableOpacity>
+              ))}
             </>
-          ) : (
-            <Text style={styles.selectedText}>Select a date to view workouts</Text>
+          )}
+
+          {upcoming.length > 0 && (
+            <>
+              <Text style={styles.selectedText}>Upcoming Workouts</Text>
+              {upcoming.map((workout, index) => (
+                <TouchableOpacity
+                  key={`u-${index}`}
+                  style={styles.workoutCard}
+                  onPress={() => {
+                    router.push(`/add-workout?mode=live&templateId=${workout.templateId}`);
+                  }}
+                >
+                  <Text style={styles.workoutText}>{workout.name}</Text>
+                  <Text style={styles.workoutNotes}>
+                    Scheduled for {new Date(workout.scheduledFor).toLocaleTimeString()}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </>
           )}
         </ScrollView>
       </View>
