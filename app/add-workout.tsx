@@ -9,6 +9,7 @@ import type { Exercise, ExerciseAction, ExerciseType } from "../types/workout";
 import DraggableExercisePanel from "@/components/DraggableExercisePanel";
 import ExerciseInteractiveModal from "../components/ExerciseInteractiveModal";
 
+import { AntDesign } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { nanoid } from 'nanoid/non-secure';
 
@@ -53,6 +54,9 @@ export default function AddWorkout() {
     const [resetExpansionTrigger, setResetExpansionTrigger] = useState(0);
     const [triggerScrollToEnd, setTriggerScrollToEnd] = useState(false);
 
+    const [elapsedTime, setElapsedTime] = useState(0);
+    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
     useEffect(() => {
         const loadTemplate = async () => {
             if (mode === "live" && templateId) {
@@ -71,6 +75,24 @@ export default function AddWorkout() {
 
         loadTemplate();
     }, [mode, templateId]);
+
+    useEffect(() => {
+        if (mode === "live") {
+            timerRef.current = setInterval(() => {
+                setElapsedTime(prev => prev + 1);
+            }, 1000);
+        }
+
+        return () => {
+            if (timerRef.current) clearInterval(timerRef.current);
+        };
+    }, []);
+
+    const formatElapsedTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, "0")}`;
+    };
 
     // ───── Workout Save (To Implement) ─────
     const saveWorkout = useCallback(async () => {
@@ -127,6 +149,39 @@ export default function AddWorkout() {
     // ───── Layout Effect for Header Buttons ─────
     useLayoutEffect(() => {
         navigation.setOptions({
+            headerTitle: () => {
+                if (mode === "live") {
+                    return (
+                        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 4, flexShrink: 1 }}>
+                            <AntDesign name="clockcircleo" size={16} color={textColor} style={{ marginRight: 4 }} />
+                            <Text
+                                numberOfLines={1}
+                                style={{ fontSize: 16, fontWeight: "bold", color: textColor }}
+                            >
+                                {formatElapsedTime(elapsedTime)}
+                            </Text>
+                        </View>
+                    );
+                } else if (mode === "template") {
+                    return (
+                        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 4, flexShrink: 1 }}>
+                            <AntDesign name="form" size={16} color={textColor} style={{ marginRight: 4 }} />
+                            <Text
+                                numberOfLines={1}
+                                style={{ fontSize: 16, fontWeight: "bold", color: textColor }}
+                            >
+                                Add Template
+                            </Text>
+                        </View>
+                    );
+                } else {
+                    return (
+                        <Text style={{ fontSize: 16, fontWeight: "bold", color: textColor }}>
+                            Add Workout
+                        </Text>
+                    );
+                }
+            },
             headerRight: () => (
                 <TouchableOpacity onPress={saveWorkout}>
                     <Text style={{ fontSize: 16, fontWeight: "bold", color: textColor }}>Done</Text>
@@ -138,7 +193,7 @@ export default function AddWorkout() {
                 </TouchableOpacity>
             )
         });
-    }, [navigation, textColor, saveWorkout]);
+    }, [navigation, textColor, saveWorkout, elapsedTime, mode]);
 
 
     // ───── Modal & Exercise Handlers ─────
