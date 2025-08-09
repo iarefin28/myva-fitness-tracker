@@ -37,6 +37,7 @@ export interface Exercise {
   name: string;
   type: ExerciseType;
   actions: ExerciseAction[];
+  editDurationInSeconds?: number;
 }
 
 export interface Workout {

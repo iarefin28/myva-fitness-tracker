@@ -152,7 +152,10 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                 {/* Left Column: Exercise Name & Details */}
                 <View style={{ flex: 1, paddingRight: 10 }}>
                     <Text style={[styles.name, { color: primaryText }]}>{exercise.name}</Text>
-                    <Text style={[styles.details, { color: secondaryText }]}>Sets: {totalSets} | Avg Reps: {avgReps}</Text>
+                    <Text style={[styles.details, { color: secondaryText }]}>Sets: {totalSets} | Avg Reps: {avgReps} | {secondsToReadableTime(exercise.editDurationInSeconds || 0)}</Text>
+                    <Text style={[styles.details, { color: secondaryText }]}>
+                        {secondsToReadableTime(exercise.editDurationInSeconds || 0)}
+                    </Text>
                 </View>
 
                 {/* Right Column: Buttons (always stay top right) */}

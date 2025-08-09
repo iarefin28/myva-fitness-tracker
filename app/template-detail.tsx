@@ -117,7 +117,7 @@ export default function TemplateDetail() {
 
                 {/* Schedule */}
                 <TouchableOpacity
-                    onPress={handleSchedule}
+                    onPress={() => setShowPicker(true)}
                     style={{
                         backgroundColor: scheme === "dark" ? "#333" : "#ddd",
                         paddingVertical: 14,
@@ -130,11 +130,12 @@ export default function TemplateDetail() {
                         Schedule
                     </Text>
                 </TouchableOpacity>
+
                 {showPicker && (
                     <DateTimePicker
                         value={new Date()}
                         mode="datetime"
-                        display="default"
+                        display={Platform.OS === "ios" ? "inline" : "default"}
                         onChange={async (event, selectedDate) => {
                             setShowPicker(false);
                             if (!selectedDate) return;

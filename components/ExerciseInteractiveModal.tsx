@@ -2,6 +2,7 @@ import { AntDesign } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
+import { useState } from "react";
 import { ActionSheetIOS, Alert, Keyboard, useColorScheme } from "react-native";
 import Animated, { Layout } from 'react-native-reanimated';
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -34,6 +35,8 @@ interface Props {
     resetExpansionTrigger: number;
     scrollToBottom: boolean;
     onScrolledToBottom: () => void;
+    initialEditDuration?: number;
+    onCloseWithDuration?: (duration: number) => void;
 }
 
 export default function ExerciseEditorModal({
@@ -55,7 +58,10 @@ export default function ExerciseEditorModal({
     isEditing,
     resetExpansionTrigger,
     scrollToBottom,
-    onScrolledToBottom
+    onScrolledToBottom,
+    initialEditDuration,
+    onCloseWithDuration
+
 }: Props) {
     const scrollViewRef = useRef<ScrollView>(null);
     const canAddRest = actionsList.length === 0 || actionsList[actionsList.length - 1].type !== "rest";
@@ -63,6 +69,9 @@ export default function ExerciseEditorModal({
     const [expandedIndex, setExpandedIndex] = React.useState<number | null>(null);
     const [advancedOptionsIndices, setAdvancedOptionsIndices] = React.useState<number[]>([]);
     const [keyboardVisible, setKeyboardVisible] = React.useState(false);
+
+    const [modalTimer, setModalTimer] = useState(initialEditDuration || 0);
+    const modalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const scheme = useColorScheme();
     const isDark = scheme === "dark";
@@ -88,6 +97,25 @@ export default function ExerciseEditorModal({
             hideSub.remove();
         };
     }, [resetExpansionTrigger]);
+
+    useEffect(() => {
+        if (visible) {
+            modalTimerRef.current = setInterval(() => {
+                setModalTimer(prev => prev + 1);
+            }, 1000);
+        }
+
+        return () => {
+            if (modalTimerRef.current) clearInterval(modalTimerRef.current);
+        };
+    }, [visible]);
+
+    const formatElapsedTime = (seconds: number) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, "0")}`;
+    };
+
 
     const toggleExpand = (index: number) => {
         setExpandedIndex(prev => {
@@ -132,6 +160,7 @@ export default function ExerciseEditorModal({
                 },
                 (buttonIndex) => {
                     if (buttonIndex === 1) {
+                        onCloseWithDuration?.(modalTimer); // ✅ for iOS
                         onClose();
                     }
                 }
@@ -145,7 +174,10 @@ export default function ExerciseEditorModal({
                     {
                         text: isEditing ? "Confirm" : "Delete",
                         style: isEditing ? "default" : "destructive",
-                        onPress: onClose,
+                        onPress: () => {
+                            onCloseWithDuration?.(modalTimer); // ✅ Save time before close
+                            onClose();
+                        }
                     },
                 ]
             );
@@ -182,7 +214,7 @@ export default function ExerciseEditorModal({
                                 <TouchableOpacity onPress={confirmClose} style={{ padding: 4, minWidth: 50 }}>
                                     <AntDesign name="close" size={24} color={textPrimary} />
                                 </TouchableOpacity>
-                                <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                                {/* <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
                                     {exerciseNameBlurred && !!lockedExerciseTitle && (
                                         <Text
                                             numberOfLines={1}
@@ -198,13 +230,22 @@ export default function ExerciseEditorModal({
                                             {lockedExerciseTitle}
                                         </Text>
                                     )}
+                                </View> */}
+                                <View style={{ flexDirection: "row" }}>
+                                    <AntDesign name="clockcircleo" size={18} color={textPrimary} style={{ marginRight: 6 }} />
+                                    <Text style={{ fontSize: 16, color: textPrimary, fontWeight: "bold" }}>
+                                        {formatElapsedTime(modalTimer)}
+                                    </Text>
                                 </View>
 
                                 <TouchableOpacity
-                                    onPress={onSave}
+                                    onPress={() => {
+                                        onCloseWithDuration?.(modalTimer); // ✅ Save the timer before closing
+                                        onSave();                          // Then trigger save
+                                    }}
                                     style={{ padding: 4, minWidth: 50, alignItems: "flex-end" }}
                                 >
-                                    <Text style={{ color: "#1e90ff", fontWeight: "bold", fontSize: 16 }}>
+                                    <Text style={{ color: textPrimary, fontWeight: "bold", fontSize: 16 }}>
                                         {isEditing ? "Update" : "Save"}
                                     </Text>
                                 </TouchableOpacity>

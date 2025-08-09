@@ -1,4 +1,3 @@
-import DateTimePicker from "@react-native-community/datetimepicker";
 import { useRoute } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
@@ -16,6 +15,9 @@ import { nanoid } from 'nanoid/non-secure';
 export default function AddWorkout() {
     const route = useRoute();
     const { mode = "live", templateId } = route.params || {};
+
+    const [editDuration, setEditDuration] = useState(0);
+
 
 
     // ───── Theme & Navigation ─────
@@ -270,6 +272,7 @@ export default function AddWorkout() {
             name: exerciseName,
             type: exerciseType,
             actions: computeNumberedActions(actionsList),
+            editDurationInSeconds: editDuration,
         };
 
         setExercises(prev => {
@@ -429,16 +432,17 @@ export default function AddWorkout() {
         <>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
                 <View style={{ flex: 1, padding: 20 }}>
-                    {/* Motivational Quote: this could be made up of quotes from the user themselves after they keep tracking workouts */}
+                    Motivational Quote: this could be made up of quotes from the user themselves after they keep tracking workouts
                     <Text style={{
                         color: "#888",
-                        fontSize: 14,
+                        fontSize: 12,
                         fontStyle: "italic",
                         textAlign: "center",
-                        marginBottom: 16,
+                        marginBottom: 6,
                         paddingHorizontal: 12
                     }}>
-                        “Discipline is doing what needs to be done, even when you don’t feel like doing it.”– Unknown
+                        "The worst thing I can be is the same as everybody else. I hate that."
+                        – Arnold Schwarzenegger
                     </Text>
                     {/* Workout Info */}
                     <View style={{
@@ -459,7 +463,7 @@ export default function AddWorkout() {
                             <TextInput
                                 value={notes}
                                 onChangeText={setNotes}
-                                placeholder="Write a pre-workout note for reflection"
+                                placeholder="Write a pre-workout note"
                                 placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
                                 multiline
                                 scrollEnabled
@@ -479,7 +483,7 @@ export default function AddWorkout() {
                         )}
 
 
-                        {/* Divider */}
+                        {/* Divider
                         {mode === "live" && (
                             <View style={{
                                 height: 1,
@@ -487,9 +491,9 @@ export default function AddWorkout() {
                                 opacity: 0.4,
                                 marginVertical: 7
                             }} />
-                        )}
-
-                        {/* Workout Date */}
+                        )} */}
+                        {/* Hiding this for now will revisit it later */}
+                        {/* Workout Date
                         {mode === "live" && (
                             <View style={{
                                 flexDirection: "row",
@@ -521,7 +525,7 @@ export default function AddWorkout() {
                                 height: 1,
                                 backgroundColor: dividerColor,
                                 opacity: 0.4,
-                                marginVertical: 7
+                                marginVertical: 6
                             }} />
                         )}
 
@@ -539,25 +543,65 @@ export default function AddWorkout() {
                                 fontSize: 14
                             }}
                         />
+
+                        {mode === "live" && (
+                            <View style={{
+                                height: 1,
+                                backgroundColor: dividerColor,
+                                opacity: 0.4,
+                                marginVertical: 6
+                            }} />
+                        )}
+
+                        {mode === "live" && (
+                            <TextInput
+                                value={notes}
+                                onChangeText={setNotes}
+                                placeholder="Write a post-workout note"
+                                placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
+                                multiline
+                                scrollEnabled
+                                blurOnSubmit={false}
+                                style={{
+                                    color: textColor,
+                                    backgroundColor: inputBg,
+                                    borderRadius: 8,
+                                    paddingHorizontal: 10,
+                                    paddingTop: 12,
+                                    paddingBottom: 10,
+                                    height: 65,
+                                    fontSize: 14,
+                                    textAlignVertical: "top"
+                                }}
+                            />
+                        )}
+
+                        {mode === "live" && (
+                            <View style={{
+                                height: 1,
+                                backgroundColor: dividerColor,
+                                opacity: 0.4,
+                                marginVertical: 6
+                            }} />
+                        )}
+                        <View>
+                            <TouchableOpacity
+                                onPress={() => setModalVisible(true)}
+                                style={{
+                                    backgroundColor: "#1e90ff",
+                                    borderRadius: 8,
+                                    paddingVertical: 12,
+                                    paddingHorizontal: 16,
+                                    alignItems: "center",
+                                }}
+                            >
+                                <Text style={{ color: "white", fontWeight: "bold", fontSize: 15 }}>
+                                    + Add Exercise
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
 
-                    {/* Add Exercise Button */}
-                    <View style={{ marginTop: -10, marginBottom: 16 }}>
-                        <TouchableOpacity
-                            onPress={() => setModalVisible(true)}
-                            style={{
-                                backgroundColor: "#1e90ff",
-                                borderRadius: 8,
-                                paddingVertical: 12,
-                                paddingHorizontal: 16,
-                                alignItems: "center"
-                            }}
-                        >
-                            <Text style={{ color: "white", fontWeight: "bold", fontSize: 15 }}>
-                                + Add Exercise
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
                     {/* Draggable Exercise Panel with List of Exercises */}
                     {exercises.length > 0 && (
                         <DraggableExercisePanel
@@ -570,6 +614,7 @@ export default function AddWorkout() {
                                 setActionsList(exercise.actions);
                                 setLockedExerciseTitle(exercise.name);
                                 setExerciseNameBlurred(true);
+                                setEditDuration(exercise.editDurationInSeconds || 0);
                                 setModalVisible(true);
                             }}
                             onDeleteExercise={confirmDeleteExercise}
@@ -606,6 +651,8 @@ export default function AddWorkout() {
                 resetExpansionTrigger={resetExpansionTrigger}
                 scrollToBottom={triggerScrollToEnd}
                 onScrolledToBottom={() => setTriggerScrollToEnd(false)}
+                initialEditDuration={editDuration}
+                onCloseWithDuration={(duration) => setEditDuration(duration)}
             />
         </>
     );
