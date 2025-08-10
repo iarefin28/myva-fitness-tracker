@@ -37,6 +37,7 @@ interface Props {
     onScrolledToBottom: () => void;
     initialEditDuration?: number;
     onCloseWithDuration?: (duration: number) => void;
+    trackTime?: boolean;
 }
 
 export default function ExerciseEditorModal({
@@ -60,7 +61,8 @@ export default function ExerciseEditorModal({
     scrollToBottom,
     onScrolledToBottom,
     initialEditDuration,
-    onCloseWithDuration
+    onCloseWithDuration,
+    trackTime = true
 
 }: Props) {
     const scrollViewRef = useRef<ScrollView>(null);
@@ -99,16 +101,16 @@ export default function ExerciseEditorModal({
     }, [resetExpansionTrigger]);
 
     useEffect(() => {
-        if (visible) {
+        if (visible && trackTime) {
             modalTimerRef.current = setInterval(() => {
-                setModalTimer(prev => prev + 1);
+                setModalTimer((prev) => prev + 1);
             }, 1000);
         }
-
         return () => {
             if (modalTimerRef.current) clearInterval(modalTimerRef.current);
+            modalTimerRef.current = null;
         };
-    }, [visible]);
+    }, [visible, trackTime]);
 
     const formatElapsedTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -175,7 +177,7 @@ export default function ExerciseEditorModal({
                         text: isEditing ? "Confirm" : "Delete",
                         style: isEditing ? "default" : "destructive",
                         onPress: () => {
-                            onCloseWithDuration?.(modalTimer); // ✅ Save time before close
+                            onCloseWithDuration?.(modalTimer);
                             onClose();
                         }
                     },
@@ -231,12 +233,14 @@ export default function ExerciseEditorModal({
                                         </Text>
                                     )}
                                 </View> */}
-                                <View style={{ flexDirection: "row" }}>
-                                    <AntDesign name="clockcircleo" size={18} color={textPrimary} style={{ marginRight: 6 }} />
-                                    <Text style={{ fontSize: 16, color: textPrimary, fontWeight: "bold" }}>
-                                        {formatElapsedTime(modalTimer)}
-                                    </Text>
-                                </View>
+                                {trackTime && (
+                                    <View style={{ flexDirection: "row" }}>
+                                        <AntDesign name="clockcircleo" size={18} color={textPrimary} style={{ marginRight: 6 }} />
+                                        <Text style={{ fontSize: 16, color: textPrimary, fontWeight: "bold" }}>
+                                            {formatElapsedTime(modalTimer)}
+                                        </Text>
+                                    </View>
+                                )}
 
                                 <TouchableOpacity
                                     onPress={() => {

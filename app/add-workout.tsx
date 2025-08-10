@@ -432,7 +432,7 @@ export default function AddWorkout() {
         <>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
                 <View style={{ flex: 1, padding: 20 }}>
-                    Motivational Quote: this could be made up of quotes from the user themselves after they keep tracking workouts
+                    {/* Motivational Quote: this could be made up of quotes from the user themselves after they keep tracking workouts*/}
                     <Text style={{
                         color: "#888",
                         fontSize: 12,
@@ -576,14 +576,14 @@ export default function AddWorkout() {
                             />
                         )}
 
-                        {mode === "live" && (
-                            <View style={{
-                                height: 1,
-                                backgroundColor: dividerColor,
-                                opacity: 0.4,
-                                marginVertical: 6
-                            }} />
-                        )}
+
+                        <View style={{
+                            height: 1,
+                            backgroundColor: dividerColor,
+                            opacity: 0.4,
+                            marginVertical: 6
+                        }} />
+
                         <View>
                             <TouchableOpacity
                                 onPress={() => setModalVisible(true)}
@@ -653,6 +653,7 @@ export default function AddWorkout() {
                 onScrolledToBottom={() => setTriggerScrollToEnd(false)}
                 initialEditDuration={editDuration}
                 onCloseWithDuration={(duration) => setEditDuration(duration)}
+                trackTime={mode !== "template"}
             />
         </>
     );
