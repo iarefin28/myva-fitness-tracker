@@ -25,6 +25,7 @@ type Props = {
     exercises: Exercise[];
     onPressExercise: (index: number) => void;
     onDeleteExercise: (index: number) => void;
+    mode?: "template" | "live";
 };
 
 const screenHeight = Dimensions.get('window').height;
@@ -33,10 +34,14 @@ export default function DraggableExercisePanel({
     exercises,
     onPressExercise,
     onDeleteExercise,
+    mode = "live",
 }: Props) {
     const headerOffset = 100;
     const topSnap = headerOffset;
-    const midSnap = screenHeight * 0.51;
+    const midSnap = mode === "template"
+        ? screenHeight * 0.33 
+        : screenHeight * 0.51; 
+
     const bottomSnap = screenHeight - 75;
 
     const translateY = useSharedValue(bottomSnap);
@@ -168,6 +173,7 @@ export default function DraggableExercisePanel({
                             onPress={() => onPressExercise(index)}
                             onDelete={() => onDeleteExercise(index)}
                             defaultExpanded={false}
+                            showNotesButton={mode !== "template"}
                         />
                     ))}
                 </ScrollView>

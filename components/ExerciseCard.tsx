@@ -69,7 +69,7 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                 }
 
                 rows.push(
-                    <View key={`set-${action.setNumber}`} style={{ marginBottom: showNotes && action.note?.trim() !== "" ? 10 : 2 }}>
+                    <View key={action.id} style={{ marginBottom: showNotes && action.note?.trim() !== "" ? 10 : 2 }}>
                         <View style={styles.row}>
                             <View style={styles.setTextContainer}>
                                 <Text style={[styles.setText, { color: primaryText }]}>

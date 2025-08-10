@@ -618,6 +618,7 @@ export default function AddWorkout() {
                                 setModalVisible(true);
                             }}
                             onDeleteExercise={confirmDeleteExercise}
+                            mode={mode}
                         />
                     )}
                 </View>
