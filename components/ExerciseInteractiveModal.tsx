@@ -38,6 +38,7 @@ interface Props {
     initialEditDuration?: number;
     onCloseWithDuration?: (duration: number) => void;
     trackTime?: boolean;
+    mode?: "live" | "template";
 }
 
 export default function ExerciseEditorModal({
@@ -62,7 +63,8 @@ export default function ExerciseEditorModal({
     onScrolledToBottom,
     initialEditDuration,
     onCloseWithDuration,
-    trackTime = true
+    trackTime = true,
+    mode = "live"
 
 }: Props) {
     const scrollViewRef = useRef<ScrollView>(null);
@@ -363,6 +365,7 @@ export default function ExerciseEditorModal({
                                                             scrollViewRef.current?.scrollToEnd({ animated: true });
                                                         }, 200);
                                                     }}
+                                                    showInfoIcon={mode !== "template"}
                                                 />
                                             </Animated.View>
                                         ))}

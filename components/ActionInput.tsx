@@ -37,7 +37,7 @@ interface ActionInputProps {
     showAdvanced: boolean;
     onToggleAdvanced: () => void;
     onDismiss?: (id: string) => void;
-
+    showInfoIcon?: boolean
 }
 
 const ActionInput: React.FC<ActionInputProps> = ({
@@ -51,7 +51,8 @@ const ActionInput: React.FC<ActionInputProps> = ({
     onToggle,
     onExpand,
     onExpandAdvanced,
-    onDismiss
+    onDismiss,
+    showInfoIcon = true,
 }) => {
     const isDark = useColorScheme() === "dark";
     const cardBg = isDark ? "#2a2a2a" : "#d1d1d1";
@@ -224,10 +225,11 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                             ]}
                                         />
                                     </View>
-
-                                    <View style={styles.infoIcon}>
-                                        <Feather name="clock" size={20} color={iconColorPrimary} />
-                                    </View>
+                                    {showInfoIcon && (
+                                        <View style={styles.infoIcon}>
+                                            <Feather name="clock" size={20} color={iconColorPrimary} />
+                                        </View>
+                                    )}
                                 </View>
                             </View>
                         </Animated.View>
@@ -253,7 +255,7 @@ const ActionInput: React.FC<ActionInputProps> = ({
                         {
                             borderColor: action.isWarmup ? "#61dafb" : "transparent",
                             borderWidth: 1,
-                            backgroundColor: cardBg 
+                            backgroundColor: cardBg
                         }
                     ]}>
                         {/* Header */}
@@ -370,15 +372,17 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                     )}
                                 </View>
 
-                                <TouchableOpacity
-                                    onPress={() => {
-                                        onToggle();
-                                        onExpand?.();
-                                    }}
-                                    style={styles.infoIcon}
-                                >
-                                    <Feather name="more-vertical" size={21} color={iconColorPrimary} />
-                                </TouchableOpacity>
+                                {showInfoIcon && (
+                                    <TouchableOpacity
+                                        onPress={() => {
+                                            onToggle();
+                                            onExpand?.();
+                                        }}
+                                        style={styles.infoIcon}
+                                    >
+                                        <Feather name="more-vertical" size={21} color={iconColorPrimary} />
+                                    </TouchableOpacity>
+                                )}
                             </View>
                         </View>
 

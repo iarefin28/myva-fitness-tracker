@@ -654,6 +654,7 @@ export default function AddWorkout() {
                 initialEditDuration={editDuration}
                 onCloseWithDuration={(duration) => setEditDuration(duration)}
                 trackTime={mode !== "template"}
+                mode={mode}
             />
         </>
     );
