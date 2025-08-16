@@ -39,7 +39,7 @@ export default function DraggableExercisePanel({
     const headerOffset = 100;
     const topSnap = headerOffset;
     const midSnap = mode === "template"
-        ? screenHeight * 0.33 
+        ? screenHeight * 0.38 
         : screenHeight * 0.51; 
 
     const bottomSnap = screenHeight - 75;

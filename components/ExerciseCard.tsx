@@ -21,6 +21,11 @@ function secondsToReadableTime(sec: number): string {
     return parts.join(" ");
 }
 
+function secondsToApproxMinutes(sec: number): string {
+    const minutes = Math.ceil(sec / 60); // round UP
+    return `${minutes} min${minutes !== 1 ? "s" : ""}`;
+}
+
 const getRpeColor = (num: number): string => {
     if (num <= 2) return "#4da6ff";
     if (num <= 4) return "#70e000";
@@ -152,10 +157,24 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                 {/* Left Column: Exercise Name & Details */}
                 <View style={{ flex: 1, paddingRight: 10 }}>
                     <Text style={[styles.name, { color: primaryText }]}>{exercise.name}</Text>
-                    <Text style={[styles.details, { color: secondaryText }]}>Sets: {totalSets} | Avg Reps: {avgReps}</Text>
                     <Text style={[styles.details, { color: secondaryText }]}>
-                        {secondsToReadableTime(exercise.editDurationInSeconds || 0)}
+                        Sets: {totalSets} | Avg Reps: {avgReps}
                     </Text>
+                    {/* <Text style={[styles.details, { color: secondaryText }]}>
+                        {secondsToReadableTime(exercise.editDurationInSeconds || 0)}
+                    </Text> */}
+
+                    {typeof exercise.computedDurationInSeconds === "number" &&
+                        exercise.computedDurationInSeconds > 0 && (
+                            <Text
+                                style={[
+                                    styles.details,
+                                    { color: restTextColor }
+                                ]}
+                            >
+                                Estimated Length: ~{secondsToApproxMinutes(exercise.computedDurationInSeconds)}
+                            </Text>
+                        )}
                 </View>
 
                 {/* Right Column: Buttons (always stay top right) */}

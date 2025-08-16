@@ -14,6 +14,11 @@ import ExerciseCard from "@/components/ExerciseCard";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
+import { useNavigation } from "expo-router";
+import { useCallback, useLayoutEffect } from "react";
+import { ActionSheetIOS, Alert, Platform } from "react-native";
 
 
 
@@ -33,20 +38,93 @@ export default function TemplateDetail() {
 
     const [showPicker, setShowPicker] = useState(false);
 
-    useEffect(() => {
-        const loadTemplate = async () => {
-            const stored = await AsyncStorage.getItem("savedTemplates");
-            if (!stored) return;
+    const navigation = useNavigation();
 
-            const parsed = JSON.parse(stored);
-            const found = parsed.find((t: any) => t.id.toString() === templateId?.toString());
-            if (found) {
-                setTemplate(found);
-            }
-        };
+    // open Edit in AddWorkout (template mode)
+    const onEditTemplate = () => {
+        router.push(`/add-workout?mode=template&templateId=${template.id}`);
+    };
 
-        loadTemplate();
+    // delete from storage and leave screen
+    const onDeleteTemplate = async () => {
+        Alert.alert("Delete template", "This cannot be undone. Delete?", [
+            { text: "Cancel", style: "cancel" },
+            {
+                text: "Delete",
+                style: "destructive",
+                onPress: async () => {
+                    try {
+                        const raw = await AsyncStorage.getItem("savedTemplates");
+                        const list = raw ? JSON.parse(raw) : [];
+                        const next = list.filter((t: any) => t.id !== template.id);
+                        await AsyncStorage.setItem("savedTemplates", JSON.stringify(next));
+                        router.back();
+                    } catch (e) {
+                        Alert.alert("Error", "Could not delete template.");
+                    }
+                },
+            },
+        ]);
+    };
+
+    const openHeaderMenu = () => {
+        if (Platform.OS === "ios") {
+            ActionSheetIOS.showActionSheetWithOptions(
+                {
+                    options: ["Cancel", "Edit Template", "Delete Template"],
+                    cancelButtonIndex: 0,
+                    destructiveButtonIndex: 2,
+                    userInterfaceStyle: scheme === "dark" ? "dark" : "light",
+                },
+                (idx) => {
+                    if (idx === 1) onEditTemplate();
+                    if (idx === 2) onDeleteTemplate();
+                }
+            );
+        } else {
+            // Simple Android menu via Alert (no extra deps)
+            Alert.alert(template.name, "Choose an action", [
+                { text: "Edit Template", onPress: onEditTemplate },
+                { text: "Delete Template", style: "destructive", onPress: onDeleteTemplate },
+                { text: "Cancel", style: "cancel" },
+            ]);
+        }
+    };
+
+    // put the button in the header
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            title: "Template Details",
+            headerRight: () => (
+                <TouchableOpacity
+                    onPress={openHeaderMenu}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    style={{ paddingHorizontal: 10 }}
+                >
+                    <Ionicons
+                        name="ellipsis-vertical"
+                        size={20}
+                        color={scheme === "dark" ? "#ddd" : "#333"}
+                    />
+                </TouchableOpacity>
+            ),
+        });
+    }, [navigation, template?.name, scheme, template?.id]);
+
+    // keep your existing loadTemplate, but memoize it
+    const loadTemplate = useCallback(async () => {
+        const stored = await AsyncStorage.getItem("savedTemplates");
+        if (!stored) return;
+        const parsed = JSON.parse(stored);
+        const found = parsed.find((t: any) => t.id.toString() === templateId?.toString());
+        if (found) setTemplate(found);
     }, [templateId]);
+
+    // initial load (optional once)
+    useEffect(() => { loadTemplate(); }, [loadTemplate]);
+
+    // 🔁 refresh every time you come back from Edit
+    useFocusEffect(useCallback(() => { loadTemplate(); }, [loadTemplate]));
 
     const handleSchedule = () => {
         setShowPicker(true);
@@ -99,6 +177,7 @@ export default function TemplateDetail() {
             >
                 {/* Start Now */}
                 <TouchableOpacity
+                    disabled={true}
                     onPress={() =>
                         router.push(`/add-workout?mode=live&templateId=${template.id}`)
                     }
@@ -117,6 +196,7 @@ export default function TemplateDetail() {
 
                 {/* Schedule */}
                 <TouchableOpacity
+                    disabled={true}
                     onPress={() => setShowPicker(true)}
                     style={{
                         backgroundColor: scheme === "dark" ? "#333" : "#ddd",

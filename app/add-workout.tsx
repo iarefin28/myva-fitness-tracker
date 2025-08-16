@@ -15,8 +15,11 @@ import { nanoid } from 'nanoid/non-secure';
 export default function AddWorkout() {
     const route = useRoute();
     const { mode = "live", templateId } = route.params || {};
+    const [editingTemplateId, setEditingTemplateId] = useState<number | string | null>(null);
+
 
     const [editDuration, setEditDuration] = useState(0);
+
 
 
 
@@ -59,19 +62,41 @@ export default function AddWorkout() {
     const [elapsedTime, setElapsedTime] = useState(0);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+    const [totalApproxSeconds, setTotalApproxSeconds] = useState(0);
+
+    useEffect(() => {
+        const total = estimateWorkoutDurationSeconds(
+            (exercises ?? []).map(ex => ({
+                ...ex,
+                // ensure numbers (in case older templates saved strings)
+                computedDurationInSeconds:
+                    typeof ex.computedDurationInSeconds === "number"
+                        ? ex.computedDurationInSeconds
+                        : Number(ex.computedDurationInSeconds ?? 0),
+            }))
+        );
+        setTotalApproxSeconds(total);
+    }, [exercises]);
+
     useEffect(() => {
         const loadTemplate = async () => {
-            if (mode === "live" && templateId) {
-                const stored = await AsyncStorage.getItem("savedTemplates");
-                if (!stored) return;
+            if (!templateId) return;
 
-                const parsed = JSON.parse(stored);
-                const found = parsed.find((t: any) => t.id.toString() === templateId.toString());
-                if (found) {
-                    setExercises(found.exercises);
-                    exercisesRef.current = found.exercises;
-                    setWorkoutName(found.name + " Copy");
-                }
+            const stored = await AsyncStorage.getItem("savedTemplates");
+            if (!stored) return;
+
+            const parsed = JSON.parse(stored);
+            const found = parsed.find((t: any) => t.id.toString() === templateId.toString());
+            if (!found) return;
+
+            setExercises(found.exercises);
+            exercisesRef.current = found.exercises;
+
+            if (mode === "live") {
+                setWorkoutName(`${found.name} Copy`);
+            } else {
+                setWorkoutName(found.name);
+                setEditingTemplateId(found.id);
             }
         };
 
@@ -103,47 +128,67 @@ export default function AddWorkout() {
 
         if (!workoutName || exercises.length === 0) return;
 
-        // base workout object
+        const approxDurationInSeconds = estimateWorkoutDurationSeconds(exercisesRef.current ?? exercises);
+
+        // Build the base object (shared)
         let workout: any = {
-            id: Date.now(),
+            id: editingTemplateId ?? Date.now(),
             name: workoutName,
             exercises: exercisesRef.current,
+            approxDurationInSeconds, // save ETA for all types
         };
 
         let key = "savedWorkouts";
 
-        if (mode === "template") {
-            workout = {
-                ...workout,
-                createdBy: "Ishan Arefin",
-                createdOn: new Date().toISOString(),
-                usageCount: 0
-            };
-            key = "savedTemplates";
-        } else {
-            workout = {
-                ...workout,
-                notes,
-                date: date.toISOString(),
-            };
-        }
-
         try {
-            const existing = await AsyncStorage.getItem(key);
-            const parsed = existing ? JSON.parse(existing) : [];
+            if (mode === "template") {
+                key = "savedTemplates";
+                const existing = await AsyncStorage.getItem(key);
+                const list = existing ? JSON.parse(existing) : [];
 
-            parsed.push(workout);
+                if (editingTemplateId) {
+                    // UPDATE
+                    const idx = list.findIndex((t: any) => t.id.toString() === String(editingTemplateId));
+                    if (idx !== -1) {
+                        const prev = list[idx];
+                        list[idx] = {
+                            ...prev,
+                            ...workout,
+                            id: prev.id,
+                            createdOn: prev.createdOn ?? new Date().toISOString(),
+                            updatedOn: new Date().toISOString(),
+                            usageCount: prev.usageCount ?? 0,
+                        };
+                    }
+                    await AsyncStorage.setItem(key, JSON.stringify(list, null, 2));
+                } else {
+                    // CREATE
+                    const newTemplate = {
+                        ...workout,
+                        createdBy: "Ishan Arefin",
+                        createdOn: new Date().toISOString(),
+                        usageCount: 0,
+                    };
+                    list.push(newTemplate);
+                    await AsyncStorage.setItem(key, JSON.stringify(list, null, 2));
+                }
+            } else {
+                // LIVE workout save (keep your fields)
+                const existing = await AsyncStorage.getItem(key);
+                const list = existing ? JSON.parse(existing) : [];
+                const liveWorkout = {
+                    ...workout,
+                    notes,
+                    date: date.toISOString(),
+                    actualDurationInSeconds: elapsedTime,
+                };
+                list.push(liveWorkout);
+                await AsyncStorage.setItem(key, JSON.stringify(list, null, 2));
+            }
 
-            const jsonString = JSON.stringify(parsed, null, 2);
-            console.log(`JSON to be saved to ${key}:`);
-            console.log(jsonString);
-
-            await AsyncStorage.setItem(key, jsonString);
-
-            console.log(`${mode === "template" ? "Template" : "Workout"} saved successfully!`);
             navigation.goBack();
-        } catch (error) {
-            console.error("Failed to save workout:", error);
+        } catch (e) {
+            console.error("Failed to save workout:", e);
         }
     }, [mode, workoutName, notes, date, exercises]);
 
@@ -164,7 +209,7 @@ export default function AddWorkout() {
                             </Text>
                         </View>
                     );
-                } else if (mode === "template") {
+                } else if (mode === "template" && !editingTemplateId) {
                     return (
                         <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 4, flexShrink: 1 }}>
                             <AntDesign name="form" size={16} color={textColor} style={{ marginRight: 4 }} />
@@ -173,6 +218,15 @@ export default function AddWorkout() {
                                 style={{ fontSize: 16, fontWeight: "bold", color: textColor }}
                             >
                                 Add Template
+                            </Text>
+                        </View>
+                    );
+                } else if (mode === "template" && editingTemplateId) {
+                    return (
+                        <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 4, flexShrink: 1 }}>
+                            <AntDesign name="form" size={16} color={textColor} style={{ marginRight: 4 }} />
+                            <Text numberOfLines={1} style={{ fontSize: 16, fontWeight: "bold", color: textColor }}>
+                                Edit Template
                             </Text>
                         </View>
                     );
@@ -268,12 +322,20 @@ export default function AddWorkout() {
     const handleSaveExercise = () => {
         if (!exerciseName || actionsList.length === 0) return;
 
+        const computedDurationInSeconds = estimateExerciseDurationWorstCase(actionsList);
+
         const newExercise: Exercise = {
             name: exerciseName,
             type: exerciseType,
             actions: computeNumberedActions(actionsList),
             editDurationInSeconds: editDuration,
+            computedDurationInSeconds: computedDurationInSeconds,
         };
+
+        // debug prints
+        console.log("Computed Duration (s):", computedDurationInSeconds);
+        console.log("Exercise to be saved:");
+        console.log(JSON.stringify(newExercise, null, 2));
 
         setExercises(prev => {
             const updated = [...prev];
@@ -428,6 +490,37 @@ export default function AddWorkout() {
         if (selectedDate) setDate(selectedDate);
     };
 
+    function estimateExerciseDurationWorstCase(actions: ExerciseAction[]) {
+        const totalRest = actions
+            .filter(a => a.type === "rest")
+            .reduce((sum, a: any) => sum + Number(a.restInSeconds ?? 0), 0); // <-- Number()
+
+        const setCount = actions.filter(a => a.type === "set").length;
+
+        return totalRest + setCount * 70; // number
+    }
+
+    const INTER_EXERCISE_BUFFER_SEC = 90; // setup/log/water between exercises
+
+    function estimateWorkoutDurationSeconds(exercises: Exercise[]) {
+        if (!exercises?.length) return 0;
+
+        return exercises.reduce((total, ex, idx) => {
+            const perExercise =
+                typeof ex.computedDurationInSeconds === "number"
+                    ? ex.computedDurationInSeconds
+                    : estimateExerciseDurationWorstCase(ex.actions); // fallback for older items
+
+            const gap = idx > 0 ? INTER_EXERCISE_BUFFER_SEC : 0; // N-1 gaps
+            return total + Number(perExercise || 0) + gap;
+        }, 0);
+    }
+
+    function secondsToApproxMinutes(sec: number): string {
+        const minutes = Math.ceil((sec || 0) / 60);
+        return `${minutes} min${minutes !== 1 ? "s" : ""}`;
+    }
+
     return (
         <>
             <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
@@ -543,7 +636,6 @@ export default function AddWorkout() {
                                 fontSize: 14
                             }}
                         />
-
                         {mode === "live" && (
                             <View style={{
                                 height: 1,
@@ -599,6 +691,27 @@ export default function AddWorkout() {
                                     + Add Exercise
                                 </Text>
                             </TouchableOpacity>
+
+
+                            {/* Approximate total workout time — templates only */}
+                            {mode === "template" && (exercises?.length ?? 0) > 0 && (
+                                <View style={{ marginTop: 10 }}>
+                                    <Text style={{
+                                        fontSize: 12,
+                                        color: scheme === "dark" ? "#9ca3af" : "#4b5563",
+                                        marginBottom: 2
+                                    }}>
+                                        Estimated Workout Length:
+                                    </Text>
+                                    <Text style={{
+                                        fontSize: 16,
+                                        fontWeight: "700",
+                                        color: "#1e90ff" // same blue as rest text
+                                    }}>
+                                        ~{Math.ceil(totalApproxSeconds / 60)} mins
+                                    </Text>
+                                </View>
+                            )}
                         </View>
                     </View>
 

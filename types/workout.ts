@@ -38,6 +38,7 @@ export interface Exercise {
   type: ExerciseType;
   actions: ExerciseAction[];
   editDurationInSeconds?: number;
+  computedDurationInSeconds: number;
 }
 
 export interface Workout {
@@ -45,4 +46,8 @@ export interface Workout {
   date: Date;
   notes?: string;
   exercises: Exercise[];
+  approxDurationInSeconds: number; // ← estimated (saved on live too)
+
+  //TO-DO: add actual duration in seconds to live workouts so we can do comparisons for templates and stuff
+  //actualDurationInSeconds?: number;   // ← only meaningful for live
 }
