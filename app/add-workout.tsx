@@ -121,21 +121,51 @@ export default function AddWorkout() {
         return `${mins}:${secs.toString().padStart(2, "0")}`;
     };
 
+    type Metrics = {
+        totalExercises: number;
+        totalSets: number;
+        totalWorkingSets: number;
+        approxDurationInSeconds: number;
+    };
+
+    function computeMetrics(exercises: Array<{ actions?: any[] }>): Omit<Metrics, "approxDurationInSeconds"> {
+        let totalSets = 0;
+        let totalWorkingSets = 0;
+
+        for (const ex of exercises ?? []) {
+            const sets = (ex.actions ?? []).filter(a => a?.type === "set");
+            totalSets += sets.length;
+            totalWorkingSets += sets.filter(s => !s?.isWarmup).length;
+        }
+        return {
+            totalExercises: exercises?.length ?? 0,
+            totalSets,
+            totalWorkingSets,
+        };
+    }
+
     // ───── Workout Save (To Implement) ─────
     const saveWorkout = useCallback(async () => {
         console.log("Workout Name:", workoutName);
-        console.log("Exercise length:", exercisesRef.current.length);
+        console.log("Exercise length:", exercisesRef.current?.length ?? exercises.length);
 
-        if (!workoutName || exercises.length === 0) return;
+        const exs = exercisesRef.current ?? exercises;
+        if (!workoutName || (exs?.length ?? 0) === 0) return;
 
-        const approxDurationInSeconds = estimateWorkoutDurationSeconds(exercisesRef.current ?? exercises);
+        // keep using your existing estimator for ETA
+        const approxDurationInSeconds = estimateWorkoutDurationSeconds(exs);
+
+        // build metrics (include approx inside metrics as requested)
+        const baseCounts = computeMetrics(exs);
+        const metrics: Metrics = { ...baseCounts, approxDurationInSeconds };
 
         // Build the base object (shared)
         let workout: any = {
             id: editingTemplateId ?? Date.now(),
             name: workoutName,
-            exercises: exercisesRef.current,
-            approxDurationInSeconds, // save ETA for all types
+            exercises: exs,
+            approxDurationInSeconds,   // stays at top level for existing UI
+            metrics,                   // <— NEW: totals + approx
         };
 
         let key = "savedWorkouts";
@@ -159,6 +189,8 @@ export default function AddWorkout() {
                             updatedOn: new Date().toISOString(),
                             usageCount: prev.usageCount ?? 0,
                         };
+
+                        console.log("Updating Template Payload:\n" + JSON.stringify(list[idx], null, 2));
                     }
                     await AsyncStorage.setItem(key, JSON.stringify(list, null, 2));
                 } else {
@@ -173,7 +205,7 @@ export default function AddWorkout() {
                     await AsyncStorage.setItem(key, JSON.stringify(list, null, 2));
                 }
             } else {
-                // LIVE workout save (keep your fields)
+                // LIVE workout save
                 const existing = await AsyncStorage.getItem(key);
                 const list = existing ? JSON.parse(existing) : [];
                 const liveWorkout = {
@@ -190,7 +222,7 @@ export default function AddWorkout() {
         } catch (e) {
             console.error("Failed to save workout:", e);
         }
-    }, [mode, workoutName, notes, date, exercises]);
+    }, [mode, workoutName, notes, date, exercises, editingTemplateId]);
 
 
     // ───── Layout Effect for Header Buttons ─────
@@ -520,6 +552,7 @@ export default function AddWorkout() {
         const minutes = Math.ceil((sec || 0) / 60);
         return `${minutes} min${minutes !== 1 ? "s" : ""}`;
     }
+
 
     return (
         <>

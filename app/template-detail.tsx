@@ -17,10 +17,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation } from "expo-router";
-import { useCallback, useLayoutEffect } from "react";
+import { useCallback, useLayoutEffect, useMemo } from "react";
 import { ActionSheetIOS, Alert, Platform } from "react-native";
-
-
 
 export default function TemplateDetail() {
     const route = useRoute();
@@ -29,11 +27,12 @@ export default function TemplateDetail() {
     const scheme = useColorScheme();
     const insets = useSafeAreaInsets();
 
-
     const [template, setTemplate] = useState<any>(null);
 
     const textColor = scheme === "dark" ? "#ffffff" : "#000000";
-    const cardColor = scheme === "dark" ? "#1a1a1a" : "#ffffff";
+    const subTextColor = scheme === "dark" ? "#9aa0a6" : "#6b7280";
+    const dividerColor = scheme === "dark" ? "#222" : "#eee";
+    const cardColor = scheme === "dark" ? "#111" : "#ffffff";
     const backgroundColor = scheme === "dark" ? "#000000" : "#ffffff";
 
     const [showPicker, setShowPicker] = useState(false);
@@ -82,7 +81,6 @@ export default function TemplateDetail() {
                 }
             );
         } else {
-            // Simple Android menu via Alert (no extra deps)
             Alert.alert(template.name, "Choose an action", [
                 { text: "Edit Template", onPress: onEditTemplate },
                 { text: "Delete Template", style: "destructive", onPress: onDeleteTemplate },
@@ -130,6 +128,77 @@ export default function TemplateDetail() {
         setShowPicker(true);
     };
 
+    // ---------- helpers ----------
+    const formatHM = (s?: number | string) => {
+        const total = Number(s || 0);
+        const totalMinutes = Math.floor(total / 60);
+        const h = Math.floor(totalMinutes / 60);
+        const m = totalMinutes % 60;
+        return h ? `${h}h ${m}m` : `${m}m`;
+    };
+
+    const formatDateOnly = (iso?: string) => {
+        if (!iso) return "—";
+        const d = new Date(iso);
+        // e.g., "Aug 16, 2025"
+        return d.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+    };
+
+    const metrics = useMemo(() => {
+        if (!template) return { totalExercises: 0, totalSets: 0, totalWorkingSets: 0, approx: 0 };
+        const m = template.metrics || {};
+        const totalExercises =
+            m.totalExercises ??
+            (Array.isArray(template.exercises) ? template.exercises.length : 0);
+
+        const totalSets =
+            m.totalSets ??
+            template.exercises?.reduce((acc: number, ex: any) => {
+                const sets = ex?.actions?.filter?.((a: any) => a?.type === "set")?.length || 0;
+                return acc + sets;
+            }, 0) ??
+            0;
+
+        const totalWorkingSets =
+            m.totalWorkingSets ??
+            template.exercises?.reduce((acc: number, ex: any) => {
+                const working = ex?.actions?.filter?.(
+                    (a: any) => a?.type === "set" && !a?.isWarmup
+                )?.length || 0;
+                return acc + working;
+            }, 0) ??
+            0;
+
+        const approx =
+            template.approxDurationInSeconds ??
+            m.approxDurationInSeconds ??
+            template.exercises?.reduce(
+                (acc: number, ex: any) => acc + Number(ex?.computedDurationInSeconds || 0),
+                0
+            ) ??
+            0;
+
+        return { totalExercises, totalSets, totalWorkingSets, approx };
+    }, [template]);
+
+    // small stat & meta row components
+    const Stat = ({ label, value, icon }: { label: string; value: string | number; icon?: any }) => (
+        <View style={{ width: "48%", marginBottom: 10 }}>
+            <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 2 }}>
+                {icon ? <Ionicons name={icon} size={14} color={subTextColor} style={{ marginRight: 6 }} /> : null}
+                <Text style={{ color: subTextColor, fontSize: 12 }}>{label}</Text>
+            </View>
+            <Text style={{ color: textColor, fontSize: 16, fontWeight: "700" }}>{value}</Text>
+        </View>
+    );
+
+    const MetaRow = ({ label, value }: { label: string; value: string | number }) => (
+        <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
+            <Text style={{ color: subTextColor, fontSize: 12 }}>{label}</Text>
+            <Text style={{ color: textColor, fontSize: 13, fontWeight: "600" }}>{value}</Text>
+        </View>
+    );
+
     if (!template) {
         return (
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor }}>
@@ -147,11 +216,83 @@ export default function TemplateDetail() {
                 </Text>
             </View>
 
-            {/* Scrollable Exercise List */}
+            {/* Scrollable content */}
             <ScrollView
                 style={{ flex: 1, paddingHorizontal: 20 }}
                 contentContainerStyle={{ paddingBottom: 100 }}
+                showsVerticalScrollIndicator={false}
+                showsHorizontalScrollIndicator={false}
             >
+                {/* ===== Overview card ===== */}
+                <View
+                    style={{
+                        backgroundColor: cardColor,
+                        borderRadius: 12,
+                        padding: 14,
+                        borderWidth: 1,
+                        borderColor: dividerColor,
+                        marginBottom: 16,
+                    }}
+                >
+                    {/* Title + white share button */}
+                    <View
+                        style={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            marginBottom: 8,
+                        }}
+                    >
+                        <Text style={{ color: textColor, fontWeight: "700", fontSize: 16 }}>
+                            Overview
+                        </Text>
+
+                        <TouchableOpacity
+                            onPress={() => { }}
+                            accessibilityLabel="Share template"
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            style={{ padding: 4 }} // small tap padding, no background
+                        >
+                            <Ionicons name="share-outline" size={22} color="#fff" />
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* stats grid: two rows, two columns */}
+                    <View style={{ flexDirection: "row", justifyContent: "space-between", flexWrap: "wrap" }}>
+                        <Stat label="Exercises" value={metrics.totalExercises} icon="barbell-outline" />
+                        <Stat label="Sets" value={metrics.totalSets} icon="albums-outline" />
+                        <Stat label="Working Sets" value={metrics.totalWorkingSets} icon="fitness-outline" />
+                        <Stat
+                            label="Approx. Duration"
+                            value={formatHM(metrics.approx)}  // e.g., "38m" or "1h 12m"
+                            icon="time-outline"
+                        />
+                    </View>
+
+                    {/* divider */}
+                    <View style={{ height: 1, backgroundColor: dividerColor, marginVertical: 8 }} />
+
+                    {/* meta rows */}
+                    <MetaRow label="Created By" value={template.createdBy ?? "—"} />
+                    <MetaRow label="Created On" value={formatDateOnly(template.createdOn)} />
+                    <MetaRow label="Last Updated" value={formatDateOnly(template.updatedOn)} />
+                    <MetaRow label="Usage Count" value={String(template.usageCount ?? 0)} />
+                </View>
+                {/* ===== end Overview card ===== */}
+
+                {/* Exercise List heading */}
+                <Text
+                    style={{
+                        color: textColor,
+                        fontWeight: "700",
+                        fontSize: 16,
+                        marginBottom: 8,
+                    }}
+                >
+                    Exercise List
+                </Text>
+
+                {/* Exercise List */}
                 {template.exercises.map((exercise: any, index: number) => (
                     <ExerciseCard
                         key={index}
@@ -163,13 +304,14 @@ export default function TemplateDetail() {
                 ))}
             </ScrollView>
 
+            {/* Bottom Actions */}
             <View
                 style={{
                     paddingHorizontal: 16,
                     paddingTop: 12,
                     paddingBottom: insets.bottom + 12,
                     borderTopWidth: 1,
-                    borderTopColor: scheme === "dark" ? "#222" : "#eee",
+                    borderTopColor: dividerColor,
                     backgroundColor: backgroundColor,
                     flexDirection: "row",
                     justifyContent: "space-between",
@@ -177,7 +319,6 @@ export default function TemplateDetail() {
             >
                 {/* Start Now */}
                 <TouchableOpacity
-                    disabled={true}
                     onPress={() =>
                         router.push(`/add-workout?mode=live&templateId=${template.id}`)
                     }
@@ -197,7 +338,7 @@ export default function TemplateDetail() {
                 {/* Schedule */}
                 <TouchableOpacity
                     disabled={true}
-                    onPress={() => setShowPicker(true)}
+                    onPress={handleSchedule}
                     style={{
                         backgroundColor: scheme === "dark" ? "#333" : "#ddd",
                         paddingVertical: 14,
@@ -240,6 +381,6 @@ export default function TemplateDetail() {
                     />
                 )}
             </View>
-        </View >
+        </View>
     );
 }
