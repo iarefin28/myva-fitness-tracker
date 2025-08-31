@@ -30,6 +30,7 @@ export default function AddWorkout() {
 
 
     const [editDuration, setEditDuration] = useState(0);
+    const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
 
 
 
@@ -400,8 +401,9 @@ export default function AddWorkout() {
 
     // ───── Action Handlers ─────
     const addSet = () => {
+        const id = nanoid();
         let newSet: any = {
-            id: nanoid(), // 🆕
+            id,
             type: "set",
         };
 
@@ -462,6 +464,7 @@ export default function AddWorkout() {
         }
 
         const updatedList = computeNumberedActions([...actionsList, newSet]);
+        setPendingFocusId(id);
         setActionsList(updatedList);
         setTriggerScrollToEnd(true);
         console.log("Updated Actions List:", JSON.stringify(updatedList, null, 2));
@@ -820,6 +823,8 @@ export default function AddWorkout() {
                 mode={mode}
                 tags={tags}
                 onChangeTags={setTags}
+                pendingFocusId={pendingFocusId}                   
+                onPendingFocusHandled={() => setPendingFocusId(null)}  
             />
         </>
     );

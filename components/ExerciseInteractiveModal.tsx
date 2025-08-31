@@ -42,6 +42,8 @@ interface Props {
     mode?: "live" | "template";
     tags: TagState;
     onChangeTags: (t: TagState) => void;
+    pendingFocusId?: string | null;
+    onPendingFocusHandled?: () => void;
 
 }
 
@@ -70,9 +72,9 @@ export default function ExerciseEditorModal({
     trackTime = true,
     mode = "live",
     tags,
-    onChangeTags
-
-
+    onChangeTags,
+    pendingFocusId,
+    onPendingFocusHandled
 }: Props) {
     const scrollViewRef = useRef<ScrollView>(null);
     const canAddRest = actionsList.length === 0 || actionsList[actionsList.length - 1].type !== "rest";
@@ -377,6 +379,8 @@ export default function ExerciseEditorModal({
                                                         }, 200);
                                                     }}
                                                     showInfoIcon={mode !== "template"}
+                                                    autoFocusWeight={action.type === "set" && action.id === pendingFocusId}
+                                                    onDidAutoFocus={onPendingFocusHandled}
                                                 />
                                             </Animated.View>
                                         ))}

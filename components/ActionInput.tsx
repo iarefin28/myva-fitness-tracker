@@ -1,5 +1,5 @@
 import { Feather } from "@expo/vector-icons";
-import React from "react";
+import React, { useRef } from "react";
 import { Dimensions, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { ExerciseType } from "../types/workout";
 import RpeSelector from "./RpeSelector";
@@ -15,6 +15,7 @@ import Animated, {
     withTiming
 } from 'react-native-reanimated';
 
+import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
 
@@ -37,7 +38,9 @@ interface ActionInputProps {
     showAdvanced: boolean;
     onToggleAdvanced: () => void;
     onDismiss?: (id: string) => void;
-    showInfoIcon?: boolean
+    showInfoIcon?: boolean;
+    autoFocusWeight?: boolean;
+    onDidAutoFocus?: () => void;
 }
 
 const ActionInput: React.FC<ActionInputProps> = ({
@@ -53,6 +56,8 @@ const ActionInput: React.FC<ActionInputProps> = ({
     onExpandAdvanced,
     onDismiss,
     showInfoIcon = true,
+    autoFocusWeight = false,
+    onDidAutoFocus,
 }) => {
     const isDark = useColorScheme() === "dark";
     const cardBg = isDark ? "#2a2a2a" : "#d1d1d1";
@@ -64,6 +69,17 @@ const ActionInput: React.FC<ActionInputProps> = ({
     const inputBg = isDark ? "#1e1e1e" : "#ffffff";
     const inputText = isDark ? "#fff" : "#000";
     const iconColorPrimary = isDark ? "#ccc" : "#555";
+    const weightRef = useRef<TextInput>(null);   // NEW
+
+    useEffect(() => {
+        if (autoFocusWeight && action.type === "set" && exerciseType === "weighted") {
+            const t = setTimeout(() => {
+                weightRef.current?.focus();
+                onDidAutoFocus?.();
+            }, 120); // small delay helps after re-layout/scroll
+            return () => clearTimeout(t);
+        }
+    }, [autoFocusWeight, action?.type, exerciseType, onDidAutoFocus]);
 
 
     const screenHeight = Dimensions.get("window").height;
@@ -294,10 +310,11 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                     {exerciseType === "weighted" && (
                                         <>
                                             <TextInput
+                                                ref={weightRef}
                                                 placeholder="Weight"
                                                 placeholderTextColor={textSecondary}
                                                 keyboardType="numeric"
-                                                value={action.weight}
+                                                value={action.weight ?? ""}
                                                 onChangeText={(value) => updateActionValue(actionId, "weight", value)}
                                                 style={[
                                                     styles.input,
@@ -305,6 +322,7 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                                         backgroundColor: inputBg,
                                                         color: inputText,
                                                         borderColor: unitBorder,
+                                                        textAlign: (action.weight ?? "").length ? "center" : "left",
                                                     }
                                                 ]}
                                             />
