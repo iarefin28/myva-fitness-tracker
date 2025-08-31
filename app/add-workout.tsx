@@ -3,14 +3,25 @@ import { useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ActionSheetIOS, Alert, Keyboard, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
-import type { Exercise, ExerciseAction, ExerciseType } from "../types/workout";
-
 import DraggableExercisePanel from "@/components/DraggableExercisePanel";
 import ExerciseInteractiveModal from "../components/ExerciseInteractiveModal";
+import { inferDefaultTags } from "../data/exerciseDefaultTags";
+import type { Exercise, ExerciseAction, ExerciseType, TagState } from "../types/workout";
 
 import { AntDesign } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { nanoid } from 'nanoid/non-secure';
+
+
+// function inferTags(name: string, type: ExerciseType): TagState {
+//   const n = name.toLowerCase();
+//   if (type === "bodyweight") return { equip: "bodyweight" };
+//   if (n.includes("barbell")) return { equip: "barbell" };
+//   if (n.includes("dumbbell") || n.includes("db")) return { equip: "dumbbell" };
+//   if (n.includes("cable")) return { equip: "cable" };
+//   if (n.includes("machine")) return { equip: "machine" };
+//   return {}; // unknown for now
+// }
 
 export default function AddWorkout() {
     const route = useRoute();
@@ -50,6 +61,7 @@ export default function AddWorkout() {
     const [lockedExerciseTitle, setLockedExerciseTitle] = useState("");
     const [exerciseType, setExerciseType] = useState<ExerciseType>("unknown");;
     const scrollViewRef = useRef<ScrollView>(null);
+    const [tags, setTags] = useState<TagState>({});
 
     // ───── Action Management State ─────
     const [actionsList, setActionsList] = useState<ExerciseAction[]>([]);
@@ -293,6 +305,7 @@ export default function AddWorkout() {
         setLockedExerciseTitle("");
         setEditIndex(null);
         setResetExpansionTrigger(prev => prev + 1);
+        setTags({});
     };
 
     const confirmClose = () => {
@@ -362,6 +375,7 @@ export default function AddWorkout() {
             actions: computeNumberedActions(actionsList),
             editDurationInSeconds: editDuration,
             computedDurationInSeconds: computedDurationInSeconds,
+            tags,
         };
 
         // debug prints
@@ -762,6 +776,7 @@ export default function AddWorkout() {
                                 setExerciseNameBlurred(true);
                                 setEditDuration(exercise.editDurationInSeconds || 0);
                                 setModalVisible(true);
+                                setTags(exercise.tags ?? {});
                             }}
                             onDeleteExercise={confirmDeleteExercise}
                             mode={mode}
@@ -786,6 +801,7 @@ export default function AddWorkout() {
                     setExerciseType(type);
                     setExerciseNameBlurred(true);
                     setLockedExerciseTitle(exercise);
+                    setTags(inferDefaultTags(exercise, type));
                 }}
                 onChangeExerciseName={(text) => {
                     setExerciseName(text);
@@ -802,6 +818,8 @@ export default function AddWorkout() {
                 onCloseWithDuration={(duration) => setEditDuration(duration)}
                 trackTime={mode !== "template"}
                 mode={mode}
+                tags={tags}
+                onChangeTags={setTags}
             />
         </>
     );

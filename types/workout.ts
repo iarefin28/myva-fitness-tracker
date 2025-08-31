@@ -1,3 +1,5 @@
+import type { TagGroup } from "./tags";
+
 export type UnitWeight = "lb" | "kg";
 export type UnitTime = "sec" | "min";
 
@@ -32,6 +34,7 @@ export interface RestAction {
 }
 
 export type ExerciseAction = SetAction | RestAction;
+export type TagState = Partial<Record<TagGroup, string>>;
 
 export interface Exercise {
   name: string;
@@ -39,6 +42,7 @@ export interface Exercise {
   actions: ExerciseAction[];
   editDurationInSeconds?: number;
   computedDurationInSeconds: number;
+  tags?: TagState
 }
 
 export interface Workout {

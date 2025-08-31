@@ -49,6 +49,7 @@ const ExerciseAutocomplete: React.FC<ExerciseAutocompleteProps> = ({
 
   const handleSelect = (exercise: string) => {
     const type = EXERCISE_TYPE_MAP[exercise] || "unknown";
+    onChangeText(exercise);
     onSelect(exercise, type);
     setFilteredExercises([]);
   };

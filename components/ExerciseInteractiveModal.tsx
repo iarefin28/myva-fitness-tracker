@@ -6,10 +6,11 @@ import { useState } from "react";
 import { ActionSheetIOS, Alert, Keyboard, useColorScheme } from "react-native";
 import Animated, { Layout } from 'react-native-reanimated';
 import { SafeAreaView } from "react-native-safe-area-context";
-import type { ExerciseAction, ExerciseType } from "../types/workout";
+import type { ExerciseAction, ExerciseType, TagState } from "../types/workout";
 import ActionInput from "./ActionInput";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
 
+import TagSearchPicker from "./TagPicker";
 
 interface Props {
     visible: boolean;
@@ -39,6 +40,9 @@ interface Props {
     onCloseWithDuration?: (duration: number) => void;
     trackTime?: boolean;
     mode?: "live" | "template";
+    tags: TagState;
+    onChangeTags: (t: TagState) => void;
+
 }
 
 export default function ExerciseEditorModal({
@@ -64,7 +68,10 @@ export default function ExerciseEditorModal({
     initialEditDuration,
     onCloseWithDuration,
     trackTime = true,
-    mode = "live"
+    mode = "live",
+    tags,
+    onChangeTags
+
 
 }: Props) {
     const scrollViewRef = useRef<ScrollView>(null);
@@ -274,6 +281,7 @@ export default function ExerciseEditorModal({
                                     <Text style={{ color: textPrimary, fontSize: 16, fontWeight: "400" }}>
                                         {lockedExerciseTitle}
                                     </Text>
+
                                 </View>
                             ) : (
                                 <ExerciseAutocomplete
@@ -286,6 +294,9 @@ export default function ExerciseEditorModal({
                             {/* Set & Rest Buttons */}
                             {lockedExerciseTitle && (
                                 <>
+                                    <View>
+                                        <TagSearchPicker value={tags} onChange={onChangeTags} />
+                                    </View>
                                     <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
                                         <TouchableOpacity
                                             style={{

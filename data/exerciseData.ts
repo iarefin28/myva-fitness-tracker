@@ -137,9 +137,9 @@ export const EXERCISES_DB = [
   "French Press (Seated) (Dumbbell)",
   "Alternating Bicep Curl (Standing)",
   "Back Squat",
-  "Standing Calf Raise (bodyweight)",
-  "Standing Calf Raise (machine)",
-  "Seated Calf Raise (machine)",
+  "Standing Calf Raise (Bodyweight)",
+  "Standing Calf Raise (Machine)",
+  "Seated Calf Raise (Machine)",
   "Dumbbell Skull Crushers (Decline Bench) (Single Arm)",
   "Romanian Deadlift (Single Leg) (Dumbbell)",
 
@@ -148,7 +148,7 @@ export const EXERCISES_DB = [
   //and give them flexibility on what they want to add. 
   //Maybe allow them to pick what muscle group is gonna be hit to dynamically render "single arm" tag vs "single leg"
 
-  "Hamstring Curl Machine (Prone)",
+  "Prone Leg Curl (Machine)",
   "Arnold Press (Standing) (Single Arm)",
   "Seated Hamstring Curl Machine",
   "Push Ups (Close Grip)",

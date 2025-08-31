@@ -36,6 +36,7 @@ const getRpeColor = (num: number): string => {
 
 
 
+
 const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = false, disableToggle = false, onDelete, showNotesButton = true }) => {
     const scheme = useColorScheme();
     const isDark = scheme === "dark";
@@ -47,6 +48,13 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
     const iconColor = isDark ? "#ccc" : "#555";
     const noteText = isDark ? "#FFD700" : "#bb8800";
     const noteBorder = isDark ? "#FFD700" : "#ccc";
+
+    const C = {
+        text: isDark ? "#fff" : "#000",
+        sub: isDark ? "#aaa" : "#666",
+        chipBg: isDark ? "#2f2f2f" : "#eee",
+        border: isDark ? "#3c3c3c" : "#ddd",
+    };
 
     const [expanded, setExpanded] = useState(defaultExpanded);
     const [showNotes, setShowNotes] = useState(false);
@@ -233,6 +241,24 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                     )}
                 </View>
             </View>
+            {/* Remove expanded to display three tags regardless of how many tags we have? */}
+            {expanded && exercise.tags && (
+                <View style={styles.tagsRow}>
+                    {Object.entries(exercise.tags).map(([key, value]) => (
+                        <View
+                            key={key}
+                            style={[
+                                styles.tagBadge,
+                                { backgroundColor: C.chipBg, borderColor: C.border }
+                            ]}
+                        >
+                            <Text style={[styles.tagText, { color: C.text }]}>
+                                {key}: {value}
+                            </Text>
+                        </View>
+                    ))}
+                </View>
+            )}
             {expanded && <View style={styles.detailList}>{renderSetRestRows()}</View>}
         </TouchableOpacity>
     );
@@ -324,6 +350,32 @@ const styles = StyleSheet.create({
         color: "#1e90ff",
         fontSize: 11.5,
     },
+
+    tagsRow: {
+        flexDirection: "row",
+        flexWrap: "wrap",
+        justifyContent: "space-between", // distribute evenly
+        marginTop: 6,
+    },
+
+    tagBadge: {
+        flexBasis: "32%",   // ~1/3 width minus margins
+        alignItems: "center",
+        backgroundColor: "#3a3a3a",
+        borderRadius: 10,
+        paddingVertical: 4,
+        marginBottom: 6,
+        borderWidth: 1,
+        borderColor: "#555",
+    },
+
+    tagText: {
+        fontSize: 11.5,               // between small + readable
+        color: "#fff",
+        fontWeight: "500",
+        textAlign: "center",
+    },
+
 });
 
 export default ExerciseCard;
