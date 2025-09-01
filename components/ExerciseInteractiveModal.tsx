@@ -150,6 +150,33 @@ export default function ExerciseEditorModal({
         };
     }, [visible, trackTime]);
 
+    useEffect(() => {
+        if (!pendingFocusId) return;
+
+        const tryFocus = (suffix: "weight" | "reps" | "rest") => {
+            const targetId = `${pendingFocusId}:${suffix}`;
+            const node = focusNodesRef.current.find(n => n.id === targetId);
+            if (node?.ref?.current?.focus) {
+                node.ref.current.focus();
+                return true;
+            }
+            return false;
+        };
+
+        // allow inputs to mount & register first
+        requestAnimationFrame(() => {
+            if (tryFocus("weight") || tryFocus("reps") || tryFocus("rest")) {
+                onPendingFocusHandled?.();
+            } else {
+                // one retry next frame in case registration is a tick late
+                requestAnimationFrame(() => {
+                    tryFocus("weight") || tryFocus("reps") || tryFocus("rest");
+                    onPendingFocusHandled?.();
+                });
+            }
+        });
+    }, [pendingFocusId, onPendingFocusHandled]);
+
     const formatElapsedTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;

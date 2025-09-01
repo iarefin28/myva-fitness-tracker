@@ -471,14 +471,16 @@ export default function AddWorkout() {
     };
 
     const addRest = () => {
+        const id = nanoid();
         const newRest = {
-            id: nanoid(), // 🆕
+            id,
             type: "rest",
             value: "",
             restInSeconds: 0
         };
 
         const updatedList = computeNumberedActions([...actionsList, newRest]);
+        setPendingFocusId(id);    
         setActionsList(updatedList);
         setTriggerScrollToEnd(true);
         console.log("Updated Actions List:", JSON.stringify(updatedList, null, 2));
