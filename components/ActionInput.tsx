@@ -350,7 +350,7 @@ const ActionInput: React.FC<ActionInputProps> = ({
                     <Animated.View style={[
                         styles.container,
                         {
-                            borderColor: action.isWarmup ? "#61dafb" : "transparent",
+                            borderColor: action.isWarmup ? "yellow" : "transparent",
                             borderWidth: 1,
                             backgroundColor: cardBg
                         }
