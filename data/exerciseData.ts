@@ -28,15 +28,17 @@ export const EXERCISES_DB = [
   "Front Raises",
   "Cable Chest Fly",
   "Tricep Pushdown",
+  "Tricep Extensions",
   "Skull Crushers",
   "Close Grip Bench Press",
-  "Machine Chest Press",
-  "Flat Dumbbell Press",
+  "Chest Press Machine",
+  "Dumbbell Press",
   "Dips (Close Grip)",
   "Dips (Wide Grip)",
   "Dips (Neutral Grip)",
 
   //Pull Up Variations 
+  "Pull Ups",
   "Pull Ups (Overhand Close Grip)",
   "Pull Ups (Overhand Shoulder Width Grip)",
   "Pull Ups (Overhand Wide Grip)",
@@ -59,6 +61,7 @@ export const EXERCISES_DB = [
   "Lat Pulldown (Close Grip)",
   "Lat Pulldown (Shoulder Width Grip)",
   "Lat Pulldown (Wide Grip):",
+  "Lat Pulldown Machine",
 
 
   "Lat Pulldown",
@@ -79,7 +82,7 @@ export const EXERCISES_DB = [
   // Legs
   "Squat",
   "Front Squat",
-  "Bulgarian Split Squat",
+  "Bulgarian Split Squats",
   "Walking Lunges",
   "Reverse Lunges",
   "Leg Press",
@@ -92,6 +95,7 @@ export const EXERCISES_DB = [
   "Calf Raises",
   "Box Jumps",
   "Goblet Squat",
+  "Kneeling Leg Curl Machine",
 
   // Core
   "Plank",
@@ -135,12 +139,12 @@ export const EXERCISES_DB = [
   //Ishan's Workouts 
   "Hip Thrust Machine",
   "French Press (Seated) (Dumbbell)",
-  "Alternating Bicep Curl (Standing)",
+  "Alternating Bicep Curls",
   "Back Squat",
   "Standing Calf Raise (Bodyweight)",
   "Standing Calf Raise (Machine)",
   "Seated Calf Raise (Machine)",
-  "Dumbbell Skull Crushers (Decline Bench) (Single Arm)",
+  "Dumbbell Skull Crushers",
   "Romanian Deadlift (Single Leg) (Dumbbell)",
 
   //Okay I have to make a choice on how many workouts I will provide for the user and what they can add. 
@@ -158,10 +162,11 @@ export const EXERCISES_DB = [
   "Weighted Push Ups (Shoulder Width Grip)",
   "Weighted Push Ups (Wide Grip)",
   "Face Pulls (Cable) (Rope)",
-  "Incline Dumbbell Row",
+  "Dumbbell Row",
+  "Incline Dumbbell Rows",
   "Incline Dumbbell Row (Single Arm)",
   "Glute Kick Back Machine",
-  "Seated Hip Adductor Machine",
+  "Hip Adductor Machine",
   "Seated Hip Abductor Machine",
   "Push Ups (Bosu Ball)",
   "Seated Cable Row (Close Grip)",

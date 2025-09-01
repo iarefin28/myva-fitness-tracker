@@ -29,14 +29,17 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
   "Tricep Pushdown": "weighted",
   "Skull Crushers": "weighted",
   "Close Grip Bench Press": "weighted",
-  "Machine Chest Press": "weighted",
-  "Flat Dumbbell Press": "weighted",
+  "Chest Press Machine": "weighted",
+  "Dumbbell Press": "weighted",
   "Dips (Close Grip)": "bodyweight",
   "Dips (Neutral Grip)": "bodyweight",
   "Dips (Wide Grip)": "bodyweight",
+  "Tricep Extensions": "weighted",
 
   /* Back */
   // Pull Up Variations
+  "Pull Ups": "bodyweight",
+  "Weighted Pull Ups": "weighted",
   "Pull Ups (Overhand Close Grip)": "bodyweight",
   "Pull Ups (Overhand Shoulder Width Grip)": "bodyweight",
   "Pull Ups (Overhand Wide Grip)": "bodyweight",
@@ -60,6 +63,7 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
   "Lat Pulldown (Close Grip)": "weighted",
   "Lat Pulldown (Shoulder Width Grip)": "weighted",
   "Lat Pulldown (Wide Grip):": "weighted",
+  "Lat Pulldown Machine:": "weighted",
 
 
   "Seated Row": "weighted",
@@ -79,7 +83,7 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
 
   "Squat": "weighted",
   "Front Squat": "weighted",
-  "Bulgarian Split Squat": "weighted",
+  "Bulgarian Split Squats": "weighted",
   "Walking Lunges": "weighted",
   "Reverse Lunges": "weighted",
   "Leg Press": "weighted",
@@ -92,6 +96,7 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
   "Calf Raises": "weighted",
   "Box Jumps": "bodyweight",
   "Goblet Squat": "weighted",
+  "Kneeling Leg Curl Machine": "weighted",
 
   "Plank": "duration",
   "Side Plank": "duration",
@@ -133,12 +138,12 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
 
   "Hip Thrust Machine": "weighted",
   "French Press (Seated) (Dumbbell)": "weighted",
-  "Alternating Bicep Curl (Standing)": "bodyweight",
+  "Alternating Bicep Curls": "weighted",
   "Back Squat": "weighted",
   "Standing Calf Raise (Bodyweight)": "bodyweight",
   "Standing Calf Raise (Machine)": "weighted",
   "Seated Calf Raise (Machine)": "weighted",
-  "Dumbbell Skull Crushers (Decline Bench) (Single Arm)": "weighted",
+  "Dumbbell Skull Crushers": "weighted",
   "Romanian Deadlift (Single Leg) (Dumbbell)": "weighted",
   "Prone Leg Curl (Machine)": "weighted",
   "Arnold Press (Standing) (Single Arm)": "weighted",
@@ -153,7 +158,7 @@ export const EXERCISE_TYPE_MAP: Record<string, "bodyweight" | "weighted" | "dura
   "Incline Dumbbell Row": "weighted",
   "Incline Dumbbell Row (Single Arm)": "weighted",
   "Glute Kick Back Machine": "weighted",
-  "Seated Hip Adductor Machine": "weighted",
+  "Hip Adductor Machine": "weighted",
   "Seated Hip Abductor Machine": "weighted",
   "Push Ups (Bosu Ball)": "bodyweight",
   "Seated Cable Row (Close Grip)": "weighted",
