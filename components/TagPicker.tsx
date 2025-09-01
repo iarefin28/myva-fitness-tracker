@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 
-type ExclusiveGroup = "equip" | "bench" | "grip";
+type ExclusiveGroup = "equipment" | "bench" | "grip style" | "grip width" | "side" | "unilateral pattern" | "posture";;
 export type TagState = Partial<Record<ExclusiveGroup, string>>;
 type Props = {
   value: TagState;
@@ -24,15 +24,26 @@ type Props = {
 };
 
 const GROUP_OPTIONS: Record<ExclusiveGroup, string[]> = {
-  equip: ["barbell", "dumbbell", "kettlebell", "cable", "machine", "smith", "trap-bar", "bodyweight"],
+  equipment: ["barbell", "dumbbell", "kettlebell", "cable", "machine", "smith", "trap-bar", "bodyweight"],
   bench: ["flat", "incline", "decline"],
-  grip: ["overhand", "underhand", "neutral", "mixed"],
+  "grip style": ["overhand", "underhand", "neutral", "mixed"],
+  "grip width": ["close", "standard", "wide", "shoulder"],
+  side: ["bilateral", "unilateral"],
+  "unilateral pattern": ["single arm", "single leg", "alternating"],
+  posture: ["standing", "seated", "half-kneeling", "tall-kneeling", "prone", "supine", "bent-over"],
 };
 
 const ALIASES: Record<string, string[]> = {
   barbell: ["bb"], dumbbell: ["db"], kettlebell: ["kb"],
   "trap-bar": ["trapbar", "hexbar", "hex-bar"],
   overhand: ["pronated"], underhand: ["supinated"],
+  "single arm": ["single-arm", "one arm", "one-arm"],
+  "single leg": ["single-leg", "one leg", "one-leg"],
+  alternating: ["alternate", "alt"],
+  "bent-over": ["bent over", "hinge", "hip hinge"],
+  "tall-kneeling": ["tall kneeling"],
+  "half-kneeling": ["half kneeling", "split kneeling"],
+  prone: ["chest-supported"],
 };
 
 const LANE = 40;   // fixed lane height for chips
@@ -42,7 +53,7 @@ const V_SP = 6;
 const TagSearchPicker: React.FC<Props> = ({
   value,
   onChange,
-  groups = ["equip", "bench", "grip"],
+  groups = ["equipment", "bench", "grip style", "grip width", "side", "unilateral pattern", "posture"],
   maxResults = 4,
   height = 140,
   containerStyle,
@@ -60,18 +71,23 @@ const TagSearchPicker: React.FC<Props> = ({
 
   const [q, setQ] = useState("");
 
-  // Build flat index
+  const activeGroups = useMemo(() => {
+    if (value.side !== "unilateral") {
+      return groups.filter(g => g !== "unilateral pattern") as ExclusiveGroup[];
+    }
+    return groups;
+  }, [groups, value.side]);
+
   const index = useMemo(() => {
     const items: { group: ExclusiveGroup; value: string; label: string; tokens: string[] }[] = [];
-    for (const g of groups) {
+    for (const g of activeGroups) {
       for (const opt of (GROUP_OPTIONS[g] || [])) {
         const tokens = [opt, g, ...(ALIASES[opt] || [])].map(s => s.toLowerCase());
         items.push({ group: g, value: opt, label: opt, tokens });
       }
     }
     return items;
-  }, [groups]);
-
+  }, [activeGroups]);
   // Rank results
   const results = useMemo(() => {
     const s = q.trim().toLowerCase();
@@ -88,16 +104,27 @@ const TagSearchPicker: React.FC<Props> = ({
       .map(x => x.it);
   }, [q, index, maxResults]);
 
+  // put near the top of the component
+  function normalize(next: TagState): TagState {
+    // if not explicitly unilateral, pattern must not exist
+    if (next.side !== "unilateral") {
+      delete next["unilateral pattern"];
+    }
+    return next;
+  }
+
   const select = (g: ExclusiveGroup, opt: string) => {
-    const next: TagState = { ...value, [g]: value[g] === opt ? undefined : opt };
-    onChange(next);
-    setQ(""); // lock-in feel
+    const toggledOff = value[g] === opt;
+    const next: TagState = { ...value, [g]: toggledOff ? undefined : opt };
+    onChange(normalize(next));
+    setQ("");
   };
 
   const clearGroup = (g: ExclusiveGroup) => {
     if (!value[g]) return;
-    const next = { ...value }; delete next[g];
-    onChange(next);
+    const next: TagState = { ...value };
+    delete next[g];
+    onChange(normalize(next));
   };
 
   const SelectedChip = ({ g, label }: { g: ExclusiveGroup; label: string }) => (
@@ -164,7 +191,7 @@ const TagSearchPicker: React.FC<Props> = ({
           style={{ width: "100%" }}
           contentContainerStyle={{ alignItems: "center", paddingRight: 4 }}
         >
-          {(["equip", "bench", "grip"] as ExclusiveGroup[])
+          {(["equipment", "bench", "posture", "grip style", "grip width", "side", ...(value.side === "unilateral" ? ["unilateral pattern"] : [])] as ExclusiveGroup[])
             .filter(g => groups.includes(g))
             .map(g => (value[g] ? <SelectedChip key={`sel:${g}`} g={g} label={value[g]!} /> : null))}
         </ScrollView>
@@ -175,7 +202,7 @@ const TagSearchPicker: React.FC<Props> = ({
       {/* SEARCH */}
       <View style={{ height: INPUT_H, justifyContent: "center" }}>
         <TextInput
-          placeholder="Search tags (equipment, grip, stance...)"
+          placeholder="Search tags (equipment, posture, grip...)"
           placeholderTextColor={C.sub}
           value={q}
           onChangeText={setQ}
