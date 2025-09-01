@@ -18,6 +18,14 @@ import Animated, {
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
+// NEW props
+type FocusProps = {
+    actionIndex: number;
+    registerFocus: (id: string, order: number, ref: React.RefObject<TextInput>) => void;
+    unregisterFocus: (id: string) => void;
+    focusNext: (id: string) => boolean;
+};
+
 
 
 
@@ -41,7 +49,17 @@ interface ActionInputProps {
     showInfoIcon?: boolean;
     autoFocusWeight?: boolean;
     onDidAutoFocus?: () => void;
+    actionIndex: number;
+    registerFocus: FocusProps["registerFocus"];
+    unregisterFocus: FocusProps["unregisterFocus"];
+    focusNext: FocusProps["focusNext"];
 }
+
+const RANK = {
+    weight: 0,
+    reps: 1,
+    rest: 2,
+} as const;
 
 const ActionInput: React.FC<ActionInputProps> = ({
     action,
@@ -57,8 +75,9 @@ const ActionInput: React.FC<ActionInputProps> = ({
     onDismiss,
     showInfoIcon = true,
     autoFocusWeight = false,
-    onDidAutoFocus,
+    onDidAutoFocus, actionIndex, registerFocus, unregisterFocus, focusNext,
 }) => {
+
     const isDark = useColorScheme() === "dark";
     const cardBg = isDark ? "#2a2a2a" : "#d1d1d1";
     const innerBg = isDark ? "#1e1e1e" : "#ffffff";
@@ -69,17 +88,32 @@ const ActionInput: React.FC<ActionInputProps> = ({
     const inputBg = isDark ? "#1e1e1e" : "#ffffff";
     const inputText = isDark ? "#fff" : "#000";
     const iconColorPrimary = isDark ? "#ccc" : "#555";
-    const weightRef = useRef<TextInput>(null);   // NEW
+
+    // refs
+    const weightRef = useRef<TextInput>(null);
+    const repsRef = useRef<TextInput>(null);
+    const restRef = useRef<TextInput>(null); // for Rest "Time"
+
 
     useEffect(() => {
-        if (autoFocusWeight && action.type === "set" && exerciseType === "weighted") {
-            const t = setTimeout(() => {
-                weightRef.current?.focus();
-                onDidAutoFocus?.();
-            }, 120); // small delay helps after re-layout/scroll
-            return () => clearTimeout(t);
+        const regs: Array<[string, number, React.RefObject<TextInput>]> = [];
+        const base = actionIndex * 10;
+
+        if (action.type === "set") {
+            if (exerciseType === "weighted") {
+                regs.push([`${action.id}:weight`, base + RANK.weight, weightRef]);
+            }
+            // You said “only weights and reps” – include reps for both bodyweight/weighted
+            regs.push([`${action.id}:reps`, base + RANK.reps, repsRef]);
         }
-    }, [autoFocusWeight, action?.type, exerciseType, onDidAutoFocus]);
+
+        if (action.type === "rest") {
+            regs.push([`${action.id}:rest`, base + RANK.rest, restRef]);
+        }
+
+        regs.forEach(([id, order, ref]) => registerFocus(id, order, ref));
+        return () => { regs.forEach(([id]) => unregisterFocus(id)); };
+    }, [action.type, action.id, actionIndex, exerciseType, registerFocus, unregisterFocus]);
 
 
     const screenHeight = Dimensions.get("window").height;
@@ -207,7 +241,8 @@ const ActionInput: React.FC<ActionInputProps> = ({
 
                                 <View style={styles.rightRow}>
                                     <View style={styles.inputRow}>
-                                        <TextInput
+                                        {/* <TextInput
+                                            ref={restRef}
                                             placeholder="Time"
                                             placeholderTextColor={textSecondary}
                                             keyboardType="numeric"
@@ -237,6 +272,52 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                                     backgroundColor: inputBg,
                                                     color: inputText,
                                                     borderColor: unitBorder,
+                                                }
+                                            ]}
+                                        /> */}
+                                        <TextInput
+                                            ref={restRef}
+                                            placeholder="Time"
+                                            placeholderTextColor={textSecondary}
+                                            keyboardType="numeric"
+                                            returnKeyType={"next"}
+                                            blurOnSubmit={false}
+                                            value={formatRestDisplay(action.value)}  // e.g. "1:30" from raw digits
+                                            onChangeText={(text) => {
+                                                const clean = text.replace(/\D/g, "");
+
+                                                let seconds = 0;
+                                                if (clean.length <= 2) {
+                                                    seconds = parseInt(clean || "0");
+                                                } else {
+                                                    const minutes = parseInt(clean.slice(0, -2) || "0");
+                                                    const secs = parseInt(clean.slice(-2) || "0");
+                                                    seconds = minutes * 60 + secs;
+                                                }
+
+                                                // keep raw digits (MMSS) and parsed seconds
+                                                updateActionValue(actionId, "value", clean);
+                                                updateActionValue(actionId, "restInSeconds", String(seconds));
+                                            }}
+
+                                            maxLength={5}
+                                            // when Next/Done is pressed
+                                            onSubmitEditing={() => {
+                                                // jump to the next registered input (e.g., next set’s Weight)
+                                                focusNext(`${action.id}:rest`);
+                                            }}
+
+                                            // make the caret visible + consistent
+                                            caretHidden={false}
+
+                                            style={[
+                                                styles.input,
+                                                {
+                                                    backgroundColor: inputBg,
+                                                    color: inputText,
+                                                    borderColor: unitBorder,
+                                                    // optional: keep caret visible when empty if you center text elsewhere
+                                                    textAlign: (formatRestDisplay(action.value) || "").length ? "center" : "left",
                                                 }
                                             ]}
                                         />
@@ -314,16 +395,19 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                                 placeholder="Weight"
                                                 placeholderTextColor={textSecondary}
                                                 keyboardType="numeric"
-                                                value={action.weight ?? ""}
-                                                onChangeText={(value) => updateActionValue(actionId, "weight", value)}
+                                                value={action.weight ?? ""} // ensure string
+                                                onChangeText={(v) => updateActionValue(actionId, "weight", v)}
+                                                returnKeyType="next"
+                                                blurOnSubmit={false}
+                                                onSubmitEditing={() => focusNext(`${action.id}:weight`)}
                                                 style={[
                                                     styles.input,
                                                     {
                                                         backgroundColor: inputBg,
                                                         color: inputText,
                                                         borderColor: unitBorder,
-                                                        textAlign: (action.weight ?? "").length ? "center" : "left",
-                                                    }
+                                                        textAlign: (action.weight ?? "").length ? "center" : "left", // show caret when empty
+                                                    },
                                                 ]}
                                             />
                                             <TouchableOpacity
@@ -342,18 +426,18 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                     )}
                                     {(exerciseType === "bodyweight" || exerciseType === "weighted") && (
                                         <TextInput
+                                            ref={repsRef}
                                             placeholder="Reps"
                                             placeholderTextColor={textSecondary}
                                             keyboardType="numeric"
-                                            value={action.reps}
-                                            onChangeText={(value) => updateActionValue(actionId, "reps", value)}
+                                            value={action.value ?? ""} // if your reps field is 'value'
+                                            onChangeText={(v) => updateActionValue(actionId, "value", v)}
+                                            returnKeyType="next"
+                                            blurOnSubmit={false}
+                                            onSubmitEditing={() => focusNext(`${action.id}:reps`)}
                                             style={[
                                                 styles.input,
-                                                {
-                                                    backgroundColor: inputBg,
-                                                    color: inputText,
-                                                    borderColor: unitBorder,
-                                                }
+                                                { backgroundColor: inputBg, color: inputText, borderColor: unitBorder }
                                             ]}
                                         />
                                     )}

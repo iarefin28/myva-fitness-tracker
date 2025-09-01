@@ -10,6 +10,8 @@ import type { ExerciseAction, ExerciseType, TagState } from "../types/workout";
 import ActionInput from "./ActionInput";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
 
+import { useCallback } from "react";
+
 import TagSearchPicker from "./TagPicker";
 
 interface Props {
@@ -96,6 +98,31 @@ export default function ExerciseEditorModal({
     const textSecondary = isDark ? "#aaa" : "#444";
     const blueAccent = isDark ? "#1e90ff" : "#007aff";
     const borderColor = isDark ? "#444" : "#ccc";
+
+    type InputNode = { id: string; order: number; ref: React.RefObject<any> };
+    const focusNodesRef = useRef<InputNode[]>([]);
+
+    const registerFocus = useCallback((id: string, order: number, ref: React.RefObject<any>) => {
+        const nodes = focusNodesRef.current;
+        const i = nodes.findIndex(n => n.id === id);
+        if (i >= 0) nodes[i] = { id, order, ref };
+        else nodes.push({ id, order, ref });
+        nodes.sort((a, b) => a.order - b.order);
+    }, []);
+
+    const unregisterFocus = useCallback((id: string) => {
+        focusNodesRef.current = focusNodesRef.current.filter(n => n.id !== id);
+    }, []);
+
+    const focusNext = useCallback((id: string) => {
+        const nodes = focusNodesRef.current;
+        const idx = nodes.findIndex(n => n.id === id);
+        if (idx >= 0 && idx + 1 < nodes.length) {
+            nodes[idx + 1].ref.current?.focus?.();
+            return true;
+        }
+        return false;
+    }, []);
 
     useEffect(() => {
         setExpandedIndex(null);
@@ -381,6 +408,10 @@ export default function ExerciseEditorModal({
                                                     showInfoIcon={mode !== "template"}
                                                     autoFocusWeight={action.type === "set" && action.id === pendingFocusId}
                                                     onDidAutoFocus={onPendingFocusHandled}
+                                                    actionIndex={index}
+                                                    registerFocus={registerFocus}
+                                                    unregisterFocus={unregisterFocus}
+                                                    focusNext={focusNext}
                                                 />
                                             </Animated.View>
                                         ))}
