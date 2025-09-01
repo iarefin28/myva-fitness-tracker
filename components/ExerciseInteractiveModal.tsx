@@ -370,7 +370,7 @@ export default function ExerciseEditorModal({
                                         style={{ flex: 1 }}
                                         showsVerticalScrollIndicator={false}
                                         keyboardShouldPersistTaps="handled"
-                                        keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "none"}
+                                        keyboardDismissMode="none"
                                         onContentSizeChange={() => {
                                             if (scrollToBottom) {
                                                 scrollViewRef.current?.scrollToEnd({ animated: true });
