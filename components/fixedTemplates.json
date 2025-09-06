@@ -1,0 +1,722 @@
+[
+  {
+    "id": 1755387922645,
+    "name": "Chest",
+    "exercises": [
+      {
+        "name": "Flat Dumbbell Press",
+        "type": "weighted",
+        "actions": [
+          {
+            "id": "qjyuczoLyL6ggoaxdCeJF",
+            "type": "set",
+            "weight": "45",
+            "weightUnit": "lb",
+            "reps": "5",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": true,
+            "RPE": "",
+            "setNumber": null
+          },
+          {
+            "id": "sIxTJaxJHnC8iZH67O8BR",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 1
+          },
+          {
+            "id": "20Pt2Jdcfz_CxDBPkI2ki",
+            "type": "set",
+            "weight": "55",
+            "weightUnit": "lb",
+            "reps": "5",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": true,
+            "RPE": "",
+            "setNumber": null
+          },
+          {
+            "id": "-fbL3nlBevCkNUM-JuuIQ",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 2
+          },
+          {
+            "id": "3h29nvEOEBN8JCYGCuZBW",
+            "type": "set",
+            "weight": "70",
+            "weightUnit": "lb",
+            "reps": "5",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": true,
+            "RPE": "",
+            "setNumber": null
+          },
+          {
+            "id": "rcVh0tDI1MhIkLcDHgymi",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 3
+          },
+          {
+            "id": "CXWvPV5_IbH3feSmTFPYh",
+            "type": "set",
+            "weight": "80",
+            "weightUnit": "lb",
+            "reps": "5",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": true,
+            "RPE": "",
+            "setNumber": null
+          },
+          {
+            "id": "DT49rI0pe2Y3W-5TeQYvL",
+            "type": "rest",
+            "value": "300",
+            "restInSeconds": "180",
+            "restNumber": 4
+          },
+          {
+            "id": "j2NzL3VcMWAIh2kAtbzvj",
+            "type": "set",
+            "weight": "90",
+            "weightUnit": "lb",
+            "reps": "5",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": true,
+            "RPE": "",
+            "setNumber": null
+          },
+          {
+            "id": "KwRBWu8oWttYBZvlR5V5M",
+            "type": "rest",
+            "value": "500",
+            "restInSeconds": "300",
+            "restNumber": 5
+          },
+          {
+            "id": "f2tSoGw9SkHvUM4b4E4mm",
+            "type": "set",
+            "weight": "100",
+            "weightUnit": "lb",
+            "reps": "8",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 1
+          },
+          {
+            "id": "l4Z3UX4tMsYlx9B6fdNgp",
+            "type": "rest",
+            "value": "500",
+            "restInSeconds": "300",
+            "restNumber": 6
+          },
+          {
+            "id": "ZpOnIxDvv6xw6_XKvzc71",
+            "type": "set",
+            "weight": "100",
+            "weightUnit": "lb",
+            "reps": "8",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 2
+          },
+          {
+            "id": "XxqJrIIbwEd5-xL_b6Lng",
+            "type": "rest",
+            "value": "500",
+            "restInSeconds": "300",
+            "restNumber": 7
+          },
+          {
+            "id": "feIrPtcjnhvcw8XZlHaPo",
+            "type": "set",
+            "weight": "100",
+            "weightUnit": "lb",
+            "reps": "8",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 3
+          },
+          {
+            "id": "I_Edv8wR7uWA-UBBNlYrb",
+            "type": "rest",
+            "value": "500",
+            "restInSeconds": "300",
+            "restNumber": 8
+          }
+        ],
+        "editDurationInSeconds": 0,
+        "computedDurationInSeconds": 2300
+      },
+      {
+        "name": "Dumbbell Shoulder Press",
+        "type": "weighted",
+        "actions": [
+          {
+            "id": "aam8QhnDsPYMvAu6SGAkc",
+            "type": "set",
+            "weight": "45",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 1
+          },
+          {
+            "id": "d0eQhWRWBSmS802JYCaMT",
+            "type": "rest",
+            "value": "300",
+            "restInSeconds": "180",
+            "restNumber": 1
+          },
+          {
+            "id": "iTOPjSYOMiZBV1ck07siz",
+            "type": "set",
+            "weight": "45",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 2
+          },
+          {
+            "id": "7MyOzVSq9_iRBvYEZHIKD",
+            "type": "rest",
+            "value": "300",
+            "restInSeconds": "180",
+            "restNumber": 2
+          },
+          {
+            "id": "GGucnKkQOB0sAXSup7zVL",
+            "type": "set",
+            "weight": "45",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 3
+          },
+          {
+            "id": "0GRoByfi0rLclOwr6ofw6",
+            "type": "rest",
+            "value": "300",
+            "restInSeconds": "180",
+            "restNumber": 3
+          }
+        ],
+        "editDurationInSeconds": 0,
+        "computedDurationInSeconds": 750
+      },
+      {
+        "name": "Machine Chest Press",
+        "type": "weighted",
+        "actions": [
+          {
+            "id": "PffH9SWT20kw9QN08wI0J",
+            "type": "set",
+            "weight": "65",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 1
+          },
+          {
+            "id": "MRCqQpbizZKvD2bExZhqL",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 1
+          },
+          {
+            "id": "mh9FfayDU924Aaxnmkldp",
+            "type": "set",
+            "weight": "65",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 2
+          },
+          {
+            "id": "cO4Tt-h-UjMVm4ZGALo3n",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 2
+          },
+          {
+            "id": "CtWsaaREmZaukQykXtER1",
+            "type": "set",
+            "weight": "65",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 3
+          },
+          {
+            "id": "sG8YZMVIAiY749ABifgnY",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 3
+          }
+        ],
+        "editDurationInSeconds": 0,
+        "computedDurationInSeconds": 570
+      },
+      {
+        "name": "Skull Crushers",
+        "type": "weighted",
+        "actions": [
+          {
+            "id": "9l2o7bpmyCbMKJu_4vg3w",
+            "type": "set",
+            "weight": "30",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 1
+          },
+          {
+            "id": "tFgjEG0gUlAOoSy1iqGJK",
+            "type": "rest",
+            "value": "300",
+            "restInSeconds": "180",
+            "restNumber": 1
+          },
+          {
+            "id": "hFYoTvGDUCkDSvnu3iutt",
+            "type": "set",
+            "weight": "30",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 2
+          },
+          {
+            "id": "rNKbdKI2-AhwpRkqWpxEU",
+            "type": "rest",
+            "value": "300",
+            "restInSeconds": "180",
+            "restNumber": 2
+          },
+          {
+            "id": "y_M5S7p4nQk24VeC6On9X",
+            "type": "set",
+            "weight": "30",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 3
+          },
+          {
+            "id": "K87UVXO44Amht-B8185er",
+            "type": "rest",
+            "value": "300",
+            "restInSeconds": "180",
+            "restNumber": 3
+          }
+        ],
+        "editDurationInSeconds": 0,
+        "computedDurationInSeconds": 750
+      }
+    ],
+    "approxDurationInSeconds": 4640,
+    "metrics": {
+      "totalExercises": 4,
+      "totalSets": 17,
+      "totalWorkingSets": 12,
+      "approxDurationInSeconds": 4640
+    },
+    "createdBy": "Ishan Arefin",
+    "createdOn": "2025-08-16T23:45:22.646Z",
+    "usageCount": 0,
+    "updatedOn": "2025-08-17T00:58:42.567Z"
+  },
+  {
+    "id": 1756853975197,
+    "name": "Legs 09/02/2025",
+    "exercises": [
+      {
+        "name": "Bulgarian Split Squats",
+        "type": "weighted",
+        "actions": [
+          {
+            "id": "3HWXtxZBxSolScn6L4vzV",
+            "type": "set",
+            "weight": "30",
+            "weightUnit": "lb",
+            "reps": "8",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": true,
+            "RPE": "",
+            "setNumber": null
+          },
+          {
+            "id": "P9rxs8KJ1xR5IeViDntoQ",
+            "type": "rest",
+            "value": "300",
+            "restInSeconds": "180",
+            "restNumber": 1
+          },
+          {
+            "id": "ujGEmJDG8kiBulGJ359Bs",
+            "type": "set",
+            "weight": "50",
+            "weightUnit": "lb",
+            "reps": "5",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": true,
+            "RPE": "",
+            "setNumber": null
+          },
+          {
+            "id": "lNcw9P5Q2pC0Pqq5rIe4h",
+            "type": "rest",
+            "value": "300",
+            "restInSeconds": "180",
+            "restNumber": 2
+          },
+          {
+            "id": "k9mqxWIrRCq8wNoU4ABau",
+            "type": "set",
+            "weight": "70",
+            "weightUnit": "lb",
+            "reps": "8",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 1
+          },
+          {
+            "id": "VY_h8Fq438vMBCnuYqTp5",
+            "type": "rest",
+            "value": "500",
+            "restInSeconds": "300",
+            "restNumber": 3
+          },
+          {
+            "id": "F8DrCW7QERY37rnJWRw6R",
+            "type": "set",
+            "weight": "70",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 2
+          },
+          {
+            "id": "rrovgHUcMWMozYUcbxHwU",
+            "type": "rest",
+            "value": "500",
+            "restInSeconds": "300",
+            "restNumber": 4
+          },
+          {
+            "id": "lWFbVyFvMTcCts9-UU8qN",
+            "type": "set",
+            "weight": "70",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 3
+          },
+          {
+            "id": "opW_xRojvAYtjCnMp-bNs",
+            "type": "rest",
+            "value": "500",
+            "restInSeconds": "300",
+            "restNumber": 5
+          }
+        ],
+        "editDurationInSeconds": 0,
+        "computedDurationInSeconds": 1610,
+        "tags": {
+          "side": "unilateral",
+          "unilateral pattern": "single leg",
+          "equipment": "dumbbell",
+          "posture": "standing"
+        }
+      },
+      {
+        "name": "Kneeling Leg Curl Machine",
+        "type": "weighted",
+        "actions": [
+          {
+            "id": "aQxBKW38H9orkb0Z88m-W",
+            "type": "set",
+            "weight": "16",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 1
+          },
+          {
+            "id": "RHW6VYJtuTfjGlmqZfHoQ",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 1
+          },
+          {
+            "id": "nZGEpH4Xt-a8OLPWSpe_8",
+            "type": "set",
+            "weight": "26",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 2
+          },
+          {
+            "id": "-v4qpfFl5btdk7IkfKaq3",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 2
+          },
+          {
+            "id": "_2KBSTU5N5nzZKB0a9rxd",
+            "type": "set",
+            "weight": "36",
+            "weightUnit": "lb",
+            "reps": "10",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 3
+          },
+          {
+            "id": "7ySNsv5ZvJD4s55W7WmHI",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 3
+          }
+        ],
+        "editDurationInSeconds": 0,
+        "computedDurationInSeconds": 570,
+        "tags": {
+          "equipment": "machine",
+          "posture": "tall-kneeling",
+          "side": "unilateral",
+          "unilateral pattern": "single leg"
+        }
+      },
+      {
+        "name": "Standing Calf Raise (Bodyweight)",
+        "type": "bodyweight",
+        "actions": [
+          {
+            "id": "T_P9fxUWMeV42Xubj21gu",
+            "type": "set",
+            "reps": "30",
+            "unit": "",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 1
+          },
+          {
+            "id": "A1r1vWfonDSes_8QulWD5",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 1
+          },
+          {
+            "id": "WxT__r3KadCDSKsXlcjM0",
+            "type": "set",
+            "reps": "30",
+            "unit": "",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 2
+          },
+          {
+            "id": "hpkhALQLgTlhonOJeA_To",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 2
+          },
+          {
+            "id": "MyLy8ONKwlWP6hQ1_UJQd",
+            "type": "set",
+            "reps": "30",
+            "unit": "",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 3
+          },
+          {
+            "id": "O8H6YhaCznfcNO5CWMj3g",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 3
+          }
+        ],
+        "editDurationInSeconds": 0,
+        "computedDurationInSeconds": 570,
+        "tags": {
+          "posture": "standing"
+        }
+      },
+      {
+        "name": "Hip Adductor Machine",
+        "type": "weighted",
+        "actions": [
+          {
+            "id": "RfN28tfq-08yXnDIwpw-0",
+            "type": "set",
+            "weight": "70",
+            "weightUnit": "lb",
+            "reps": "15",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 1
+          },
+          {
+            "id": "dxLFr2edQDMJRg4OezfiJ",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 1
+          },
+          {
+            "id": "6GQXfNeRZDHArMGoboKRf",
+            "type": "set",
+            "weight": "70",
+            "weightUnit": "lb",
+            "reps": "15",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 2
+          },
+          {
+            "id": "z5yCvESfMKOCtlesi0gFW",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 2
+          },
+          {
+            "id": "b0jcGpyt4XtycAGbwLKgp",
+            "type": "set",
+            "weight": "90",
+            "weightUnit": "lb",
+            "reps": "15",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 3
+          },
+          {
+            "id": "fOqFUC37NGwLAiFlbbcPL",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 3
+          },
+          {
+            "id": "fuTzCDA5S84-c2Zp5c5hH",
+            "type": "set",
+            "weight": "90",
+            "weightUnit": "lb",
+            "reps": "15",
+            "unit": "lb",
+            "note": "",
+            "isWarmup": false,
+            "RPE": 0,
+            "setNumber": 4
+          },
+          {
+            "id": "2Qptv8cv0c4jK2Z4MfIkm",
+            "type": "rest",
+            "value": "200",
+            "restInSeconds": "120",
+            "restNumber": 4
+          }
+        ],
+        "editDurationInSeconds": 0,
+        "computedDurationInSeconds": 760,
+        "tags": {
+          "equipment": "machine",
+          "posture": "seated",
+          "side": "bilateral"
+        }
+      }
+    ],
+    "approxDurationInSeconds": 3780,
+    "metrics": {
+      "totalExercises": 4,
+      "totalSets": 15,
+      "totalWorkingSets": 13,
+      "approxDurationInSeconds": 3780
+    },
+    "createdBy": "Ishan Arefin",
+    "createdOn": "2025-09-02T22:59:35.210Z",
+    "usageCount": 0
+  }
+]
+

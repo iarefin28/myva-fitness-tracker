@@ -18,17 +18,12 @@ import Animated, {
 import { useEffect } from "react";
 import { useColorScheme } from "react-native";
 
-// NEW props
 type FocusProps = {
     actionIndex: number;
-    registerFocus: (id: string, order: number, ref: React.RefObject<TextInput>) => void;
+    registerFocus: (id: string, order: number, ref: React.RefObject<TextInput | null>) => void;
     unregisterFocus: (id: string) => void;
     focusNext: (id: string) => boolean;
 };
-
-
-
-
 
 interface ActionInputProps {
     action: any;
@@ -90,13 +85,13 @@ const ActionInput: React.FC<ActionInputProps> = ({
     const iconColorPrimary = isDark ? "#ccc" : "#555";
 
     // refs
-    const weightRef = useRef<TextInput>(null);
-    const repsRef = useRef<TextInput>(null);
-    const restRef = useRef<TextInput>(null); // for Rest "Time"
+    const weightRef = useRef<TextInput | null>(null);
+    const repsRef = useRef<TextInput | null>(null);
+    const restRef = useRef<TextInput | null>(null);
 
 
     useEffect(() => {
-        const regs: Array<[string, number, React.RefObject<TextInput>]> = [];
+        const regs: Array<[string, number, React.RefObject<TextInput | null>]> = [];
         const base = actionIndex * 10;
 
         if (action.type === "set") {
@@ -430,8 +425,8 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                             placeholder="Reps"
                                             placeholderTextColor={textSecondary}
                                             keyboardType="numeric"
-                                            value={action.value ?? ""} // if your reps field is 'value'
-                                            onChangeText={(v) => updateActionValue(actionId, "value", v)}
+                                            value={action.reps ?? ""}
+                                            onChangeText={(v) => updateActionValue(actionId, "reps", v)}
                                             returnKeyType="next"
                                             blurOnSubmit={false}
                                             onSubmitEditing={() => focusNext(`${action.id}:reps`)}

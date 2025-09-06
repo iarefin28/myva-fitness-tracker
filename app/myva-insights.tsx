@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import ExportTemplatesButton from "../components/ExportTemplatesButton";
 
-
+//for now treating the myva-insights screen as a debug screen
 
 export default function MyvaInsightsScreen() {
   const [selectedPlan, setSelectedPlan] = useState<'pro' | 'proPlus'>('pro');
