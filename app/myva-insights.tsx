@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
-
+import ExportTemplatesButton from "../components/ExportTemplatesButton";
 
 
 
@@ -102,6 +102,10 @@ export default function MyvaInsightsScreen() {
 
       {/* Feature List */}
       <View style={[styles.cardGroup, { backgroundColor: cardBg, borderColor: dividerColor }]}>
+        <View style={{ position: "absolute", right: 16, bottom: 24 }}>
+          <ExportTemplatesButton storageKey="savedTemplates" />
+        </View>
+
         <View style={styles.infoCard}>
           <Text style={[styles.cardText, { color: textColor }]}>Weekly performance breakdowns</Text>
         </View>
