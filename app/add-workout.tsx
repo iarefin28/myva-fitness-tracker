@@ -11,6 +11,7 @@ import type { Exercise, ExerciseAction, ExerciseType, TagState } from "../types/
 import { AntDesign } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { nanoid } from 'nanoid/non-secure';
+import { Pressable } from "react-native";
 
 
 // function inferTags(name: string, type: ExerciseType): TagState {
@@ -76,20 +77,36 @@ export default function AddWorkout() {
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const [totalApproxSeconds, setTotalApproxSeconds] = useState(0);
+    const [durationOverrideMin, setDurationOverrideMin] = useState<number | null>(null);
+    const [isDurationControlsOpen, setIsDurationControlsOpen] = useState(false);
+
+    const autoMinutes = Math.ceil((totalApproxSeconds ?? 0) / 60);
+    const currentMinutes = durationOverrideMin ?? autoMinutes;
+
+    // Clamp to [auto, 999]
+    const clampMinutes = (m: number) => Math.min(999, Math.max(autoMinutes, m));
+
+    const nudge = (delta: number) => {
+        setDurationOverrideMin(prev => {
+            const base = prev ?? autoMinutes;
+            return clampMinutes(base + delta);
+        });
+    };
+
 
     useEffect(() => {
         const total = estimateWorkoutDurationSeconds(
             (exercises ?? []).map(ex => ({
                 ...ex,
-                // ensure numbers (in case older templates saved strings)
                 computedDurationInSeconds:
                     typeof ex.computedDurationInSeconds === "number"
                         ? ex.computedDurationInSeconds
                         : Number(ex.computedDurationInSeconds ?? 0),
             }))
         );
-        setTotalApproxSeconds(total);
-    }, [exercises]);
+        // if user has an override, use that (minutes → seconds)
+        setTotalApproxSeconds(durationOverrideMin != null ? durationOverrideMin * 60 : total);
+    }, [exercises, durationOverrideMin]);
 
     useEffect(() => {
         const loadTemplate = async () => {
@@ -110,6 +127,11 @@ export default function AddWorkout() {
             } else {
                 setWorkoutName(found.name);
                 setEditingTemplateId(found.id);
+                if (typeof found.durationOverrideMin === "number") {
+                    setDurationOverrideMin(found.durationOverrideMin);
+                } else if (typeof found.approxDurationInSeconds === "number") {
+                    setDurationOverrideMin(Math.ceil(found.approxDurationInSeconds / 60));
+                }
             }
         };
 
@@ -165,10 +187,17 @@ export default function AddWorkout() {
         const exs = exercisesRef.current ?? exercises;
         if (!workoutName || (exs?.length ?? 0) === 0) return;
 
-        // keep using your existing estimator for ETA
-        const approxDurationInSeconds = estimateWorkoutDurationSeconds(exs);
+        const computedApprox = estimateWorkoutDurationSeconds(exs);
 
-        // build metrics (include approx inside metrics as requested)
+        // clamp minutes if overridden
+        const approxMinutes =
+            durationOverrideMin != null
+                ? clampMinutes(durationOverrideMin) // [auto, 999]
+                : Math.ceil(computedApprox / 60);
+
+        const approxDurationInSeconds = approxMinutes * 60;
+
+        // build metrics
         const baseCounts = computeMetrics(exs);
         const metrics: Metrics = { ...baseCounts, approxDurationInSeconds };
 
@@ -179,6 +208,7 @@ export default function AddWorkout() {
             exercises: exs,
             approxDurationInSeconds,   // stays at top level for existing UI
             metrics,                   // <— NEW: totals + approx
+            durationOverrideMin: durationOverrideMin,
         };
 
         let key = "savedWorkouts";
@@ -480,7 +510,7 @@ export default function AddWorkout() {
         };
 
         const updatedList = computeNumberedActions([...actionsList, newRest]);
-        setPendingFocusId(id);    
+        setPendingFocusId(id);
         setActionsList(updatedList);
         setTriggerScrollToEnd(true);
         console.log("Updated Actions List:", JSON.stringify(updatedList, null, 2));
@@ -571,7 +601,6 @@ export default function AddWorkout() {
         const minutes = Math.ceil((sec || 0) / 60);
         return `${minutes} min${minutes !== 1 ? "s" : ""}`;
     }
-
 
     return (
         <>
@@ -747,21 +776,111 @@ export default function AddWorkout() {
 
                             {/* Approximate total workout time — templates only */}
                             {mode === "template" && (exercises?.length ?? 0) > 0 && (
-                                <View style={{ marginTop: 10 }}>
-                                    <Text style={{
-                                        fontSize: 12,
-                                        color: scheme === "dark" ? "#9ca3af" : "#4b5563",
-                                        marginBottom: 2
-                                    }}>
+                                <View style={{ marginTop: 8 }}>
+                                    <Text
+                                        style={{
+                                            fontSize: 12,
+                                            color: scheme === "dark" ? "#9ca3af" : "#4b5563",
+                                            marginBottom: 2,
+                                        }}
+                                    >
                                         Estimated Workout Length:
                                     </Text>
-                                    <Text style={{
-                                        fontSize: 16,
-                                        fontWeight: "700",
-                                        color: "#1e90ff" // same blue as rest text
-                                    }}>
-                                        ~{Math.ceil(totalApproxSeconds / 60)} mins
-                                    </Text>
+
+                                    <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                        {/* Time pill = toggle */}
+                                        <Pressable
+                                            onPress={() => setIsDurationControlsOpen(open => !open)}
+                                            style={{
+                                                paddingVertical: 5,
+                                                paddingHorizontal: 10,
+                                                borderRadius: 10,
+                                                borderWidth: 1,
+                                                borderColor: borderColor ?? "#d1d5db",
+                                                marginRight: 6,
+                                                minWidth: 96,
+                                                justifyContent: "center",
+                                                alignItems: "center",
+                                            }}
+                                        >
+                                            <Text
+                                                style={{
+                                                    fontSize: 15,
+                                                    fontWeight: "700",
+                                                    color: "#1e90ff",
+                                                    textAlign: "center",
+                                                    fontVariant: ["tabular-nums"],
+                                                }}
+                                            >
+                                                ~{currentMinutes} mins
+                                            </Text>
+                                        </Pressable>
+
+                                        {isDurationControlsOpen && (
+                                            <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                                {[-5, -1, +1, +5].map((delta) => (
+                                                    <Pressable
+                                                        key={delta}
+                                                        onPress={() => nudge(delta)}
+                                                        style={{
+                                                            height: 30,
+                                                            minWidth: 32, // 👈 narrower
+                                                            paddingHorizontal: 4,
+                                                            borderRadius: 6,
+                                                            backgroundColor: "#1e90ff",
+                                                            marginRight: 4,
+                                                            justifyContent: "center",
+                                                            alignItems: "center",
+                                                        }}
+                                                    >
+                                                        <Text style={{ color: "white", fontWeight: "700", fontSize: 12 }}>
+                                                            {delta > 0 ? `+${delta}` : delta}
+                                                        </Text>
+                                                    </Pressable>
+                                                ))}
+
+                                                {/* Auto button */}
+                                                <Pressable
+                                                    onPress={() => setDurationOverrideMin(null)}
+                                                    style={{
+                                                        height: 30,
+                                                        paddingHorizontal: 6,
+                                                        borderRadius: 6,
+                                                        borderWidth: 1,
+                                                        borderColor: borderColor ?? "#d1d5db",
+                                                        marginRight: 4,
+                                                        justifyContent: "center",
+                                                        alignItems: "center",
+                                                    }}
+                                                >
+                                                    <Text
+                                                        style={{
+                                                            color: scheme === "dark" ? "#9ca3af" : "#6b7280",
+                                                            fontWeight: "700",
+                                                            fontSize: 12,
+                                                        }}
+                                                    >
+                                                        Auto
+                                                    </Text>
+                                                </Pressable>
+
+                                                {/* X button */}
+                                                <Pressable
+                                                    onPress={() => setIsDurationControlsOpen(false)}
+                                                    style={{
+                                                        height: 30,
+                                                        paddingHorizontal: 10,
+                                                        borderRadius: 6,
+                                                        backgroundColor: "#ef4444",
+                                                        justifyContent: "center",
+                                                        alignItems: "center",
+                                                    }}
+                                                >
+                                                    <Text style={{ color: "white", fontWeight: "700", fontSize: 12 }}>X</Text>
+                                                </Pressable>
+                                            </View>
+                                        )}
+                                    </View>
                                 </View>
                             )}
                         </View>
@@ -825,8 +944,8 @@ export default function AddWorkout() {
                 mode={mode}
                 tags={tags}
                 onChangeTags={setTags}
-                pendingFocusId={pendingFocusId}                   
-                onPendingFocusHandled={() => setPendingFocusId(null)}  
+                pendingFocusId={pendingFocusId}
+                onPendingFocusHandled={() => setPendingFocusId(null)}
             />
         </>
     );
