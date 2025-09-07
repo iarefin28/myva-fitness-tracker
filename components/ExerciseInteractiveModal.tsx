@@ -5,7 +5,7 @@ import { KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpaci
 import { useState } from "react";
 import { ActionSheetIOS, Alert, Keyboard, useColorScheme } from "react-native";
 import Animated, { Layout } from 'react-native-reanimated';
-import { SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ExerciseAction, ExerciseType, TagState } from "../types/workout";
 import ActionInput from "./ActionInput";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
@@ -98,6 +98,8 @@ export default function ExerciseEditorModal({
     const textSecondary = isDark ? "#aaa" : "#444";
     const blueAccent = isDark ? "#1e90ff" : "#007aff";
     const borderColor = isDark ? "#444" : "#ccc";
+
+    const insets = useSafeAreaInsets();
 
     type InputNode = { id: string; order: number; ref: React.RefObject<any> };
     const focusNodesRef = useRef<InputNode[]>([]);
@@ -457,6 +459,7 @@ export default function ExerciseEditorModal({
                                                 borderWidth: 1,
                                                 borderColor: borderColor,
                                                 marginTop: 10,
+                                                marginBottom: insets.bottom
                                             }}
                                         >
                                             <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
