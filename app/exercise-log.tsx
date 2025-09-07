@@ -539,7 +539,7 @@ export default function ExerciseLogScreen() {
 
     // ---------- actions ----------
     const openHeaderMenu = () => {
-        const opts = ["Cancel", "Share Summary", "Share Full Details", "Export JSON", "Delete Log"] as const;
+        const opts = ["Cancel", "Share Full Details", "Export JSON", "Delete Log"] as const;
         const cancelIdx = 0;
         const shareIdx = 1;
         const shareFullIdx = 2;
