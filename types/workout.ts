@@ -48,7 +48,8 @@ export interface Exercise {
 export interface Workout {
   workoutName: string;
   date: Date;
-  notes?: string;
+  preWorkoutNote?: string;
+  postWorkoutNote?: string;
   exercises: Exercise[];
   approxDurationInSeconds: number; // ← estimated (saved on live too)
 

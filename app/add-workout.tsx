@@ -30,7 +30,9 @@ export default function AddWorkout() {
     const [editingTemplateId, setEditingTemplateId] = useState<number | string | null>(null);
 
 
-    const [editDuration, setEditDuration] = useState(0);
+    // ─── NEW: keep the last modal duration in a ref ───
+    const editDurationRef = useRef(0);
+    const [editDuration, setEditDuration] = useState(0); // keep for UI/prop, but ref is source-of-truth
     const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
 
     // ───── Theme & Navigation ─────
@@ -47,7 +49,8 @@ export default function AddWorkout() {
 
     // ───── Workout Info State ─────
     const [workoutName, setWorkoutName] = useState("");
-    const [notes, setNotes] = useState("");
+    const [preWorkoutNote, setPreWorkoutNote] = useState("");
+    const [postWorkoutNote, setPostWorkoutNote] = useState("");
     const [date, setDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
 
@@ -250,7 +253,8 @@ export default function AddWorkout() {
                 const list = existing ? JSON.parse(existing) : [];
                 const liveWorkout = {
                     ...workout,
-                    notes,
+                    preWorkoutNote,
+                    postWorkoutNote,
                     date: date.toISOString(),
                     actualDurationInSeconds: elapsedTime,
                     createdBy: "Ishan Arefin",
@@ -264,7 +268,7 @@ export default function AddWorkout() {
         } catch (e) {
             console.error("Failed to save workout:", e);
         }
-    }, [mode, workoutName, notes, date, exercises, editingTemplateId]);
+    }, [mode, workoutName, preWorkoutNote, postWorkoutNote, date, exercises, editingTemplateId]);
 
 
     // ───── Layout Effect for Header Buttons ─────
@@ -403,7 +407,7 @@ export default function AddWorkout() {
             name: exerciseName,
             type: exerciseType,
             actions: computeNumberedActions(actionsList),
-            editDurationInSeconds: editDuration,
+            editDurationInSeconds: editDurationRef.current,
             computedDurationInSeconds: computedDurationInSeconds,
             tags,
         };
@@ -634,8 +638,8 @@ export default function AddWorkout() {
                         {/* Pre-Workout Notes */}
                         {mode === "live" && (
                             <TextInput
-                                value={notes}
-                                onChangeText={setNotes}
+                                value={preWorkoutNote}
+                                onChangeText={setPreWorkoutNote}
                                 placeholder="Write a pre-workout note"
                                 placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
                                 multiline
@@ -727,8 +731,8 @@ export default function AddWorkout() {
 
                         {mode === "live" && (
                             <TextInput
-                                value={notes}
-                                onChangeText={setNotes}
+                                value={postWorkoutNote}
+                                onChangeText={setPostWorkoutNote}
                                 placeholder="Write a post-workout note"
                                 placeholderTextColor={scheme === "dark" ? "#888" : "#aaa"}
                                 multiline
@@ -758,7 +762,22 @@ export default function AddWorkout() {
 
                         <View>
                             <TouchableOpacity
-                                onPress={() => setModalVisible(true)}
+                                onPress={() => {
+                                    // ensure a fresh add flow
+                                    setExerciseName("");
+                                    setExerciseType("unknown");
+                                    setActionsList([]);
+                                    setLockedExerciseTitle("");
+                                    setExerciseNameBlurred(false);
+                                    setEditIndex(null);
+
+                                    // ⬇️ Reset per-exercise timer for a new exercise
+                                    setEditDuration(0);
+                                    editDurationRef.current = 0;
+
+                                    setTags({});
+                                    setModalVisible(true);
+                                }}
                                 style={{
                                     backgroundColor: "#1e90ff",
                                     borderRadius: 8,
@@ -897,7 +916,9 @@ export default function AddWorkout() {
                                 setActionsList(exercise.actions);
                                 setLockedExerciseTitle(exercise.name);
                                 setExerciseNameBlurred(true);
-                                setEditDuration(exercise.editDurationInSeconds || 0);
+                                const d = exercise.editDurationInSeconds || 0;
+                                setEditDuration(d);
+                                editDurationRef.current = d;
                                 setModalVisible(true);
                                 setTags(exercise.tags ?? {});
                             }}
@@ -938,7 +959,11 @@ export default function AddWorkout() {
                 scrollToBottom={triggerScrollToEnd}
                 onScrolledToBottom={() => setTriggerScrollToEnd(false)}
                 initialEditDuration={editDuration}
-                onCloseWithDuration={(duration) => setEditDuration(duration)}
+                onCloseWithDuration={(duration) => {
+                    // keep both in sync
+                    setEditDuration(duration);
+                    editDurationRef.current = duration;
+                }}
                 trackTime={mode !== "template"}
                 mode={mode}
                 tags={tags}

@@ -180,6 +180,12 @@ export default function ExerciseEditorModal({
         });
     }, [pendingFocusId, onPendingFocusHandled]);
 
+    useEffect(() => {
+        // Whenever we open the modal for a different exercise,
+        // or open/close, reset the counter from the prop.
+        setModalTimer(initialEditDuration || 0);
+    }, [visible, initialEditDuration]);
+
     const formatElapsedTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
         const secs = seconds % 60;
