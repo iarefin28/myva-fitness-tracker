@@ -1,4 +1,5 @@
 // /screens/exercise-log.tsx
+import WorkoutNotesCard from "@/components/WorkoutNotesCard";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute } from "@react-navigation/native";
@@ -16,6 +17,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import ExerciseCard from "../components/ExerciseCard";
+
 
 const BRANDING_LINE = "This workout was created and completed by the MYVA Fitness App.";
 
@@ -37,6 +39,9 @@ type CompletedWorkout = {
     completedAt?: string; // ISO
     elapsedSeconds?: number;
     notes?: string;
+    preWorkoutNote?: string;
+    postWorkoutNote?: string;
+
     metrics?: {
         totalExercises?: number;
         totalSets?: number;
@@ -627,6 +632,70 @@ export default function ExerciseLogScreen() {
         );
     }
 
+    // ───────── Mindset Notes UI helpers ─────────
+    const hasText = (s?: string) => typeof s === "string" && s.trim().length > 0;
+
+    const NoteRow = ({
+        icon,
+        label,
+        text,
+    }: {
+        icon: any;
+        label: string;
+        text: string;
+    }) => {
+        const [expanded, setExpanded] = useState(false);
+        const trimmed = text.trim();
+        const collapsedLines = 3;
+        const isLong = trimmed.length > 160;
+
+        return (
+            <TouchableOpacity
+                onPress={() => setExpanded((v) => !v)}
+                activeOpacity={0.8}
+                style={{
+                    paddingVertical: 10,
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={`${label} note, ${expanded ? "collapse" : "expand"}`}
+            >
+                <View style={{ flexDirection: "row", alignItems: "flex-start" }}>
+                    <Ionicons
+                        name={icon}
+                        size={16}
+                        color={subTextColor}
+                        style={{ marginTop: 2, marginRight: 8 }}
+                    />
+                    <View style={{ flex: 1 }}>
+                        <Text style={{ color: subTextColor, fontSize: 12, marginBottom: 4 }}>
+                            {label}
+                        </Text>
+                        <Text
+                            style={{ color: textColor, fontSize: 14, lineHeight: 20 }}
+                            numberOfLines={expanded ? undefined : collapsedLines}
+                            selectable
+                        >
+                            {trimmed}
+                        </Text>
+
+                        {isLong && !expanded ? (
+                            <Text
+                                style={{
+                                    marginTop: 6,
+                                    color: subTextColor,
+                                    fontSize: 12,
+                                    textDecorationLine: "underline",
+                                }}
+                            >
+                                Tap to expand
+                            </Text>
+                        ) : null}
+                    </View>
+                </View>
+            </TouchableOpacity>
+        );
+    };
+
     return (
         <View style={{ flex: 1, backgroundColor }}>
             {/* Title */}
@@ -728,6 +797,21 @@ export default function ExerciseLogScreen() {
                     ) : null}
                 </View>
                 {/* ===== end Overview card ===== */}
+
+                {/* Mindset Notes (Pre/Post) */}
+                <WorkoutNotesCard
+                    pre={log?.preWorkoutNote}
+                    post={log?.postWorkoutNote}
+                    legacy={log?.notes}
+                    workoutDateISO={log?.completedAt || log?.endedAt || log?.startedAt}
+                    // If later you track per-note timestamps, pass them here:
+                    // preDateISO={log?.preNoteAt}
+                    // postDateISO={log?.postNoteAt}
+
+                    // Optional: keep visuals consistent with your theme tokens
+                    colors={{ textColor, subTextColor, cardColor, dividerColor}}
+                    style={{ marginBottom: 16 }}
+                />
 
                 {/* Exercise List heading */}
                 <Text style={{ color: textColor, fontWeight: "700", fontSize: 16, marginBottom: 8 }}>
