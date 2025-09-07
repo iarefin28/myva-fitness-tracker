@@ -93,7 +93,7 @@ export default function ExerciseLogScreen() {
 
             // 2) lookup by id in AsyncStorage
             if (workoutId != null) {
-                const stored = await AsyncStorage.getItem("completedWorkouts");
+                const stored = await AsyncStorage.getItem("savedWorkouts");
                 const list: CompletedWorkout[] = stored ? JSON.parse(stored) : [];
                 const found = list.find((w) => String(w.id) === String(workoutId));
                 if (found) {
@@ -653,11 +653,34 @@ export default function ExerciseLogScreen() {
     return (
         <View style={{ flex: 1, backgroundColor }}>
             {/* Title */}
-            <View style={{ padding: 20 }}>
+            <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 15, paddingBottom: 2}}>
                 <Text style={{ fontSize: 20, fontWeight: "bold", color: textColor }}>
                     {log.name ?? "Workout Breakdown"}
                 </Text>
             </View>
+
+            {/* Completed On row */}
+            <View
+                style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingBottom: 15,
+                    paddingHorizontal: 12,
+                }}
+                accessibilityRole="text"
+                accessibilityLabel={`Completed On ${formatDateTime(completedTime)}`}
+                testID="completed-on-row"
+            >
+                <Ionicons name="calendar-outline" size={18} color={subTextColor} />
+                {/* <Text style={{ color: subTextColor, fontSize: 12, marginLeft: 8 }}>
+                    Completed On
+                </Text> */}
+                <Text style={{ color: textColor, fontSize: 14, fontWeight: "700", marginLeft: 6 }}>
+                    {formatDateTime(completedTime)}
+                </Text>
+            </View>
+
+
 
             {/* Scrollable content */}
             <ScrollView

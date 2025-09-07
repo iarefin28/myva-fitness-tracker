@@ -256,6 +256,8 @@ export default function AddWorkout() {
                     notes,
                     date: date.toISOString(),
                     actualDurationInSeconds: elapsedTime,
+                    createdBy: "Ishan Arefin",
+                    completedAt: date.toISOString()
                 };
                 list.push(liveWorkout);
                 await AsyncStorage.setItem(key, JSON.stringify(list, null, 2));

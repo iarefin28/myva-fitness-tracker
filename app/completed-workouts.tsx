@@ -133,7 +133,8 @@ export default function CompletedWorkouts() {
                 onPress={() => {
                   // Preserve your current behavior
                   (globalThis as any).tempExercises = item.exercises;
-                  router.push("/exercise-log");
+                  //router.push("/exercise-log");
+                  router.push(`/exercise-log?workoutId=${item.id}`)
                 }}
                 testID={`completed-card-${item.id}`}
                 // optional: onLongPress={() => router.push(`/completed-detail?id=${item.id}`)}
