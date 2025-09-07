@@ -360,9 +360,6 @@ export default function ExerciseLogScreen() {
 
                 lines.push(line);
             }
-
-            // We don’t render standalone "rest:" summary lines anymore,
-            // since rest is now attached directly after each set.
         }
 
         // Optional notes: if you also keep ex.notes or note actions, append here if you want
@@ -525,6 +522,21 @@ export default function ExerciseLogScreen() {
         </View>
     );
 
+    const shareFullDetails = async () => {
+        if (!log) return;
+        try {
+            const payload = formatWorkoutShare(log, {
+                includeWarmups: true,
+                includeRest: true,
+                includeNotes: true,
+                includeTags: true,
+            });
+            await Share.share({ message: payload });
+        } catch {
+            Alert.alert("Error", "Could not share full details.");
+        }
+    };
+
     // ---------- actions ----------
     const openHeaderMenu = () => {
         const opts = ["Cancel", "Share Summary", "Share Full Details", "Export JSON", "Delete Log"] as const;
@@ -533,21 +545,6 @@ export default function ExerciseLogScreen() {
         const shareFullIdx = 2;
         const exportIdx = 3;
         const deleteIdx = 4;
-
-        const shareFullDetails = async () => {
-            if (!log) return;
-            try {
-                const payload = formatWorkoutShare(log, {
-                    includeWarmups: true,
-                    includeRest: true,
-                    includeNotes: true,
-                    includeTags: true,
-                });
-                await Share.share({ message: payload });
-            } catch {
-                Alert.alert("Error", "Could not share full details.");
-            }
-        };
 
         if (Platform.OS === "ios") {
             // @ts-ignore - ActionSheetIOS typed under RN
@@ -560,7 +557,6 @@ export default function ExerciseLogScreen() {
                     userInterfaceStyle: scheme === "dark" ? "dark" : "light",
                 },
                 async (idx: number) => {
-                    if (idx === shareIdx) await shareSummary();
                     if (idx === shareFullIdx) await shareFullDetails();
                     if (idx === exportIdx) await exportJson();
                     if (idx === deleteIdx) await deleteLog();
@@ -569,7 +565,6 @@ export default function ExerciseLogScreen() {
             );
         } else {
             Alert.alert(log?.name || "Workout", "Choose an action", [
-                { text: "Share Summary", onPress: shareSummary },
                 { text: "Share Full Details", onPress: shareFullDetails },
                 { text: "Export JSON", onPress: exportJson },
                 { text: "Delete Log", style: "destructive", onPress: deleteLog },
@@ -577,22 +572,6 @@ export default function ExerciseLogScreen() {
             ]);
         }
     };
-
-    const shareSummary = async () => {
-        if (!log) return;
-        const summary =
-            `🏋️ ${log.name ?? "Workout"}\n` +
-            `Completed: ${formatDateTime(completedTime)}\n` +
-            `Exercises: ${metrics.totalExercises}, Sets: ${metrics.totalSets}, Working Sets: ${metrics.totalWorkingSets}\n` +
-            `Reps: ${metrics.totalReps}, Volume: ${numberFmt(metrics.totalVolume)}\n` +
-            `Duration: ${formatHM(metrics.approx)}`;
-        try {
-            await Share.share({ message: summary });
-        } catch {
-            Alert.alert("Error", "Could not share summary.");
-        }
-    };
-
     const exportJson = async () => {
         if (!log) return;
         try {
@@ -611,10 +590,10 @@ export default function ExerciseLogScreen() {
                 style: "destructive",
                 onPress: async () => {
                     try {
-                        const raw = await AsyncStorage.getItem("completedWorkouts");
+                        const raw = await AsyncStorage.getItem("savedWorkouts");
                         const list = raw ? JSON.parse(raw) : [];
                         const next = list.filter((w: CompletedWorkout) => String(w.id) !== String(log.id));
-                        await AsyncStorage.setItem("completedWorkouts", JSON.stringify(next));
+                        await AsyncStorage.setItem("savedWorkouts", JSON.stringify(next));
                         router.back();
                     } catch {
                         Alert.alert("Error", "Could not delete workout.");
@@ -653,7 +632,7 @@ export default function ExerciseLogScreen() {
     return (
         <View style={{ flex: 1, backgroundColor }}>
             {/* Title */}
-            <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 15, paddingBottom: 2}}>
+            <View style={{ paddingLeft: 15, paddingRight: 15, paddingTop: 15, paddingBottom: 2 }}>
                 <Text style={{ fontSize: 20, fontWeight: "bold", color: textColor }}>
                     {log.name ?? "Workout Breakdown"}
                 </Text>
@@ -712,7 +691,7 @@ export default function ExerciseLogScreen() {
                         <Text style={{ color: textColor, fontWeight: "700", fontSize: 16 }}>Overview</Text>
 
                         <TouchableOpacity
-                            onPress={shareSummary}
+                            onPress={shareFullDetails}
                             accessibilityLabel="Share workout"
                             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                             style={{ padding: 4 }}
@@ -798,7 +777,7 @@ export default function ExerciseLogScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                    onPress={shareSummary}
+                    onPress={shareFullDetails}
                     style={{
                         backgroundColor: scheme === "dark" ? "#333" : "#ddd",
                         paddingVertical: 14,
@@ -808,7 +787,7 @@ export default function ExerciseLogScreen() {
                     }}
                 >
                     <Text style={{ color: textColor, fontWeight: "bold", fontSize: 15 }}>
-                        Share Summary
+                        Share Workout
                     </Text>
                 </TouchableOpacity>
             </View>
