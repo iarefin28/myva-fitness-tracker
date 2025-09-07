@@ -1,4 +1,5 @@
 // /screens/exercise-log.tsx
+import SectionCard from "@/components/SectionCard";
 import WorkoutNotesCard from "@/components/WorkoutNotesCard";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -66,7 +67,8 @@ export default function ExerciseLogScreen() {
     const textColor = scheme === "dark" ? "#ffffff" : "#000000";
     const subTextColor = scheme === "dark" ? "#9aa0a6" : "#6b7280";
     const dividerColor = scheme === "dark" ? "#222" : "#eee";
-    const cardColor = scheme === "dark" ? "#111" : "#ffffff";
+    //const cardColor = scheme === "dark" ? "#111" : "#ffffff"; this color is the cool black aesthetic but ngl the color scheme I already have is so much cleaner
+    const cardColor = scheme === "dark" ? "#1e1e1e" : "#d1d1d1"
     const backgroundColor = scheme === "dark" ? "#000000" : "#ffffff";
 
     const { workoutId, log: routeLog } = route.params || {};
@@ -809,25 +811,40 @@ export default function ExerciseLogScreen() {
                     // postDateISO={log?.postNoteAt}
 
                     // Optional: keep visuals consistent with your theme tokens
-                    colors={{ textColor, subTextColor, cardColor, dividerColor}}
+                    colors={{ textColor, subTextColor, cardColor, dividerColor }}
                     style={{ marginBottom: 16 }}
                 />
 
-                {/* Exercise List heading */}
-                <Text style={{ color: textColor, fontWeight: "700", fontSize: 16, marginBottom: 8 }}>
-                    Exercise List
-                </Text>
 
-                {/* Exercise List */}
-                {(log.exercises || []).map((exercise: any, index: number) => (
-                    <ExerciseCard
-                        key={index}
-                        exercise={exercise}
-                        defaultExpanded
-                        disableToggle
-                        showNotesButton={true}
-                    />
-                ))}
+                <SectionCard
+                    colors={{ cardColor, dividerColor }}   // reuse your theme tokens
+                    style={{ marginBottom: 16 }}
+                >
+                    {/* Section header */}
+                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+                        <Ionicons name="barbell-outline" size={18} color={subTextColor} />
+                        <Text style={{ color: textColor, fontWeight: "700", fontSize: 16, marginLeft: 6 }}>
+                            Exercise List
+                        </Text>
+                    </View>
+
+                    {/* Divider (optional) */}
+                    <View style={{ height: 1, backgroundColor: dividerColor, marginBottom: 8 }} />
+
+                    {/* Your list */}
+                    {/* If you map items: */}
+                    <View style={{ gap: 8 }}>
+                        {(log.exercises || []).map((exercise: any, index: number) => (
+                            <ExerciseCard
+                                key={index}
+                                exercise={exercise}
+                                defaultExpanded
+                                disableToggle
+                                showNotesButton={true}
+                            />
+                        ))}
+                    </View>
+                </SectionCard>
             </ScrollView>
 
             {/* Bottom Actions */}

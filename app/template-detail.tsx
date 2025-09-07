@@ -14,6 +14,7 @@ import ExerciseCard from "@/components/ExerciseCard";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
+import SectionCard from "@/components/SectionCard";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation } from "expo-router";
@@ -32,7 +33,8 @@ export default function TemplateDetail() {
     const textColor = scheme === "dark" ? "#ffffff" : "#000000";
     const subTextColor = scheme === "dark" ? "#9aa0a6" : "#6b7280";
     const dividerColor = scheme === "dark" ? "#222" : "#eee";
-    const cardColor = scheme === "dark" ? "#111" : "#ffffff";
+    //const cardColor = scheme === "dark" ? "#111" : "#ffffff";
+    const cardColor = scheme === "dark" ? "#1e1e1e" : "#d1d1d1";
     const backgroundColor = scheme === "dark" ? "#000000" : "#ffffff";
 
     const [showPicker, setShowPicker] = useState(false);
@@ -280,28 +282,35 @@ export default function TemplateDetail() {
                 </View>
                 {/* ===== end Overview card ===== */}
 
-                {/* Exercise List heading */}
-                <Text
-                    style={{
-                        color: textColor,
-                        fontWeight: "700",
-                        fontSize: 16,
-                        marginBottom: 8,
-                    }}
+                <SectionCard
+                    colors={{ cardColor, dividerColor }}   // reuse your theme tokens
+                    style={{ marginBottom: 16 }}
                 >
-                    Exercise List
-                </Text>
+                    {/* Section header */}
+                    <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 8 }}>
+                        <Ionicons name="barbell-outline" size={18} color={subTextColor} />
+                        <Text style={{ color: textColor, fontWeight: "700", fontSize: 16, marginLeft: 6 }}>
+                            Exercise List
+                        </Text>
+                    </View>
 
-                {/* Exercise List */}
-                {template.exercises.map((exercise: any, index: number) => (
-                    <ExerciseCard
-                        key={index}
-                        exercise={exercise}
-                        defaultExpanded
-                        disableToggle
-                        showNotesButton={false}
-                    />
-                ))}
+                    {/* Divider (optional) */}
+                    <View style={{ height: 1, backgroundColor: dividerColor, marginBottom: 8 }} />
+
+                    {/* Your list */}
+                    {/* If you map items: */}
+                    <View style={{ gap: 8 }}>
+                        {template.exercises.map((exercise: any, index: number) => (
+                            <ExerciseCard
+                                key={index}
+                                exercise={exercise}
+                                defaultExpanded
+                                disableToggle
+                                showNotesButton={false}
+                            />
+                        ))}
+                    </View>
+                </SectionCard>
             </ScrollView>
 
             {/* Bottom Actions */}
