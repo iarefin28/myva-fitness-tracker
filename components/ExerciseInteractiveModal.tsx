@@ -4,7 +4,7 @@ import { KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpaci
 
 import { useState } from "react";
 import { ActionSheetIOS, Alert, Keyboard, useColorScheme } from "react-native";
-import Animated, { Layout } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ExerciseAction, ExerciseType, TagState } from "../types/workout";
 import ActionInput from "./ActionInput";
@@ -13,6 +13,7 @@ import ExerciseAutocomplete from "./ExerciseAutocomplete";
 import { useCallback } from "react";
 
 import TagSearchPicker from "./TagPicker";
+const AUTO_SCROLL = false;
 
 interface Props {
     visible: boolean;
@@ -191,7 +192,7 @@ export default function ExerciseEditorModal({
             const newIndex = prev === index ? null : index;
 
             // Delay scroll until after state updates
-            if (newIndex !== null) {
+            if (AUTO_SCROLL && newIndex !== null) {
                 setTimeout(() => {
                     scrollViewRef.current?.scrollToEnd({ animated: true });
                 }, 300); // You can tweak this delay based on testing
@@ -401,7 +402,7 @@ export default function ExerciseEditorModal({
                                         keyboardShouldPersistTaps="handled"
                                         keyboardDismissMode="none"
                                         onContentSizeChange={() => {
-                                            if (scrollToBottom) {
+                                            if (AUTO_SCROLL && scrollToBottom) {
                                                 scrollViewRef.current?.scrollToEnd({ animated: true });
                                                 onScrolledToBottom(); // reset flag
                                             }
@@ -410,7 +411,7 @@ export default function ExerciseEditorModal({
 
                                         {actionsList.map((action, index) => (
                                             <Animated.View
-                                                layout={Layout.springify()}
+                                                // layout={Layout.springify()}
                                                 key={action.id}
                                             >
                                                 <ActionInput
@@ -426,13 +427,13 @@ export default function ExerciseEditorModal({
                                                     onToggleAdvanced={() => toggleAdvancedOptions(index)}
                                                     onExpand={() => {
                                                         // fallback scroll trigger if needed
-                                                        scrollViewRef.current?.scrollToEnd({ animated: true });
+                                                        //scrollViewRef.current?.scrollToEnd({ animated: true });
                                                     }}
                                                     onExpandAdvanced={() => {
-                                                        // Small timeout to wait for layout shift
-                                                        setTimeout(() => {
-                                                            scrollViewRef.current?.scrollToEnd({ animated: true });
-                                                        }, 200);
+                                                        // // Small timeout to wait for layout shift
+                                                        // setTimeout(() => {
+                                                        //     scrollViewRef.current?.scrollToEnd({ animated: true });
+                                                        // }, 200);
                                                     }}
                                                     showInfoIcon={mode !== "template"}
                                                     autoFocusWeight={action.type === "set" && action.id === pendingFocusId}

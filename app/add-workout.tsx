@@ -33,9 +33,6 @@ export default function AddWorkout() {
     const [editDuration, setEditDuration] = useState(0);
     const [pendingFocusId, setPendingFocusId] = useState<string | null>(null);
 
-
-
-
     // ───── Theme & Navigation ─────
     const scheme = useColorScheme();
     const navigation = useNavigation();
