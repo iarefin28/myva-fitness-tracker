@@ -541,10 +541,9 @@ export default function ExerciseLogScreen() {
     const openHeaderMenu = () => {
         const opts = ["Cancel", "Share Full Details", "Export JSON", "Delete Log"] as const;
         const cancelIdx = 0;
-        const shareIdx = 1;
-        const shareFullIdx = 2;
-        const exportIdx = 3;
-        const deleteIdx = 4;
+        const shareFullIdx = 1;
+        const exportIdx = 2;
+        const deleteIdx = 3;
 
         if (Platform.OS === "ios") {
             // @ts-ignore - ActionSheetIOS typed under RN
@@ -560,7 +559,6 @@ export default function ExerciseLogScreen() {
                     if (idx === shareFullIdx) await shareFullDetails();
                     if (idx === exportIdx) await exportJson();
                     if (idx === deleteIdx) await deleteLog();
-
                 }
             );
         } else {
