@@ -10,6 +10,7 @@ import {
     useColorScheme,
     View
 } from "react-native";
+import { WorkoutSummaryCard } from "../components/WorkoutSummaryCard";
 
 interface Template {
     id: number;
@@ -65,7 +66,7 @@ export default function WorkoutTemplates() {
                 setTemplates([]);
             }
         } catch (error) {
-            console.error("❌ Failed to load templates:", error);
+            console.error("Failed to load templates:", error);
         }
     }, []);
 
@@ -124,86 +125,26 @@ export default function WorkoutTemplates() {
                 <FlatList
                     data={templates}
                     keyExtractor={(item) => item.id.toString()}
-                    renderItem={({ item }) => (
-                        <TouchableOpacity
-                            onPress={() => {
-                                router.push(`/template-detail?templateId=${item.id}`);
-                            }}
-                            style={{
-                                backgroundColor: cardColor,
-                                padding: 16,
-                                borderRadius: 12,
-                                marginBottom: 15,
-                                elevation: 3,
-                                shadowColor: "#000",
-                                shadowOffset: { width: 0, height: 2 },
-                                shadowOpacity: 0.1,
-                                shadowRadius: 6,
-                            }}
-                        >
-                            {/* Header: Title (left) + Usage (right) */}
-                            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                                <Text style={{ fontSize: 20, fontWeight: "bold", color: textColor, flexShrink: 1 }}>
-                                    {item.name}
-                                </Text>
-                                <Text style={{ fontSize: 20, fontWeight: "bold", color: textColor, marginLeft: 8 }}>
-                                    {Number(item.usageCount ?? 0) > 0 ? `Used ${Number(item.usageCount)}×` : "Not used"}
-                                </Text>
-                            </View>
+                    renderItem={({ item }) => {
+                        const m = computeCardMetrics(item);
+                        const rightText =
+                            Number(item.usageCount ?? 0) > 0 ? `Used ${Number(item.usageCount)}×` : "Not used";
 
-                            {/* Divider directly under header */}
-                            <View
-                                style={{
-                                    height: 1,
-                                    backgroundColor: typeof dividerColor !== "undefined" ? dividerColor : (scheme === "dark" ? "#222" : "#eee"),
-                                    marginTop: 8,
-                                    marginBottom: 8,
-                                    opacity: scheme === "dark" ? 0.7 : 1,
-                                }}
+                        return (
+                            <WorkoutSummaryCard
+                                title={item.name}
+                                rightText={rightText}
+                                items={[
+                                    { label: "Total Exercises", value: m.totalExercises },
+                                    { label: "Total       Sets", value: m.totalSets },
+                                    { label: "Working Sets", value: m.totalWorkingSets },
+                                    { label: "Approx. Duration", value: formatHM(m.approx) },
+                                ]}
+                                onPress={() => router.push(`/template-detail?templateId=${item.id}`)}
+                                testID={`template-card-${item.id}`}
                             />
-
-                            {/* Stats: 1 row, 4 cells (label top, value bottom) */}
-                            {(() => {
-                                const m = computeCardMetrics(item);
-                                const labelColor = typeof subTextColor !== "undefined" ? subTextColor : "#6b7280";
-                                return (
-                                    <View style={{ marginTop: 10, flexDirection: "row" }}>
-                                        {/* Exercises */}
-                                        <View style={{ flex: 1, paddingRight: 6 }}>
-                                            <Text style={{ color: labelColor, fontSize: 12 }}>Total Exercises</Text>
-                                            <Text style={{ color: textColor, fontSize: 16, fontWeight: "700" }}>
-                                                {m.totalExercises}
-                                            </Text>
-                                        </View>
-
-                                        {/* Sets */}
-                                        <View style={{ flex: 1, paddingHorizontal: 3 }}>
-                                            <Text style={{ color: labelColor, fontSize: 12 }}>Total        Sets</Text>
-                                            <Text style={{ color: textColor, fontSize: 16, fontWeight: "700" }}>
-                                                {m.totalSets}
-                                            </Text>
-                                        </View>
-
-                                        {/* Working Sets */}
-                                        <View style={{ flex: 1, paddingHorizontal: 3 }}>
-                                            <Text style={{ color: labelColor, fontSize: 12 }}>Working Sets</Text>
-                                            <Text style={{ color: textColor, fontSize: 16, fontWeight: "700" }}>
-                                                {m.totalWorkingSets}
-                                            </Text>
-                                        </View>
-
-                                        {/* Approx. Duration */}
-                                        <View style={{ flex: 1, paddingLeft: 6 }}>
-                                            <Text style={{ color: labelColor, fontSize: 12 }}>Approx. Duration</Text>
-                                            <Text style={{ color: textColor, fontSize: 16, fontWeight: "700" }}>
-                                                {formatHM(m.approx)}
-                                            </Text>
-                                        </View>
-                                    </View>
-                                );
-                            })()}
-                        </TouchableOpacity>
-                    )}
+                        );
+                    }}
                 />
             )}
         </View>

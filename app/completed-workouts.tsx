@@ -2,14 +2,12 @@ import { AntDesign } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useTheme } from "@react-navigation/native";
 import { useFocusEffect, useRouter } from "expo-router";
-import { useCallback, useLayoutEffect, useState } from "react";
-import {
-  FlatList,
-  Text,
-  TouchableOpacity,
-  useColorScheme,
-  View,
-} from "react-native";
+import React, { useCallback, useLayoutEffect, useState } from "react";
+import { FlatList, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+
+// ✅ new shared card
+// If you don't use the "@/components" alias, change this import to a relative path like "../components/WorkoutSummaryCard"
+import { formatHM, WorkoutSummaryCard } from "../components/WorkoutSummaryCard";
 
 interface Workout {
   id: number;
@@ -17,6 +15,11 @@ interface Workout {
   exercises: any[];
   notes?: string;
   date: string;
+
+  // Optional extras if present in your data (we'll gracefully fall back if missing)
+  metrics?: { totalExercises?: number; totalSets?: number; totalWorkingSets?: number; approxDurationInSeconds?: number };
+  elapsedSeconds?: number;
+  approxDurationInSeconds?: number;
 }
 
 export default function CompletedWorkouts() {
@@ -34,12 +37,12 @@ export default function CompletedWorkouts() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity onPress={() => router.push("/add-workout")}>
+        <TouchableOpacity onPress={() => router.push("/add-workout")} accessible accessibilityLabel="Add workout">
           <AntDesign name="plus" size={20} color={colors.text} />
         </TouchableOpacity>
       ),
     });
-  }, [navigation, colors, textColor]);
+  }, [navigation, colors]);
 
   const loadWorkouts = useCallback(async () => {
     try {
@@ -52,19 +55,57 @@ export default function CompletedWorkouts() {
         setWorkouts([]);
       }
     } catch (error) {
-      console.error("❌ Failed to load workouts:", error);
+      console.error("Failed to load workouts:", error);
     }
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadWorkouts();
-    }, [loadWorkouts])
-  );
+  useFocusEffect(useCallback(() => { loadWorkouts(); }, [loadWorkouts]));
 
-  const formatDate = (isoDate: string) => {
-    const date = new Date(isoDate);
-    return isNaN(date.getTime()) ? "Unknown Date" : date.toLocaleDateString();
+  const formatShortDate = (isoDate: string) => {
+    const d = new Date(isoDate);
+    if (isNaN(d.getTime())) return "Unknown";
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  const notePreview = (notes?: string) => {
+    const s = (notes ?? "").trim();
+    if (!s) return undefined;
+    return s.length > 80 ? `“${s.slice(0, 77)}…”` : `“${s}”`;
+  };
+
+  const computeCompletedMetrics = (w: Workout) => {
+    // totals
+    const totalExercises =
+      w.metrics?.totalExercises ?? (Array.isArray(w.exercises) ? w.exercises.length : 0);
+
+    const totalSets =
+      w.metrics?.totalSets ??
+      (w.exercises?.reduce((acc, ex) => {
+        const sets = ex?.actions?.filter?.((a: any) => a?.type === "set")?.length || 0;
+        return acc + sets;
+      }, 0) ?? 0);
+
+    const totalWorkingSets =
+      w.metrics?.totalWorkingSets ??
+      (w.exercises?.reduce((acc, ex) => {
+        const working = ex?.actions?.filter?.((a: any) => a?.type === "set" && !a?.isWarmup)?.length || 0;
+        return acc + working;
+      }, 0) ?? 0);
+
+    // duration: prefer the real elapsed time, fall back to computed/approx if present
+    const sumComputed = w.exercises?.reduce((t, ex) => {
+      const v = Number(ex?.computedDurationInSeconds || 0);
+      return t + (isFinite(v) ? v : 0);
+    }, 0) ?? 0;
+
+    const duration =
+      (isFinite(Number(w.elapsedSeconds)) && Number(w.elapsedSeconds) > 0 && Number(w.elapsedSeconds)) ||
+      (isFinite(Number(w.metrics?.approxDurationInSeconds)) && Number(w.metrics?.approxDurationInSeconds)) ||
+      (isFinite(Number(w.approxDurationInSeconds)) && Number(w.approxDurationInSeconds)) ||
+      (sumComputed > 0 && sumComputed) ||
+      0;
+
+    return { totalExercises, totalSets, totalWorkingSets, duration };
   };
 
   return (
@@ -77,38 +118,29 @@ export default function CompletedWorkouts() {
         <FlatList
           data={workouts}
           keyExtractor={(item) => item.id.toString()}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => {
-                globalThis.tempExercises = item.exercises;
-                router.push("/exercise-log");
-              }}
-              style={{
-                backgroundColor: cardColor,
-                padding: 16,
-                borderRadius: 12,
-                marginBottom: 15,
-                elevation: 3,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 6,
-              }}
-            >
-              <Text style={{ fontSize: 20, fontWeight: "bold", color: textColor }}>
-                {item.name}
-              </Text>
-              <Text style={{ color: textColor, marginTop: 4 }}>
-                {formatDate(item.date)}
-              </Text>
-
-              {!!item.notes?.trim() && (
-                <Text style={{ color: "#888", fontStyle: "italic", marginTop: 6 }}>
-                  “{item.notes.trim()}”
-                </Text>
-              )}
-            </TouchableOpacity>
-          )}
+          renderItem={({ item }) => {
+            const m = computeCompletedMetrics(item);
+            return (
+              <WorkoutSummaryCard
+                title={item.name}
+                rightText={formatShortDate(item.date)}
+                items={[
+                  { label: "Total Exercises", value: m.totalExercises },
+                  { label: "Total       Sets", value: m.totalSets },
+                  { label: "Working Sets", value: m.totalWorkingSets },
+                  { label: "Total Duration", value: formatHM(m.duration) },
+                ]}
+                onPress={() => {
+                  // Preserve your current behavior
+                  (globalThis as any).tempExercises = item.exercises;
+                  router.push("/exercise-log");
+                }}
+                testID={`completed-card-${item.id}`}
+                // optional: onLongPress={() => router.push(`/completed-detail?id=${item.id}`)}
+              />
+            );
+          }}
+          contentContainerStyle={{ paddingBottom: 12 }}
         />
       )}
     </View>
