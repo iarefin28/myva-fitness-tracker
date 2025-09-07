@@ -66,7 +66,6 @@ export const EXERCISES_DB = [
 
   "Lat Pulldown",
   "Seated Row",
-  "Dumbbell Row",
   "Barbell Row",
   "T-Bar Row",
   "Face Pulls",

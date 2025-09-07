@@ -48,6 +48,8 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
     const iconColor = isDark ? "#ccc" : "#555";
     const noteText = isDark ? "#FFD700" : "#bb8800";
     const noteBorder = isDark ? "#FFD700" : "#ccc";
+    const dividerColor = isDark ? "#aaa" : "#666";
+    const tagKeyColor = isDark ? "#FFD700" : "#bb8800";
 
     const C = {
         text: isDark ? "#fff" : "#000",
@@ -252,9 +254,11 @@ const ExerciseCard: React.FC<Props> = ({ exercise, onPress, defaultExpanded = fa
                                 { backgroundColor: C.chipBg, borderColor: C.border }
                             ]}
                         >
-                            <Text style={[styles.tagText, { color: C.text }]}>
-                                {key}: {value}
+                            <Text style={[styles.tagKey, { color: tagKeyColor }]}>
+                                {key.charAt(0).toUpperCase() + key.slice(1)}
                             </Text>
+                            <View style={[styles.tagDivider, { backgroundColor: dividerColor }]} />
+                            <Text style={[styles.tagValue, { color: C.text }]}>{value}</Text>
                         </View>
                     ))}
                 </View>
@@ -357,25 +361,41 @@ const styles = StyleSheet.create({
         justifyContent: "space-between", // distribute evenly
         marginTop: 6,
     },
-
     tagBadge: {
-        flexBasis: "32%",   // ~1/3 width minus margins
+        flexBasis: "32%",
         alignItems: "center",
         backgroundColor: "#3a3a3a",
         borderRadius: 10,
-        paddingVertical: 4,
+        paddingVertical: 6,  // was 4
         marginBottom: 6,
         borderWidth: 1,
         borderColor: "#555",
     },
-
     tagText: {
         fontSize: 11.5,               // between small + readable
         color: "#fff",
         fontWeight: "500",
         textAlign: "center",
     },
+    tagKey: {
+        fontSize: 11,
+        fontWeight: "600",
+        textAlign: "center",
+        marginBottom: 2,
+    },
 
+    tagDivider: {
+        height: 1,
+        width: "90%",
+        backgroundColor: "#888", // nice gray line
+        marginVertical: 2,
+    },
+
+    tagValue: {
+        fontSize: 11.5,
+        fontWeight: "500",
+        textAlign: "center",
+    }
 });
 
 export default ExerciseCard;
