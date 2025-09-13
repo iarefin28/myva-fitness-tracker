@@ -8,7 +8,7 @@ import ExerciseInteractiveModal from "../components/ExerciseInteractiveModal";
 import { inferDefaultTags } from "../data/exerciseDefaultTags";
 import type { Exercise, ExerciseAction, ExerciseType, TagState } from "../types/workout";
 
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { nanoid } from 'nanoid/non-secure';
 import { Pressable } from "react-native";
@@ -278,7 +278,7 @@ export default function AddWorkout() {
                 if (mode === "live") {
                     return (
                         <View style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 4, flexShrink: 1 }}>
-                            <AntDesign name="clockcircleo" size={16} color={textColor} style={{ marginRight: 4 }} />
+                            <Ionicons name="time-outline" size={16} color={textColor} style={{ marginRight: 4 }} />
                             <Text
                                 numberOfLines={1}
                                 style={{ fontSize: 16, fontWeight: "bold", color: textColor }}

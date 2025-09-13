@@ -1,4 +1,4 @@
-import { AntDesign } from "@expo/vector-icons";
+import { AntDesign, Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
@@ -285,7 +285,7 @@ export default function ExerciseEditorModal({
                                 flexDirection: "row",
                                 alignItems: "center",
                                 justifyContent: "space-between",
-                                marginBottom: 20,
+                                marginBottom: 10,
                             }}>
                                 <TouchableOpacity onPress={confirmClose} style={{ padding: 4, minWidth: 50 }}>
                                     <AntDesign name="close" size={24} color={textPrimary} />
@@ -309,7 +309,7 @@ export default function ExerciseEditorModal({
                                 </View> */}
                                 {trackTime && (
                                     <View style={{ flexDirection: "row" }}>
-                                        <AntDesign name="clockcircleo" size={18} color={textPrimary} style={{ marginRight: 6 }} />
+                                        <Ionicons name="time-outline" size={18} color={textPrimary} style={{ marginRight: 6 }} />
                                         <Text style={{ fontSize: 16, color: textPrimary, fontWeight: "bold" }}>
                                             {formatElapsedTime(modalTimer)}
                                         </Text>
