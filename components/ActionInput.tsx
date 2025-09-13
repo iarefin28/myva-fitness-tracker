@@ -48,6 +48,7 @@ interface ActionInputProps {
     registerFocus: FocusProps["registerFocus"];
     unregisterFocus: FocusProps["unregisterFocus"];
     focusNext: FocusProps["focusNext"];
+    disabled?: boolean;
 }
 
 const RANK = {
@@ -71,6 +72,7 @@ const ActionInput: React.FC<ActionInputProps> = ({
     showInfoIcon = true,
     autoFocusWeight = false,
     onDidAutoFocus, actionIndex, registerFocus, unregisterFocus, focusNext,
+    disabled = false,
 }) => {
 
     const isDark = useColorScheme() === "dark";
@@ -136,6 +138,7 @@ const ActionInput: React.FC<ActionInputProps> = ({
 
 
     const pan = Gesture.Pan()
+        .enabled(!disabled)
         .activeOffsetX([-10, 10])        // only activate on meaningful horizontal swipes
         .failOffsetY([-5, 5])            // cancel if vertical movement is detected
         .minDistance(10)                 // prevent ghost touches
@@ -277,10 +280,11 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                             keyboardType="numeric"
                                             returnKeyType={"next"}
                                             blurOnSubmit={false}
-                                            value={formatRestDisplay(action.value)}  // e.g. "1:30" from raw digits
+                                            editable={!disabled} // NEW
+                                            value={formatRestDisplay(action.value)}
                                             onChangeText={(text) => {
+                                                if (disabled) return; // NEW guard
                                                 const clean = text.replace(/\D/g, "");
-
                                                 let seconds = 0;
                                                 if (clean.length <= 2) {
                                                     seconds = parseInt(clean || "0");
@@ -289,31 +293,23 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                                     const secs = parseInt(clean.slice(-2) || "0");
                                                     seconds = minutes * 60 + secs;
                                                 }
-
-                                                // keep raw digits (MMSS) and parsed seconds
                                                 updateActionValue(actionId, "value", clean);
                                                 updateActionValue(actionId, "restInSeconds", String(seconds));
                                             }}
-
                                             maxLength={5}
-                                            // when Next/Done is pressed
                                             onSubmitEditing={() => {
-                                                // jump to the next registered input (e.g., next set’s Weight)
-                                                focusNext(`${action.id}:rest`);
+                                                if (!disabled) focusNext(`${action.id}:rest`);
                                             }}
-
-                                            // make the caret visible + consistent
                                             caretHidden={false}
-
                                             style={[
                                                 styles.input,
                                                 {
                                                     backgroundColor: inputBg,
                                                     color: inputText,
                                                     borderColor: unitBorder,
-                                                    // optional: keep caret visible when empty if you center text elsewhere
                                                     textAlign: (formatRestDisplay(action.value) || "").length ? "center" : "left",
-                                                }
+                                                    opacity: disabled ? 0.6 : 1, // NEW subtle dim on input itself
+                                                },
                                             ]}
                                         />
                                     </View>
@@ -354,21 +350,21 @@ const ActionInput: React.FC<ActionInputProps> = ({
                         <View style={styles.headerRow}>
                             <TouchableOpacity
                                 onPress={() => {
+                                    if (disabled) return; // NEW
                                     const newWarmup = !action.isWarmup;
                                     updateActionValue(actionId, "isWarmup", newWarmup);
-                                    if (newWarmup) {
-                                        updateActionValue(actionId, "RPE", ""); // reset RPE
-                                    }
+                                    if (newWarmup) updateActionValue(actionId, "RPE", "");
                                 }}
+                                disabled={disabled} // NEW
                                 style={{
-                                    borderColor: "#555",
+                                    borderColor: unitBorder,
                                     borderWidth: 1,
                                     paddingVertical: 4,
                                     paddingHorizontal: 12,
                                     borderRadius: 8,
                                     justifyContent: "center",
                                     backgroundColor: innerBg,
-                                    borderColor: unitBorder,
+                                    opacity: disabled ? 0.6 : 1, // NEW
                                 }}
                             >
                                 <Text style={{
@@ -395,6 +391,7 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                                 returnKeyType="next"
                                                 blurOnSubmit={false}
                                                 onSubmitEditing={() => focusNext(`${action.id}:weight`)}
+                                                editable={!disabled}
                                                 style={[
                                                     styles.input,
                                                     {
@@ -402,16 +399,18 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                                         color: inputText,
                                                         borderColor: unitBorder,
                                                         textAlign: (action.weight ?? "").length ? "center" : "left", // show caret when empty
+                                                        opacity: disabled ? 0.6 : 1,
                                                     },
                                                 ]}
                                             />
                                             <TouchableOpacity
-                                                onPress={() => updateActionValue(actionId, "weightUnit", action.weightUnit === "lb" ? "kg" : "lb")}
+                                                onPress={() => { if (!disabled) updateActionValue(actionId, "weightUnit", action.weightUnit === "lb" ? "kg" : "lb"); }}
                                                 style={[
                                                     styles.unitToggle,
                                                     {
                                                         backgroundColor: unitBg,
                                                         borderColor: unitBorder,
+                                                        opacity: disabled ? 0.6 : 1
                                                     }
                                                 ]}
                                             >
@@ -426,13 +425,14 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                             placeholderTextColor={textSecondary}
                                             keyboardType="numeric"
                                             value={action.reps ?? ""}
-                                            onChangeText={(v) => updateActionValue(actionId, "reps", v)}
+                                            onChangeText={(v) => { if (!disabled) updateActionValue(actionId, "reps", v); }}
                                             returnKeyType="next"
                                             blurOnSubmit={false}
-                                            onSubmitEditing={() => focusNext(`${action.id}:reps`)}
+                                            onSubmitEditing={() => { if (!disabled) focusNext(`${action.id}:reps`); }}
+                                            editable={!disabled}
                                             style={[
                                                 styles.input,
-                                                { backgroundColor: inputBg, color: inputText, borderColor: unitBorder }
+                                                { backgroundColor: inputBg, color: inputText, borderColor: unitBorder, opacity: disabled ? 0.6 : 1 }
                                             ]}
                                         />
                                     )}
@@ -472,10 +472,11 @@ const ActionInput: React.FC<ActionInputProps> = ({
                                 {showInfoIcon && (
                                     <TouchableOpacity
                                         onPress={() => {
+                                            if (disabled) return;
                                             onToggle();
                                             onExpand?.();
                                         }}
-                                        style={styles.infoIcon}
+                                        style={[styles.infoIcon, { opacity: disabled ? 0.6 : 1 }]}
                                     >
                                         <Feather name="more-vertical" size={21} color={iconColorPrimary} />
                                     </TouchableOpacity>

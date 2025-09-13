@@ -12,7 +12,7 @@ import ExerciseAutocomplete from "./ExerciseAutocomplete";
 
 import { useCallback } from "react";
 
-import TagSearchPicker from "./TagPicker";
+import TagSearchPicker, { TagPickerHandle } from "./TagPicker";
 const AUTO_SCROLL = false;
 
 interface Props {
@@ -79,6 +79,9 @@ export default function ExerciseEditorModal({
     pendingFocusId,
     onPendingFocusHandled
 }: Props) {
+
+
+
     const scrollViewRef = useRef<ScrollView>(null);
     const canAddRest = actionsList.length === 0 || actionsList[actionsList.length - 1].type !== "rest";
 
@@ -90,6 +93,11 @@ export default function ExerciseEditorModal({
     const modalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const scheme = useColorScheme();
+    const tagPickerRef = React.useRef<TagPickerHandle>(null);
+    const [isTagPickerOpen, setIsTagPickerOpen] = React.useState(false);
+    const openingTagRef = React.useRef(false); // NEW
+
+
     const isDark = scheme === "dark";
 
     const modalOverlay = isDark ? "#2a2a2a" : "rgba(0, 0, 0, 0.2)";
@@ -127,20 +135,25 @@ export default function ExerciseEditorModal({
         return false;
     }, []);
 
-    useEffect(() => {
-        setExpandedIndex(null);
-        const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-        const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    React.useEffect(() => {
+        const showEvent = "keyboardDidShow";
+        const hideEvent = "keyboardDidHide";
 
-        const showSub = Keyboard.addListener(showEvent, () => setKeyboardVisible(true));
-        const hideSub = Keyboard.addListener(hideEvent, () => setKeyboardVisible(false));
-
-        return () => {
-            showSub.remove();
-            hideSub.remove();
+        const onShow = () => {
+            setKeyboardVisible(true);                  // ✅ always mark visible
+            if (openingTagRef.current) return;         // we're opening Tag Picker → don't collapse
+            const searchFocused = tagPickerRef.current?.isSearchFocused?.() ?? false;
+            if (!searchFocused) setIsTagPickerOpen(false);
         };
-    }, [resetExpansionTrigger]);
 
+        const onHide = () => {
+            setKeyboardVisible(false); // ✅ mark hidden
+        }
+
+        const subShow = Keyboard.addListener(showEvent, onShow);
+        const subHide = Keyboard.addListener(hideEvent, onHide);
+        return () => { subShow.remove(); subHide.remove(); };
+    }, []);
     useEffect(() => {
         if (visible && trackTime) {
             modalTimerRef.current = setInterval(() => {
@@ -191,6 +204,28 @@ export default function ExerciseEditorModal({
         const secs = seconds % 60;
         return `${mins}:${secs.toString().padStart(2, "0")}`;
     };
+
+    // open/close helpers
+    const openTagPicker = React.useCallback(() => {
+        openingTagRef.current = true;         // NEW
+        Keyboard.dismiss();
+        setIsTagPickerOpen(true);
+
+        // Try focusing across a few frames to beat mount/layout timing
+        const tryFocus = (i = 0) => {
+            tagPickerRef.current?.focusSearch();
+            const ok = tagPickerRef.current?.isSearchFocused?.();
+            if (!ok && i < 5) setTimeout(() => tryFocus(i + 1), 30);
+            else openingTagRef.current = false; // clear the guard
+        };
+        setTimeout(() => tryFocus(), 0);
+    }, []);
+
+    const closeTagPicker = React.useCallback(() => {
+        openingTagRef.current = false;        // NEW (safety)
+        setIsTagPickerOpen(false);
+        tagPickerRef.current?.blurSearch();
+    }, []);
 
 
     const toggleExpand = (index: number) => {
@@ -270,6 +305,7 @@ export default function ExerciseEditorModal({
             <View style={{ flex: 1, justifyContent: "flex-end", backgroundColor: modalOverlay }}>
                 <KeyboardAvoidingView
                     behavior={Platform.OS === "ios" ? "padding" : "height"}
+                    enabled={!isTagPickerOpen}
                     style={{
                         backgroundColor: modalBg,
                         height: "95%",
@@ -359,10 +395,20 @@ export default function ExerciseEditorModal({
                             {/* Set & Rest Buttons */}
                             {lockedExerciseTitle && (
                                 <>
+                                    {/* Tag Picker */}
                                     <View>
-                                        <TagSearchPicker value={tags} onChange={onChangeTags} />
+                                        <TagSearchPicker
+                                            ref={tagPickerRef}
+                                            value={tags}
+                                            onChange={onChangeTags}
+                                            collapsed={!isTagPickerOpen}
+                                            onToggleCollapsed={() => {
+                                                if (isTagPickerOpen) closeTagPicker();
+                                                else openTagPicker();
+                                            }}
+                                        />
                                     </View>
-                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20 }}>
+                                    <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 20, }}>
                                         <TouchableOpacity
                                             style={{
                                                 flex: 1,
@@ -373,9 +419,14 @@ export default function ExerciseEditorModal({
                                                 alignItems: "center",
                                                 justifyContent: "center",
                                                 borderWidth: 1,
-                                                borderColor: borderColor
+                                                borderColor: borderColor,
+                                                opacity: isTagPickerOpen ? 0.5 : 1,       // NEW
                                             }}
-                                            onPress={addSet}
+                                            onPress={() => {
+                                                if (isTagPickerOpen) return;              // NEW: prevent while picker is open
+                                                addSet();
+                                            }}
+                                            disabled={isTagPickerOpen}                  // NEW
                                         >
                                             <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>+ Add Set</Text>
                                         </TouchableOpacity>
@@ -391,10 +442,13 @@ export default function ExerciseEditorModal({
                                                 justifyContent: "center",
                                                 borderWidth: 1,
                                                 borderColor: "#444",
-                                                opacity: canAddRest ? 1 : 0.5,
+                                                opacity: (canAddRest && !isTagPickerOpen) ? 1 : 0.5, // NEW
                                             }}
-                                            onPress={canAddRest ? addRest : undefined}
-                                            disabled={!canAddRest}
+                                            onPress={() => {
+                                                if (!canAddRest || isTagPickerOpen) return;          // NEW
+                                                addRest();
+                                            }}
+                                            disabled={!canAddRest || isTagPickerOpen}              // NEW
                                         >
                                             <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>+ Add Rest</Text>
                                         </TouchableOpacity>
@@ -404,6 +458,8 @@ export default function ExerciseEditorModal({
                                     <ScrollView
                                         ref={scrollViewRef}
                                         style={{ flex: 1 }}
+                                        contentContainerStyle={{ flexGrow: 1, paddingBottom: 8 }}
+                                        pointerEvents={isTagPickerOpen ? "none" : "auto"}
                                         showsVerticalScrollIndicator={false}
                                         keyboardShouldPersistTaps="handled"
                                         keyboardDismissMode="none"
@@ -414,7 +470,18 @@ export default function ExerciseEditorModal({
                                             }
                                         }}
                                     >
-
+                                        {/* Exercise header title */}
+                                        <Text
+                                            style={{
+                                                color: textPrimary,
+                                                fontSize: 20,
+                                                fontWeight: "700",
+                                                marginBottom: 8,
+                                                opacity: isTagPickerOpen ? 0.5 : 1
+                                            }}
+                                        >
+                                            Sets and Rest
+                                        </Text>
                                         {actionsList.map((action, index) => (
                                             <Animated.View
                                                 // layout={Layout.springify()}
@@ -448,12 +515,13 @@ export default function ExerciseEditorModal({
                                                     registerFocus={registerFocus}
                                                     unregisterFocus={unregisterFocus}
                                                     focusNext={focusNext}
+                                                    disabled={isTagPickerOpen}
                                                 />
                                             </Animated.View>
                                         ))}
                                     </ScrollView>
 
-                                    {/* Save button at bottom for user ease */}
+                                    {/* Save button at bottom for user ease
                                     {!keyboardVisible && (
                                         <TouchableOpacity
                                             onPress={onSave}
@@ -473,7 +541,7 @@ export default function ExerciseEditorModal({
                                                 Save Exercise
                                             </Text>
                                         </TouchableOpacity>
-                                    )}
+                                    )} */}
                                 </>
                             )}
                         </View>

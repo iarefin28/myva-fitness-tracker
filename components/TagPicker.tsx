@@ -11,6 +11,12 @@ import {
   View,
 } from "react-native";
 
+export type TagPickerHandle = {
+  focusSearch: () => void;
+  blurSearch: () => void;
+  isSearchFocused: () => boolean;
+};
+
 type ExclusiveGroup = "equipment" | "bench" | "grip style" | "grip width" | "side" | "unilateral pattern" | "posture";;
 export type TagState = Partial<Record<ExclusiveGroup, string>>;
 type Props = {
@@ -20,7 +26,8 @@ type Props = {
   maxResults?: number;   // default: 4
   height?: number;       // default: 140
   containerStyle?: any;  // optional override/extra styles
-  // title?: string;     // kept out intentionally (no header)
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
 };
 
 const GROUP_OPTIONS: Record<ExclusiveGroup, string[]> = {
@@ -50,14 +57,27 @@ const LANE = 40;   // fixed lane height for chips
 const INPUT_H = 40;
 const V_SP = 6;
 
-const TagSearchPicker: React.FC<Props> = ({
+const TagSearchPicker = React.forwardRef<TagPickerHandle, Props>(({
   value,
   onChange,
   groups = ["equipment", "bench", "grip style", "grip width", "side", "unilateral pattern", "posture"],
   maxResults = 4,
   height = 140,
   containerStyle,
-}) => {
+  collapsed = false,
+  onToggleCollapsed
+}, ref) => {
+
+  const searchRef = React.useRef<TextInput>(null);
+  const [searchFocused, setSearchFocused] = React.useState(false);
+
+  React.useImperativeHandle(ref, () => ({
+    focusSearch: () => searchRef.current?.focus(),
+    blurSearch: () => searchRef.current?.blur(),
+    // Use the native focus state first; fallback to React state
+    isSearchFocused: () => !!searchRef.current?.isFocused?.() || searchFocused,
+  }), [searchFocused]);
+
   const isDark = useColorScheme() === "dark";
   const C = {
     text: isDark ? "#fff" : "#000",
@@ -68,6 +88,7 @@ const TagSearchPicker: React.FC<Props> = ({
     chipBgActive: isDark ? "#1e90ff22" : "#007aff1a",
     border: isDark ? "#3c3c3c" : "#ddd",
   };
+
 
   const [q, setQ] = useState("");
 
@@ -112,12 +133,17 @@ const TagSearchPicker: React.FC<Props> = ({
     }
     return next;
   }
+  const refocusSearch = () => {
+    requestAnimationFrame(() => searchRef.current?.focus());
+  };
+
 
   const select = (g: ExclusiveGroup, opt: string) => {
     const toggledOff = value[g] === opt;
     const next: TagState = { ...value, [g]: toggledOff ? undefined : opt };
     onChange(normalize(next));
     setQ("");
+    refocusSearch();
   };
 
   const clearGroup = (g: ExclusiveGroup) => {
@@ -125,6 +151,7 @@ const TagSearchPicker: React.FC<Props> = ({
     const next: TagState = { ...value };
     delete next[g];
     onChange(normalize(next));
+    refocusSearch();
   };
 
   const SelectedChip = ({ g, label }: { g: ExclusiveGroup; label: string }) => (
@@ -164,18 +191,21 @@ const TagSearchPicker: React.FC<Props> = ({
     </TouchableOpacity>
   );
 
+  // compact height when collapsed: just the selected chips lane + small padding
+  const compactHeight = LANE + 20;
+
   return (
     <View
       style={[
         {
-          height,
+          height: collapsed ? compactHeight : height,   // NEW
           backgroundColor: C.cardBg,
           borderColor: C.border,
           borderWidth: 1,
           borderRadius: 12,
           padding: 10,
           marginBottom: 10,
-          overflow: "hidden", // <<< keeps chips/suggestions contained
+          overflow: "hidden",
           ...(Platform.OS === "ios"
             ? { shadowColor: "#000", shadowOpacity: 0.07, shadowOffset: { width: 0, height: 3 }, shadowRadius: 6 }
             : { elevation: 1 }),
@@ -183,107 +213,117 @@ const TagSearchPicker: React.FC<Props> = ({
         containerStyle,
       ]}
     >
-      {/* SELECTED lane */}
-      <View style={{ height: LANE, justifyContent: "center" }}>
+      {/* SELECTED lane (always visible) */}
+      <View style={{ height: LANE, justifyContent: "center", flexDirection: "row", alignItems: "center" }}>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={true}
-          style={{ width: "100%" }}
-          contentContainerStyle={{ alignItems: "center", paddingRight: 4 }}
+          keyboardShouldPersistTaps="always"
+          keyboardDismissMode="none"
+          style={{ width: "100%", flex: 1 }}
+          contentContainerStyle={{ alignItems: "center", flexGrow: 1 }}
         >
           {(["equipment", "bench", "posture", "grip style", "grip width", "side", ...(value.side === "unilateral" ? ["unilateral pattern"] : [])] as ExclusiveGroup[])
             .filter(g => groups.includes(g))
             .map(g => (value[g] ? <SelectedChip key={`sel:${g}`} g={g} label={value[g]!} /> : null))}
         </ScrollView>
-      </View>
-
-      <View style={{ height: V_SP }} />
-
-      {/* SEARCH */}
-      <View style={{ height: INPUT_H, justifyContent: "center" }}>
-        <TextInput
-          placeholder="Search tags (equipment, posture, grip...)"
-          placeholderTextColor={C.sub}
-          value={q}
-          onChangeText={setQ}
+        {/* expand/collapse chevron */}
+        <TouchableOpacity
+          onPress={onToggleCollapsed}
           style={{
-            height: INPUT_H,
-            backgroundColor: C.inputBg,
-            color: C.text,
-            borderRadius: 10,
-            paddingHorizontal: 12,
-            borderWidth: 1,
-            borderColor: C.border,
+            justifyContent: "center",
+            alignItems: "center",
+            paddingHorizontal: 8,
+            height: "100%",
           }}
-          returnKeyType="search"
-        />
-      </View>
-
-      {/* SUGGESTIONS lane */}
-      <View style={{ height: LANE, justifyContent: "center" }}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={true}
-          keyboardShouldPersistTaps="handled"
-          style={{ width: "100%" }}
-          contentContainerStyle={{ alignItems: "center", paddingRight: 4 }}
         >
-          {q && results.length > 0
-            ? results.map(r => (
-              <SuggestionChip
-                key={`${r.group}:${r.value}`}
-                g={r.group}
-                label={r.label}
-                active={value[r.group] === r.value}
-                onPress={() => select(r.group, r.value)}
-              />
-            ))
-            : null}
-        </ScrollView>
-
-        {/* 👇 add this fallback */}
-        {!q && (
-          <View
-            style={{
-              position: "absolute",
-              alignSelf: "center",
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            <Text
-              style={{
-                color: C.sub,
-                fontWeight: "700",
-                fontSize: 14,
-                opacity: 0.5,
-                letterSpacing: 0.3,
-              }}
-            >
-              MYVA
-            </Text>
-            <Ionicons name="search" size={14} color={C.sub} />
-          </View>
-        )}
-
-        {q && results.length === 0 && (
-          <Text
-            style={{
-              position: "absolute",
-              alignSelf: "center",
-              color: C.sub,
-              fontWeight: "600",
-              fontSize: 13,
-              opacity: 0.7,
-            }}
-          >
-            No results.
-          </Text>
-        )}
+          <Ionicons
+            name={collapsed ? "chevron-down" : "chevron-up"}
+            size={24}
+            color={C.sub}
+          />
+        </TouchableOpacity>
       </View>
+
+      {/* Spacer */}
+      {!collapsed && <View style={{ height: V_SP }} />}
+
+      {/* SEARCH (hidden when collapsed) */}
+      {!collapsed && (
+        <View style={{ height: INPUT_H, justifyContent: "center" }}>
+          <TextInput
+            ref={searchRef}
+            placeholder="Search tags (equipment, posture, grip...)"
+            placeholderTextColor={C.sub}
+            value={q}
+            onChangeText={setQ}
+            onFocus={(...args) => {
+              setSearchFocused(true);
+              // if you already had onFocus, call it:
+              // props.onSearchFocus?.();
+            }}
+            onBlur={(...args) => {
+              setSearchFocused(false);
+              // props.onSearchBlur?.();
+            }}
+            blurOnSubmit={false}
+            style={{
+              height: INPUT_H,
+              backgroundColor: C.inputBg,
+              color: C.text,
+              borderRadius: 10,
+              paddingHorizontal: 12,
+              borderWidth: 1,
+              borderColor: C.border,
+            }}
+            returnKeyType="search"
+          />
+        </View>
+      )}
+
+      {/* SUGGESTIONS (hidden when collapsed) */}
+      {!collapsed && (
+        <View style={{ height: LANE, justifyContent: "center" }}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={true}
+            keyboardShouldPersistTaps="always"
+            keyboardDismissMode="none"
+            style={{ width: "100%" }}
+            contentContainerStyle={{ alignItems: "center", paddingRight: 4 }}
+          >
+            {q && results.length > 0
+              ? results.map(r => (
+                <SuggestionChip
+                  key={`${r.group}:${r.value}`}
+                  g={r.group}
+                  label={r.label}
+                  active={value[r.group] === r.value}
+                  onPress={() => select(r.group, r.value)}
+                />
+              ))
+              : null}
+          </ScrollView>
+
+          {!q && (
+            <View style={{ position: "absolute", alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Text style={{ color: C.sub, fontWeight: "700", fontSize: 14, opacity: 0.5, letterSpacing: 0.3 }}>
+                MYVA
+              </Text>
+              <Ionicons name="search" size={14} color={C.sub} />
+            </View>
+          )}
+
+          {q && results.length === 0 && (
+            <Text style={{ position: "absolute", alignSelf: "center", color: C.sub, fontWeight: "600", fontSize: 13, opacity: 0.7 }}>
+              No results.
+            </Text>
+          )}
+        </View>
+      )}
     </View>
   );
-};
+});
+
 
 export default TagSearchPicker;
