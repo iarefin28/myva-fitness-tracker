@@ -8,8 +8,10 @@ import ExerciseInteractiveModal from "../components/ExerciseInteractiveModal";
 import { inferDefaultTags } from "../data/exerciseDefaultTags";
 import type { Exercise, ExerciseAction, ExerciseType, TagState } from "../types/workout";
 
+import useAccurateTimer from "@/hooks/useAccurateTimer";
 import { AntDesign, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useIsFocused } from "@react-navigation/native";
 import { nanoid } from 'nanoid/non-secure';
 import { Pressable } from "react-native";
 
@@ -73,8 +75,9 @@ export default function AddWorkout() {
     const [resetExpansionTrigger, setResetExpansionTrigger] = useState(0);
     const [triggerScrollToEnd, setTriggerScrollToEnd] = useState(false);
 
-    const [elapsedTime, setElapsedTime] = useState(0);
-    const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    // const [elapsedTime, setElapsedTime] = useState(0);
+    // const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const sessionKeyRef = useRef(`workoutTimer:${Date.now()}`);
 
     const [totalApproxSeconds, setTotalApproxSeconds] = useState(0);
     const [durationOverrideMin, setDurationOverrideMin] = useState<number | null>(null);
@@ -138,17 +141,33 @@ export default function AddWorkout() {
         loadTemplate();
     }, [mode, templateId]);
 
-    useEffect(() => {
-        if (mode === "live") {
-            timerRef.current = setInterval(() => {
-                setElapsedTime(prev => prev + 1);
-            }, 1000);
-        }
+    // useEffect(() => {
+    //     if (mode === "live") {
+    //         timerRef.current = setInterval(() => {
+    //             setElapsedTime(prev => prev + 1);
+    //         }, 1000);
+    //     }
 
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-        };
+    //     return () => {
+    //         if (timerRef.current) clearInterval(timerRef.current);
+    //     };
+    // }, []);
+
+    useEffect(() => {
+        return () => { stopWorkoutTimer(); };
     }, []);
+
+    
+    const isFocused = useIsFocused();
+    const {
+        displaySeconds: elapsedTime,
+        finalize: finalizeWorkoutTimer,
+        reset: resetWorkoutTimer,
+        persistNow: persistWorkoutTimer,
+        stop: stopWorkoutTimer,           // <-- add this from the hook
+    } = useAccurateTimer(sessionKeyRef.current, isFocused && mode === "live");
+
+
 
     const formatElapsedTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -256,13 +275,16 @@ export default function AddWorkout() {
                     preWorkoutNote,
                     postWorkoutNote,
                     date: date.toISOString(),
-                    actualDurationInSeconds: elapsedTime,
+                    actualDurationInSeconds: finalizeWorkoutTimer(),
                     createdBy: "Ishan Arefin",
                     completedAt: date.toISOString()
                 };
                 list.push(liveWorkout);
                 await AsyncStorage.setItem(key, JSON.stringify(list, null, 2));
+
+                stopWorkoutTimer();
             }
+
 
             navigation.goBack();
         } catch (e) {
@@ -354,6 +376,7 @@ export default function AddWorkout() {
                 },
                 (buttonIndex) => {
                     if (buttonIndex === 1) {
+                        stopWorkoutTimer();
                         navigation.goBack();
                     }
                 }

@@ -2,7 +2,6 @@ import { AntDesign, Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useRef } from "react";
 import { KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpacity, View } from "react-native";
 
-import { useState } from "react";
 import { ActionSheetIOS, Alert, Keyboard, useColorScheme } from "react-native";
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,6 +13,10 @@ import { useCallback } from "react";
 
 import TagSearchPicker, { TagPickerHandle } from "./TagPicker";
 const AUTO_SCROLL = false;
+
+import useAccurateTimer from "@/hooks/useAccurateTimer";
+import { nanoid } from "nanoid/non-secure"; // or Date.now()
+
 
 interface Props {
     visible: boolean;
@@ -89,13 +92,14 @@ export default function ExerciseEditorModal({
     const [advancedOptionsIndices, setAdvancedOptionsIndices] = React.useState<number[]>([]);
     const [keyboardVisible, setKeyboardVisible] = React.useState(false);
 
-    const [modalTimer, setModalTimer] = useState(initialEditDuration || 0);
-    const modalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    // const [modalTimer, setModalTimer] = useState(initialEditDuration || 0);
+    // const modalTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const scheme = useColorScheme();
     const tagPickerRef = React.useRef<TagPickerHandle>(null);
     const [isTagPickerOpen, setIsTagPickerOpen] = React.useState(false);
     const openingTagRef = React.useRef(false); // NEW
+    const sessionKeyRef = useRef(`exerciseTimer:${nanoid()}`);
 
 
     const isDark = scheme === "dark";
@@ -154,17 +158,17 @@ export default function ExerciseEditorModal({
         const subHide = Keyboard.addListener(hideEvent, onHide);
         return () => { subShow.remove(); subHide.remove(); };
     }, []);
-    useEffect(() => {
-        if (visible && trackTime) {
-            modalTimerRef.current = setInterval(() => {
-                setModalTimer((prev) => prev + 1);
-            }, 1000);
-        }
-        return () => {
-            if (modalTimerRef.current) clearInterval(modalTimerRef.current);
-            modalTimerRef.current = null;
-        };
-    }, [visible, trackTime]);
+    // useEffect(() => {
+    //     if (visible && trackTime) {
+    //         modalTimerRef.current = setInterval(() => {
+    //             setModalTimer((prev) => prev + 1);
+    //         }, 1000);
+    //     }
+    //     return () => {
+    //         if (modalTimerRef.current) clearInterval(modalTimerRef.current);
+    //         modalTimerRef.current = null;
+    //     };
+    // }, [visible, trackTime]);
 
     useEffect(() => {
         if (!pendingFocusId) return;
@@ -193,11 +197,29 @@ export default function ExerciseEditorModal({
         });
     }, [pendingFocusId, onPendingFocusHandled]);
 
+    // useEffect(() => {
+    //     // Whenever we open the modal for a different exercise,
+    //     // or open/close, reset the counter from the prop.
+    //     setModalTimer(initialEditDuration || 0);
+    // }, [visible, initialEditDuration]);
+    const {
+        displaySeconds: modalElapsed,
+        finalize: finalizeModalTimer,
+        reset: resetModalTimer,
+    } = useAccurateTimer(
+        sessionKeyRef.current,
+        Boolean(visible && trackTime),
+        { initialAccumulatedMs: (initialEditDuration || 0) * 1000 }
+    );
+
+
+    const prevVisible = useRef(false);
     useEffect(() => {
-        // Whenever we open the modal for a different exercise,
-        // or open/close, reset the counter from the prop.
-        setModalTimer(initialEditDuration || 0);
-    }, [visible, initialEditDuration]);
+        if (visible && !prevVisible.current) {
+            resetModalTimer((initialEditDuration || 0) * 1000);
+        }
+        prevVisible.current = visible;
+    }, [visible, initialEditDuration, resetModalTimer]);
 
     const formatElapsedTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -271,7 +293,7 @@ export default function ExerciseEditorModal({
                 },
                 (buttonIndex) => {
                     if (buttonIndex === 1) {
-                        onCloseWithDuration?.(modalTimer); // ✅ for iOS
+                        onCloseWithDuration?.(finalizeModalTimer()); // ✅ for iOS
                         onClose();
                     }
                 }
@@ -286,7 +308,7 @@ export default function ExerciseEditorModal({
                         text: isEditing ? "Confirm" : "Delete",
                         style: isEditing ? "default" : "destructive",
                         onPress: () => {
-                            onCloseWithDuration?.(modalTimer);
+                            onCloseWithDuration?.(finalizeModalTimer());
                             onClose();
                         }
                     },
@@ -347,14 +369,14 @@ export default function ExerciseEditorModal({
                                     <View style={{ flexDirection: "row" }}>
                                         <Ionicons name="time-outline" size={18} color={textPrimary} style={{ marginRight: 6 }} />
                                         <Text style={{ fontSize: 16, color: textPrimary, fontWeight: "bold" }}>
-                                            {formatElapsedTime(modalTimer)}
+                                            {formatElapsedTime(modalElapsed)}
                                         </Text>
                                     </View>
                                 )}
 
                                 <TouchableOpacity
                                     onPress={() => {
-                                        onCloseWithDuration?.(modalTimer); // ✅ Save the timer before closing
+                                        onCloseWithDuration?.(finalizeModalTimer()); // ✅ Save the timer before closing
                                         onSave();                          // Then trigger save
                                     }}
                                     style={{ padding: 4, minWidth: 50, alignItems: "flex-end" }}
