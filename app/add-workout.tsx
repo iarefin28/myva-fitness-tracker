@@ -13,7 +13,38 @@ import { AntDesign, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useIsFocused } from "@react-navigation/native";
 import { nanoid } from 'nanoid/non-secure';
-import { Pressable } from "react-native";
+import { AppState, Pressable } from "react-native";
+
+import { useLocalSearchParams } from "expo-router";
+
+
+
+// // ---- AUTOSAVE: tiny storage helpers ----
+const DRAFT_KEY = "workout_draft_v1";
+
+// type WorkoutDraft = {
+//     id: string;                   // stable id for this live session
+//     status: "active" | "completed" | "abandoned";
+//     // core fields you already hold in AddWorkout:
+//     mode: "live" | "template";    // we only resume when mode === "live"
+//     workoutName: string;
+//     preWorkoutNote: string;
+//     postWorkoutNote: string;
+//     dateISO: string;
+//     exercises: Exercise[];
+//     durationOverrideMin: number | null;
+//     // timer linkage
+//     sessionKey: string;           // matches your useAccurateTimer key
+//     elapsedSeconds: number;       // snapshot for resume UI
+// };
+
+// async function saveDraft(d: WorkoutDraft) {
+//     try { await AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { }
+// }
+// async function loadDraft(): Promise<WorkoutDraft | null> {
+//     try { const raw = await AsyncStorage.getItem(DRAFT_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
+// }
+// async function clearDraft() { try { await AsyncStorage.removeItem(DRAFT_KEY); } catch { } }
 
 
 // function inferTags(name: string, type: ExerciseType): TagState {
@@ -25,6 +56,38 @@ import { Pressable } from "react-native";
 //   if (n.includes("machine")) return { equip: "machine" };
 //   return {}; // unknown for now
 // }
+
+type DraftTimer = {
+    startedAt: number;
+    isRunning: boolean;
+    totalPauseMs: number;
+    lastStateChangeAt: number;
+};
+
+type WorkoutDraft = {
+    id: string;
+    status: "active" | "completed" | "abandoned";
+    mode: "live" | "template";
+    workoutName: string;
+    preWorkoutNote: string;
+    postWorkoutNote: string;
+    dateISO: string;
+    exercises: Exercise[];
+    durationOverrideMin: number | null;
+    sessionKey: string;
+    elapsedSeconds: number;   // snapshot for UI
+    timer: DraftTimer;        // synthetic wall-clock timer for Home card
+};
+
+async function saveDraft(d: WorkoutDraft) {
+    try { await AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { }
+}
+async function loadDraft(): Promise<WorkoutDraft | null> {
+    try { const raw = await AsyncStorage.getItem(DRAFT_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
+}
+async function clearDraft() { try { await AsyncStorage.removeItem(DRAFT_KEY); } catch { } }
+
+
 
 export default function AddWorkout() {
     const route = useRoute();
@@ -157,7 +220,7 @@ export default function AddWorkout() {
         return () => { stopWorkoutTimer(); };
     }, []);
 
-    
+
     const isFocused = useIsFocused();
     const {
         displaySeconds: elapsedTime,
@@ -281,7 +344,7 @@ export default function AddWorkout() {
                 };
                 list.push(liveWorkout);
                 await AsyncStorage.setItem(key, JSON.stringify(list, null, 2));
-
+                await clearDraft();
                 stopWorkoutTimer();
             }
 
@@ -374,20 +437,29 @@ export default function AddWorkout() {
                     destructiveButtonIndex: 1,
                     userInterfaceStyle: "dark",
                 },
-                (buttonIndex) => {
+                async (buttonIndex) => {
                     if (buttonIndex === 1) {
                         stopWorkoutTimer();
+                        clearDraft();
                         navigation.goBack();
                     }
                 }
             );
         } else {
             Alert.alert(
-                "Delete Exercise?",
-                "Are you sure you want to delete this exercise? This action cannot be undone.",
+                "Discard Workout?",
+                "Are you sure you want to discard this workout? This action cannot be undone.",
                 [
                     { text: "Cancel", style: "cancel" },
-                    { text: "Delete", style: "destructive", onPress: onClose },
+                    {
+                        text: "Discard",
+                        style: "destructive",
+                        onPress: async () => {
+                            try { stopWorkoutTimer(); } catch { }
+                            await clearDraft();
+                            navigation.goBack();
+                        },
+                    },
                 ]
             );
         }
@@ -627,6 +699,160 @@ export default function AddWorkout() {
         const minutes = Math.ceil((sec || 0) / 60);
         return `${minutes} min${minutes !== 1 ? "s" : ""}`;
     }
+
+
+    // stable id for this session (so you can resume the *same* run)
+    const sessionIdRef = useRef<string>(() => {
+        // reuse timer key as the session id seed (1:1)
+        return sessionKeyRef.current;
+    }) as React.MutableRefObject<string>;
+    if (typeof sessionIdRef.current === 'function') sessionIdRef.current = sessionIdRef.current();
+
+    const buildDraft = useCallback((): WorkoutDraft => {
+        // synthesize a wall-clock timer so Home can show elapsed robustly
+        const now = Date.now();
+        const pseudoStartedAt = Math.max(0, now - (elapsedTime ?? 0) * 1000);
+
+        return {
+            id: sessionIdRef.current,
+            status: "active",
+            mode,
+            workoutName,
+            preWorkoutNote,
+            postWorkoutNote,
+            dateISO: date.toISOString(),
+            exercises: (exercisesRef.current ?? exercises) ?? [],
+            durationOverrideMin,
+            sessionKey: sessionKeyRef.current,
+            elapsedSeconds: elapsedTime ?? 0,
+            timer: {
+                startedAt: pseudoStartedAt,
+                isRunning: true,             // simple assumption for Home display
+                totalPauseMs: 0,
+                lastStateChangeAt: now,
+            },
+        };
+    }, [mode, workoutName, preWorkoutNote, postWorkoutNote, date, exercises, durationOverrideMin, elapsedTime]);
+
+
+    // simple throttle
+    const lastSaveRef = useRef(0);
+    const THROTTLE_MS = 600;
+
+    const autosaveNow = useCallback(async () => {
+        const now = Date.now();
+        if (now - lastSaveRef.current < THROTTLE_MS) return;
+        lastSaveRef.current = now;
+        const d = buildDraft();
+        if (d.mode === "live" && (d.exercises?.length ?? 0) > 0) {
+            await saveDraft(d);
+            try { persistWorkoutTimer?.(); } catch { }
+        }
+    }, [buildDraft, persistWorkoutTimer]);
+
+    // 3a) Save on important state changes
+    useEffect(() => { autosaveNow(); }, [
+        workoutName, preWorkoutNote, postWorkoutNote,
+        exercises, durationOverrideMin, elapsedTime
+    ]);
+
+    // 3b) Save when app backgrounds (final unthrottled flush)
+    useEffect(() => {
+        const sub = AppState.addEventListener("change", (s) => {
+            if (s !== "active") { saveDraft({ ...buildDraft(), status: "active" }); }
+        });
+        return () => sub.remove();
+    }, [buildDraft]);
+
+    // 3c) When you mutate exercises via setters, also write through exercisesRef
+    useEffect(() => { exercisesRef.current = exercises; }, [exercises]);
+
+    // useEffect(() => {
+    //     (async () => {
+    //         const draft = await loadDraft();
+    //         if (!draft || draft.mode !== "live" || draft.status !== "active") return;
+    //         // show platform-appropriate prompt
+    //         const resume = async () => {
+    //             // rehydrate all relevant state
+    //             setWorkoutName(draft.workoutName || "");
+    //             setPreWorkoutNote(draft.preWorkoutNote || "");
+    //             setPostWorkoutNote(draft.postWorkoutNote || "");
+    //             setDate(new Date(draft.dateISO));
+    //             setDurationOverrideMin(draft.durationOverrideMin ?? null);
+    //             setExercises(draft.exercises ?? []);
+    //             exercisesRef.current = draft.exercises ?? [];
+
+    //             // keep timer continuity: reuse original sessionKey if possible
+    //             sessionKeyRef.current = draft.sessionKey || sessionKeyRef.current;
+    //             // optional: if your timer hook supports a reset/seed, you could seed elapsed here.
+    //             // otherwise your header clock will restart but state is safe.
+
+    //             // If you want, persist the timer immediately
+    //             try { persistWorkoutTimer?.(); } catch { }
+    //         };
+
+    //         if (Platform.OS === "ios") {
+    //             ActionSheetIOS.showActionSheetWithOptions(
+    //                 {
+    //                     message: `Resume in-progress workout? (~${Math.floor((draft.elapsedSeconds || 0) / 60)} min so far)`,
+    //                     options: ["Cancel", "Discard", "Resume"],
+    //                     cancelButtonIndex: 0,
+    //                     destructiveButtonIndex: 1,
+    //                     userInterfaceStyle: "dark",
+    //                 },
+    //                 async (idx) => {
+    //                     if (idx === 2) await resume();
+    //                     if (idx === 1) await clearDraft();
+    //                 }
+    //             );
+    //         } else {
+    //             Alert.alert(
+    //                 "Resume workout?",
+    //                 `You have an in-progress workout (~${Math.floor((draft.elapsedSeconds || 0) / 60)} min).`,
+    //                 [
+    //                     { text: "Discard", style: "destructive", onPress: async () => { await clearDraft(); } },
+    //                     { text: "Resume", onPress: async () => { await resume(); } },
+    //                     { text: "Cancel", style: "cancel" },
+    //                 ]
+    //             );
+    //         }
+    //     })();
+    // }, []);
+
+    const { resume } = useLocalSearchParams<{ resume?: string | string[] }>();
+    const hasHydratedFromDraftRef = useRef(false);
+
+    useLayoutEffect(() => {
+        if (hasHydratedFromDraftRef.current) return;
+
+        (async () => {
+            // normalize param: could be "1" or ["1"]
+            const resumeParam = Array.isArray(resume) ? resume[0] : resume;
+            const wantsResume = resumeParam === "1";
+
+            const d = await loadDraft();
+            const eligible = !!d && d.status === "active" && d.mode === "live" && (d.exercises?.length ?? 0) > 0;
+
+            // allow resume if:
+            //  - user tapped "Continue" (wantsResume)
+            //  - OR this is a fresh AddWorkout screen (no local exercises yet) and a draft exists
+            const allowResume = (wantsResume && eligible) || (eligible && (exercisesRef.current?.length ?? exercises.length ?? 0) === 0);
+            if (!allowResume) return;
+
+            // --- hydrate exactly as you already do ---
+            setWorkoutName(d.workoutName || "");
+            setPreWorkoutNote(d.preWorkoutNote || "");
+            setPostWorkoutNote(d.postWorkoutNote || "");
+            setDate(new Date(d.dateISO || Date.now()));
+            setDurationOverrideMin(d.durationOverrideMin ?? null);
+            setExercises(d.exercises ?? []);
+            exercisesRef.current = d.exercises ?? [];
+
+            sessionKeyRef.current = d.sessionKey || sessionKeyRef.current;
+
+            hasHydratedFromDraftRef.current = true;
+        })();
+    }, [resume]);
 
     return (
         <>

@@ -1,10 +1,10 @@
 import { FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from "expo-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ScrollView } from 'react-native';
-
 
 import {
   Text,
@@ -22,10 +22,92 @@ interface Workout {
   date: string;
 }
 
+// ---- Draft helpers (match keys/shape you used in AddWorkout) ----
+const DRAFT_KEY = "workout_draft_v1";
+type DraftTimer = {
+  startedAt: number;
+  isRunning: boolean;
+  totalPauseMs: number;
+  lastStateChangeAt: number;
+};
+type WorkoutDraft = {
+  id: string;
+  status: "active" | "completed" | "abandoned";
+  mode: "live" | "template";
+  workoutName?: string;
+  dateISO?: string;
+  exercises?: any[];
+  timer?: DraftTimer;
+  elapsedSeconds?: number; // <— add this
+};
+
+async function loadDraft(): Promise<WorkoutDraft | null> {
+  try {
+    const raw = await AsyncStorage.getItem(DRAFT_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+}
+async function clearDraft() { try { await AsyncStorage.removeItem(DRAFT_KEY); } catch { } }
+
+// derive elapsed from wall-clock
+function getElapsedSec(t?: DraftTimer) {
+  if (!t || !t.startedAt) return 0;
+  const now = Date.now();
+  const base = t.isRunning ? now : t.lastStateChangeAt || now;
+  return Math.max(0, Math.floor((base - t.startedAt - (t.totalPauseMs || 0)) / 1000));
+}
+
+
 export default function HomeScreen() {
   const router = useRouter();
   const scheme = useColorScheme();
   const [workoutsThisWeek, setWorkoutsThisWeek] = useState(0);
+
+
+  const [draft, setDraft] = useState<WorkoutDraft | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+
+  useFocusEffect(
+    useCallback(() => {
+      let mounted = true;
+      (async () => {
+        const d = await loadDraft();
+        if (!mounted) return;
+        if (d && d.status === "active" && d.mode === "live" && (d.exercises?.length ?? 0) > 0) {
+          setDraft(d);
+          const initial = d.timer ? getElapsedSec(d.timer) : Math.max(0, Math.floor(d.elapsedSeconds ?? 0));
+          setElapsed(initial);
+        } else {
+          setDraft(null);
+          setElapsed(0);
+        }
+      })();
+      return () => { mounted = false; };
+    }, [])
+  );
+
+  useEffect(() => {
+    (async () => {
+      const d = await loadDraft();
+      if (d && d.status === "active" && d.mode === "live" && (d.exercises?.length ?? 0) > 0) {
+        setDraft(d);
+        const initial = d.timer ? getElapsedSec(d.timer) : Math.max(0, Math.floor(d.elapsedSeconds ?? 0));
+        setElapsed(initial);
+      } else {
+        setDraft(null);
+        setElapsed(0);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!draft) return;
+    const id = setInterval(() => {
+      const next = draft.timer ? getElapsedSec(draft.timer) : Math.max(0, Math.floor(draft.elapsedSeconds ?? 0));
+      setElapsed(next);
+    }, 1000);
+    return () => clearInterval(id);
+  }, [draft]);
 
   const backgroundColor = scheme === "dark" ? "#000" : "#fff";
   const textColor = scheme === "dark" ? "#fff" : "#000";
@@ -87,6 +169,65 @@ export default function HomeScreen() {
     if (count === 4) return ["#70e000", "#00c853"];      // lime to bright green
     if (count >= 5) return ["#00b894", "#00cec9"];       // emerald to teal
     return ["#666", "#999"]; // fallback gray
+  }
+
+  function ContinueWorkoutItem() {
+    if (!draft) return null;
+
+    const cardBg = cardColor; // same group background
+    const labelColor = scheme === "dark" ? "#cbd5e1" : "#475569";
+
+    return (
+      <View
+        style={{
+          marginTop: 16,
+          backgroundColor: cardBg,
+          borderRadius: 12,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.15,
+          shadowRadius: 4,
+          elevation: 2,
+          overflow: "hidden",
+        }}
+      >
+        <TouchableOpacity
+          onPress={() => router.push({ pathname: "/add-workout", params: { resume: "1" } })}
+          accessibilityLabel="Continue live workout"
+          style={{
+            paddingVertical: 18,
+            paddingHorizontal: 20,
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <View style={{ flexShrink: 1 }}>
+            <Text style={{ color: textColor, fontWeight: "800", fontSize: 16 }}>
+              Continue Live Workout
+            </Text>
+            <Text style={{ marginTop: 4, color: labelColor }}>
+              {draft.workoutName ? `${draft.workoutName} · ` : ""}
+              {Math.floor(elapsed / 60)}m elapsed
+            </Text>
+          </View>
+
+          {/* Right-side “Resume” chip to match your UI language */}
+          <View
+            style={{
+              paddingVertical: 8,
+              paddingHorizontal: 12,
+              borderRadius: 999,
+              backgroundColor: scheme === "dark" ? "#0f172a" : "#ecfdf5",
+              borderWidth: 1,
+              borderColor: scheme === "dark" ? "#334155" : "#a7f3d0",
+            }}
+          >
+            <Text style={{ color: textColor, fontWeight: "700" }}>Resume ▶︎</Text>
+          </View>
+        </TouchableOpacity>
+      </View>
+    );
   }
 
 
@@ -155,6 +296,7 @@ export default function HomeScreen() {
           </LinearGradient>
         </View>
 
+
         {/* Grouped Navigation Panel */}
         <View
           style={{
@@ -206,6 +348,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           ))}
         </View>
+        <ContinueWorkoutItem />
       </View>
     </ScrollView>
   );
