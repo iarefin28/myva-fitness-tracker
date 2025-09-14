@@ -185,5 +185,32 @@ export const EXERCISES_DB = [
   "Farmer Carry (Distance)",
   "Hip Flexor Raises (Monkey Feet)",
   "Lying Hip Flexor Raise (Orange Band)",
-  "Reverse Squat (Orange Band)"
+  "Reverse Squat (Orange Band)",
+
+  // Importing missing exercises from Adrian's list import on 09/14/2025
+  "Smith Machine Bench Press (Incline)",
+  "Dumbbell Flys",
+  "Pec Deck Chest Fly Machine",
+  "Machine Row (Hammer Strength)",
+  "Cable Lateral Raise",
+  "Machine Lateral Raise",
+  "Cable Rear Delt Fly (Reverse Cable Cross)",
+  "Reverse Pec Deck Machine",
+  "Incline Reverse Fly (Chest on Incline Bench)",
+  "Barbell Shrugs",
+  "EZ Bar Curl",
+  "Hammer Curl (Neutral Grip)",
+  "Preacher Curl (Barbell)",
+  "Preacher Curl (Dumbbell)",
+  "Incline Dumbbell Curl",
+  "Rope Cable Hammer Curl",
+  "Reverse Curl (Overhand Grip)",
+  "Machine Bicep Curl",
+  "Overhead Triceps Extension (Dumbbell)",
+  "Overhead Cable Triceps Extension",
+  "Dumbbell Kickbacks",
+  "One-Arm Cable Pushdowns",
+  "Machine Triceps Dip Press",
+  "Hack Squat",
+  "Smith Machine Squat"
 ];
