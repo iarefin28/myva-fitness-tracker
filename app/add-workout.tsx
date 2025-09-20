@@ -210,9 +210,6 @@ export default function AddWorkout() {
     }
     // ───── Workout Save (To Implement) ─────
     const saveWorkout = useCallback(async () => {
-        console.log("Workout Name:", workoutName);
-        console.log("Exercise length:", exercisesRef.current?.length ?? exercises.length);
-
         const exs = exercisesRef.current ?? exercises;
         if (!workoutName || (exs?.length ?? 0) === 0) return;
 
@@ -307,6 +304,7 @@ export default function AddWorkout() {
     const canSave =
         (workoutName?.trim().length ?? 0) > 0 &&
         ((exercisesRef.current?.length ?? exercises.length) > 0);
+
     // ───── Layout Effect for Header Buttons ─────
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -354,10 +352,41 @@ export default function AddWorkout() {
             },
             headerRight: () => (
                 <TouchableOpacity
-                    onPress={canSave ? saveWorkout : undefined}
                     disabled={!canSave}
                     accessibilityRole="button"
                     accessibilityState={{ disabled: !canSave }}
+                    onPress={() => {
+                        if (!canSave) return; 
+                        if (mode === "live") {
+                            if (Platform.OS === "ios") {
+                                ActionSheetIOS.showActionSheetWithOptions(
+                                    {
+                                        title: "Finish Live Workout?",
+                                        message:
+                                            "Are you sure you want to finish this live workout? Once saved, it cannot be modified.",
+                                        options: ["Cancel", "Save Workout"],
+                                        cancelButtonIndex: 0,
+                                        destructiveButtonIndex: 1,
+                                        userInterfaceStyle: scheme === "dark" ? "dark" : "light",
+                                    },
+                                    (buttonIndex) => {
+                                        if (buttonIndex === 1) saveWorkout();
+                                    }
+                                );
+                            } else {
+                                Alert.alert(
+                                    "Finish Live Workout?",
+                                    "Are you sure you want to finish this live workout? Once saved, it cannot be modified.",
+                                    [
+                                        { text: "Cancel", style: "cancel" },
+                                        { text: "Save Workout", style: "destructive", onPress: saveWorkout },
+                                    ]
+                                );
+                            }
+                        } else {
+                            saveWorkout();
+                        }
+                    }}
                 >
                     <Text
                         style={{
