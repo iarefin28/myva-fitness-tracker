@@ -1,0 +1,7 @@
+{
+  "build": {
+    "development": {
+      "channel": "main"
+    }
+  }
+}
