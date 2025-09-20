@@ -17,45 +17,8 @@ import { AppState, Pressable } from "react-native";
 
 import { useLocalSearchParams } from "expo-router";
 
-
-
 // // ---- AUTOSAVE: tiny storage helpers ----
 const DRAFT_KEY = "workout_draft_v1";
-
-// type WorkoutDraft = {
-//     id: string;                   // stable id for this live session
-//     status: "active" | "completed" | "abandoned";
-//     // core fields you already hold in AddWorkout:
-//     mode: "live" | "template";    // we only resume when mode === "live"
-//     workoutName: string;
-//     preWorkoutNote: string;
-//     postWorkoutNote: string;
-//     dateISO: string;
-//     exercises: Exercise[];
-//     durationOverrideMin: number | null;
-//     // timer linkage
-//     sessionKey: string;           // matches your useAccurateTimer key
-//     elapsedSeconds: number;       // snapshot for resume UI
-// };
-
-// async function saveDraft(d: WorkoutDraft) {
-//     try { await AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { }
-// }
-// async function loadDraft(): Promise<WorkoutDraft | null> {
-//     try { const raw = await AsyncStorage.getItem(DRAFT_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
-// }
-// async function clearDraft() { try { await AsyncStorage.removeItem(DRAFT_KEY); } catch { } }
-
-
-// function inferTags(name: string, type: ExerciseType): TagState {
-//   const n = name.toLowerCase();
-//   if (type === "bodyweight") return { equip: "bodyweight" };
-//   if (n.includes("barbell")) return { equip: "barbell" };
-//   if (n.includes("dumbbell") || n.includes("db")) return { equip: "dumbbell" };
-//   if (n.includes("cable")) return { equip: "cable" };
-//   if (n.includes("machine")) return { equip: "machine" };
-//   return {}; // unknown for now
-// }
 
 type DraftTimer = {
     startedAt: number;
@@ -204,22 +167,9 @@ export default function AddWorkout() {
         loadTemplate();
     }, [mode, templateId]);
 
-    // useEffect(() => {
-    //     if (mode === "live") {
-    //         timerRef.current = setInterval(() => {
-    //             setElapsedTime(prev => prev + 1);
-    //         }, 1000);
-    //     }
-
-    //     return () => {
-    //         if (timerRef.current) clearInterval(timerRef.current);
-    //     };
-    // }, []);
-
     useEffect(() => {
         return () => { stopWorkoutTimer(); };
     }, []);
-
 
     const isFocused = useIsFocused();
     const {
@@ -229,8 +179,6 @@ export default function AddWorkout() {
         persistNow: persistWorkoutTimer,
         stop: stopWorkoutTimer,           // <-- add this from the hook
     } = useAccurateTimer(sessionKeyRef.current, isFocused && mode === "live");
-
-
 
     const formatElapsedTime = (seconds: number) => {
         const mins = Math.floor(seconds / 60);
@@ -260,7 +208,6 @@ export default function AddWorkout() {
             totalWorkingSets,
         };
     }
-
     // ───── Workout Save (To Implement) ─────
     const saveWorkout = useCallback(async () => {
         console.log("Workout Name:", workoutName);
@@ -414,7 +361,6 @@ export default function AddWorkout() {
         });
     }, [navigation, textColor, saveWorkout, elapsedTime, mode]);
 
-
     // ───── Modal & Exercise Handlers ─────
     const closeModal = () => {
         setModalVisible(false);
@@ -525,7 +471,6 @@ export default function AddWorkout() {
             return updated;
         });
     };
-
 
     // ───── Action Handlers ─────
     const addSet = () => {
@@ -700,7 +645,6 @@ export default function AddWorkout() {
         return `${minutes} min${minutes !== 1 ? "s" : ""}`;
     }
 
-
     // stable id for this session (so you can resume the *same* run)
     const sessionIdRef = useRef<string>(() => {
         // reuse timer key as the session id seed (1:1)
@@ -766,58 +710,6 @@ export default function AddWorkout() {
 
     // 3c) When you mutate exercises via setters, also write through exercisesRef
     useEffect(() => { exercisesRef.current = exercises; }, [exercises]);
-
-    // useEffect(() => {
-    //     (async () => {
-    //         const draft = await loadDraft();
-    //         if (!draft || draft.mode !== "live" || draft.status !== "active") return;
-    //         // show platform-appropriate prompt
-    //         const resume = async () => {
-    //             // rehydrate all relevant state
-    //             setWorkoutName(draft.workoutName || "");
-    //             setPreWorkoutNote(draft.preWorkoutNote || "");
-    //             setPostWorkoutNote(draft.postWorkoutNote || "");
-    //             setDate(new Date(draft.dateISO));
-    //             setDurationOverrideMin(draft.durationOverrideMin ?? null);
-    //             setExercises(draft.exercises ?? []);
-    //             exercisesRef.current = draft.exercises ?? [];
-
-    //             // keep timer continuity: reuse original sessionKey if possible
-    //             sessionKeyRef.current = draft.sessionKey || sessionKeyRef.current;
-    //             // optional: if your timer hook supports a reset/seed, you could seed elapsed here.
-    //             // otherwise your header clock will restart but state is safe.
-
-    //             // If you want, persist the timer immediately
-    //             try { persistWorkoutTimer?.(); } catch { }
-    //         };
-
-    //         if (Platform.OS === "ios") {
-    //             ActionSheetIOS.showActionSheetWithOptions(
-    //                 {
-    //                     message: `Resume in-progress workout? (~${Math.floor((draft.elapsedSeconds || 0) / 60)} min so far)`,
-    //                     options: ["Cancel", "Discard", "Resume"],
-    //                     cancelButtonIndex: 0,
-    //                     destructiveButtonIndex: 1,
-    //                     userInterfaceStyle: "dark",
-    //                 },
-    //                 async (idx) => {
-    //                     if (idx === 2) await resume();
-    //                     if (idx === 1) await clearDraft();
-    //                 }
-    //             );
-    //         } else {
-    //             Alert.alert(
-    //                 "Resume workout?",
-    //                 `You have an in-progress workout (~${Math.floor((draft.elapsedSeconds || 0) / 60)} min).`,
-    //                 [
-    //                     { text: "Discard", style: "destructive", onPress: async () => { await clearDraft(); } },
-    //                     { text: "Resume", onPress: async () => { await resume(); } },
-    //                     { text: "Cancel", style: "cancel" },
-    //                 ]
-    //             );
-    //         }
-    //     })();
-    // }, []);
 
     const { resume } = useLocalSearchParams<{ resume?: string | string[] }>();
     const hasHydratedFromDraftRef = useRef(false);
@@ -907,8 +799,6 @@ export default function AddWorkout() {
                                 }}
                             />
                         )}
-
-
                         {/* Divider
                         {mode === "live" && (
                             <View style={{
