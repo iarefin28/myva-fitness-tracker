@@ -303,6 +303,10 @@ export default function AddWorkout() {
     }, [mode, workoutName, preWorkoutNote, postWorkoutNote, date, exercises, editingTemplateId]);
 
 
+    const disabledColor = scheme === "dark" ? "#666" : "#bbb";
+    const canSave =
+        (workoutName?.trim().length ?? 0) > 0 &&
+        ((exercisesRef.current?.length ?? exercises.length) > 0);
     // ───── Layout Effect for Header Buttons ─────
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -349,8 +353,22 @@ export default function AddWorkout() {
                 }
             },
             headerRight: () => (
-                <TouchableOpacity onPress={saveWorkout}>
-                    <Text style={{ fontSize: 16, fontWeight: "bold", color: textColor }}>Done</Text>
+                <TouchableOpacity
+                    onPress={canSave ? saveWorkout : undefined}
+                    disabled={!canSave}
+                    accessibilityRole="button"
+                    accessibilityState={{ disabled: !canSave }}
+                >
+                    <Text
+                        style={{
+                            fontSize: 16,
+                            fontWeight: "bold",
+                            color: canSave ? textColor : disabledColor,
+                            opacity: canSave ? 1 : 0.6,
+                        }}
+                    >
+                        Done
+                    </Text>
                 </TouchableOpacity>
             ),
             headerLeft: () => (
@@ -359,7 +377,7 @@ export default function AddWorkout() {
                 </TouchableOpacity>
             )
         });
-    }, [navigation, textColor, saveWorkout, elapsedTime, mode]);
+    }, [navigation, textColor, saveWorkout, elapsedTime, mode, canSave, workoutName, exercises.length]);
 
     // ───── Modal & Exercise Handlers ─────
     const closeModal = () => {
