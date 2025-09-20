@@ -356,7 +356,7 @@ export default function AddWorkout() {
                     accessibilityRole="button"
                     accessibilityState={{ disabled: !canSave }}
                     onPress={() => {
-                        if (!canSave) return; 
+                        if (!canSave) return;
                         if (mode === "live") {
                             if (Platform.OS === "ios") {
                                 ActionSheetIOS.showActionSheetWithOptions(
@@ -421,10 +421,25 @@ export default function AddWorkout() {
     };
 
     const confirmClose = () => {
+        const isWorkoutEmpty =
+            !workoutName?.trim() &&
+            !preWorkoutNote?.trim() &&
+            !postWorkoutNote?.trim() &&
+            (!exercises || exercises.length === 0);
+
+        if (isWorkoutEmpty) {
+            try { stopWorkoutTimer(); } catch { }
+            Promise.resolve(clearDraft()).finally(() => {
+                navigation.goBack();
+            });
+            return;
+        }
+
         if (Platform.OS === "ios") {
             ActionSheetIOS.showActionSheetWithOptions(
                 {
-                    message: "Are you sure you want to discard this workout? Your current progress will be lost.",
+                    message:
+                        "Are you sure you want to discard this workout? Your current progress will be lost.",
                     options: ["Cancel", "Delete"],
                     cancelButtonIndex: 0,
                     destructiveButtonIndex: 1,
@@ -432,8 +447,8 @@ export default function AddWorkout() {
                 },
                 async (buttonIndex) => {
                     if (buttonIndex === 1) {
-                        stopWorkoutTimer();
-                        clearDraft();
+                        try { stopWorkoutTimer(); } catch { }
+                        await clearDraft();
                         navigation.goBack();
                     }
                 }
