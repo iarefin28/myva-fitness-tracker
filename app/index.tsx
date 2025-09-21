@@ -111,10 +111,10 @@ export default function HomeScreen() {
     return () => clearInterval(id);
   }, [draft]);
 
-  const backgroundColor = scheme === "dark" ? "#000" : "#fff";
+  const backgroundColor = scheme === "dark" ? "#000" : "#d1d1d1";
   const textColor = scheme === "dark" ? "#fff" : "#000";
-  const cardColor = scheme === "dark" ? "#1e1e1e" : "#f2f2f2";
-  const dividerColor = scheme === "dark" ? "#333" : "#ccc";
+  const cardColor = scheme === "dark" ? "#1e1e1e" : "notes#ffffffff";
+  const dividerColor = scheme === "dark" ? "#333" : "#797474ff";
 
   const buttons = [
     {

@@ -30,7 +30,7 @@ export default function CompletedWorkouts() {
 
   const [workouts, setWorkouts] = useState<Workout[]>([]);
 
-  const backgroundColor = scheme === "dark" ? "#000000" : "#ffffff";
+  const backgroundColor = scheme === "dark" ? "#000000" : "#d1d1d1";
   const textColor = scheme === "dark" ? "#ffffff" : "#000000";
   const cardColor = scheme === "dark" ? "#1a1a1a" : "#ffffff";
 

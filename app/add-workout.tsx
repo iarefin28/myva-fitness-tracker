@@ -72,7 +72,8 @@ export default function AddWorkout() {
     const backgroundColor = scheme === "dark" ? "#000000" : "#ffffff";
     const textColor = scheme === "dark" ? "#ffffff" : "#000000";
     const borderColor = scheme === "dark" ? "#444" : "#ccc";
-    const cardColor = scheme === "dark" ? "#1e1e1e" : "#f2f2f2";
+    const cardColor = scheme === "dark" ? "#1e1e1e" : "#d1d1d1";
+    
     const inputBg = scheme === "dark" ? "#2a2a2a" : "#fff";
     const dividerColor = scheme === "dark" ? "#333" : "#ccc";
 
