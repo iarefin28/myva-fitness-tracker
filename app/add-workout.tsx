@@ -16,6 +16,7 @@ import { nanoid } from 'nanoid/non-secure';
 import { AppState, Pressable } from "react-native";
 
 import { useLocalSearchParams } from "expo-router";
+import { useLiveWorkout } from '../stores/liveWorkout';
 
 // // ---- AUTOSAVE: tiny storage helpers ----
 const DRAFT_KEY = "workout_draft_v1";
@@ -112,6 +113,10 @@ export default function AddWorkout() {
     const autoMinutes = Math.ceil((totalApproxSeconds ?? 0) / 60);
     const currentMinutes = durationOverrideMin ?? autoMinutes;
 
+    const isActive = useLiveWorkout(s => s.isActive);
+    const start = useLiveWorkout(s => s.start);
+    const stop = useLiveWorkout(s => s.stop);
+
     // Clamp to [auto, 999]
     const clampMinutes = (m: number) => Math.min(999, Math.max(autoMinutes, m));
 
@@ -121,6 +126,15 @@ export default function AddWorkout() {
             return clampMinutes(base + delta);
         });
     };
+
+
+    // start global timer for live sessions
+    useEffect(() => {
+        if (mode === 'live' && !isActive) start();
+        return () => {
+            //if (mode === 'live') stop();
+        };
+    }, [mode, start]);
 
 
     useEffect(() => {
@@ -153,6 +167,7 @@ export default function AddWorkout() {
 
             if (mode === "live") {
                 setWorkoutName(`${found.name} Copy`);
+                start()
             } else {
                 setWorkoutName(found.name);
                 setEditingTemplateId(found.id);
@@ -290,6 +305,7 @@ export default function AddWorkout() {
                 await AsyncStorage.setItem(key, JSON.stringify(list, null, 2));
                 await clearDraft();
                 stopWorkoutTimer();
+                stop();
             }
 
 
@@ -305,6 +321,17 @@ export default function AddWorkout() {
         (workoutName?.trim().length ?? 0) > 0 &&
         ((exercisesRef.current?.length ?? exercises.length) > 0);
 
+          function clock(ms: number) {
+    const s = Math.floor(ms / 1000);
+    const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  }
+
+
+    const elapsedMs = useLiveWorkout((s) => s.elapsedMs);
+
     // ───── Layout Effect for Header Buttons ─────
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -317,7 +344,8 @@ export default function AddWorkout() {
                                 numberOfLines={1}
                                 style={{ fontSize: 16, fontWeight: "bold", color: textColor }}
                             >
-                                {formatElapsedTime(elapsedTime)}
+                                {/* {formatElapsedTime(elapsedTime)} */}
+                                {isActive ? clock(elapsedMs) : clock(0)}
                             </Text>
                         </View>
                     );
@@ -406,7 +434,7 @@ export default function AddWorkout() {
                 </TouchableOpacity>
             )
         });
-    }, [navigation, textColor, saveWorkout, elapsedTime, mode, canSave, workoutName, exercises.length]);
+    }, [navigation, textColor, saveWorkout, elapsedMs, isActive, mode, canSave, workoutName, exercises.length]);
 
     // ───── Modal & Exercise Handlers ─────
     const closeModal = () => {
@@ -432,6 +460,7 @@ export default function AddWorkout() {
             Promise.resolve(clearDraft()).finally(() => {
                 navigation.goBack();
             });
+            stop();
             return;
         }
 
@@ -450,6 +479,7 @@ export default function AddWorkout() {
                         try { stopWorkoutTimer(); } catch { }
                         await clearDraft();
                         navigation.goBack();
+                        stop();
                     }
                 }
             );
@@ -466,6 +496,7 @@ export default function AddWorkout() {
                             try { stopWorkoutTimer(); } catch { }
                             await clearDraft();
                             navigation.goBack();
+                            stop();
                         },
                     },
                 ]

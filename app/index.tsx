@@ -13,6 +13,8 @@ import {
   View,
 } from "react-native";
 
+import { useLiveWorkout } from '../stores/liveWorkout';
+
 
 interface Workout {
   id: number;
@@ -171,11 +173,25 @@ export default function HomeScreen() {
     return ["#666", "#999"]; // fallback gray
   }
 
+  function clock(ms: number) {
+    const s = Math.floor(ms / 1000);
+    const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+    const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+    const ss = String(s % 60).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  }
+
+      const isActive = useLiveWorkout((s) => s.isActive);
+    const elapsedMs = useLiveWorkout((s) => s.elapsedMs);
+
+
   function ContinueWorkoutItem() {
     if (!draft) return null;
 
     const cardBg = cardColor; // same group background
     const labelColor = scheme === "dark" ? "#cbd5e1" : "#475569";
+
+
 
     return (
       <View
@@ -208,7 +224,7 @@ export default function HomeScreen() {
             </Text>
             <Text style={{ marginTop: 4, color: labelColor }}>
               {draft.workoutName ? `${draft.workoutName} · ` : ""}
-              {Math.floor(elapsed / 60)}m elapsed
+              {isActive ? <Text>Live: {clock(elapsedMs)}</Text> : <Text>No live workout</Text>}
             </Text>
           </View>
 

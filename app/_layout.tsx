@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { default as React, useRef, useState } from 'react';
+import { default as React, useEffect, useRef, useState } from 'react';
 import { Animated, useColorScheme, View } from 'react-native';
 import { Host } from 'react-native-portalize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,6 +15,8 @@ import CalendarScreen from './calendar';
 import ChartsScreen from './charts';
 import IndexScreen from './index';
 import MyvaInsightsScreen from './myva-insights';
+
+import { useLiveWorkout } from '../stores/liveWorkout';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -130,6 +132,16 @@ export default function RootLayout() {
   const scheme = useColorScheme();
   const isDarkMode = scheme === 'dark';
   const iconColor = isDarkMode ? '#fff' : '#000';
+
+  const isActive = useLiveWorkout((s) => s.isActive);
+  const tick = useLiveWorkout((s) => s.tick);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      if (isActive) tick();
+    }, 1000);
+    return () => clearInterval(id);
+  }, [isActive, tick]);
 
   return (
     <GestureHandlerRootView>
