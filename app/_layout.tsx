@@ -16,7 +16,13 @@ import ChartsScreen from './charts';
 import IndexScreen from './index';
 import MyvaInsightsScreen from './myva-insights';
 
+import { AuthProvider, useAuth } from '../auth/AuthProvider';
+import SignInScreen from '../auth/SignInScreen';
+import SignUpScreen from '../auth/SignUpScreen';
+
+
 import { useLiveWorkout } from '../stores/liveWorkout';
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -128,11 +134,71 @@ function TabLayout() {
   );
 }
 
-export default function RootLayout() {
+function AppStack() {
   const scheme = useColorScheme();
   const isDarkMode = scheme === 'dark';
   const iconColor = isDarkMode ? '#fff' : '#000';
 
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="Root"
+        component={TabLayout}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="add-workout"
+        component={AddWorkoutScreen}
+        options={{ title: "Add Workout" }}
+      />
+      <Stack.Screen
+        name="exercise-log"
+        getComponent={() => require('./exercise-log').default}
+        options={{ title: "Workout", headerBackTitle: 'Back', headerTintColor: iconColor }}
+      />
+      <Stack.Screen
+        name="completed-workouts"
+        getComponent={() => require('./completed-workouts').default}
+        options={{ title: "Completed Workouts", headerBackTitle: 'Back', headerTintColor: iconColor }}
+      />
+      <Stack.Screen
+        name="workout-templates"
+        getComponent={() => require('./workout-templates').default}
+        options={{ title: "Workout Templates", headerBackTitle: 'Back', headerTintColor: iconColor }}
+      />
+      <Stack.Screen
+        name="template-detail"
+        getComponent={() => require('./template-detail').default}
+        options={{ title: "Template Details", headerBackTitle: 'Back', headerTintColor: iconColor }}
+      />
+      <Stack.Screen
+        name="upcomingworkouts"
+        getComponent={() => require('./upcomingworkouts').default}
+        options={{ title: "Upcoming Workouts", headerBackTitle: 'Back', headerTintColor: iconColor }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+function AuthStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="SignIn" component={SignInScreen} options={{ title: 'Sign In' }} />
+      <Stack.Screen name="SignUp" component={SignUpScreen} options={{ title: 'Create Account' }} />
+    </Stack.Navigator>
+  );
+}
+
+function Gate() {
+  const { user, loading } = useAuth();
+  if (loading) return null; // splash/loader if you want
+  return user ? <AppStack /> : <AuthStack />;
+}
+
+export default function RootLayout() {
+  const scheme = useColorScheme();
+  const isDarkMode = scheme === 'dark';
+  const iconColor = isDarkMode ? '#fff' : '#000';
   const isActive = useLiveWorkout((s) => s.isActive);
   const tick = useLiveWorkout((s) => s.tick);
 
@@ -146,43 +212,9 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView>
       <ThemeProvider value={scheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <Stack.Navigator>
-          <Stack.Screen
-            name="Root"
-            component={TabLayout}
-            options={{ headerShown: false }}
-          />
-          <Stack.Screen
-            name="add-workout"
-            component={AddWorkoutScreen}
-            options={{ title: "Add Workout" }}
-          />
-          <Stack.Screen
-            name="exercise-log"
-            getComponent={() => require('./exercise-log').default}
-            options={{ title: "Workout", headerBackTitle: 'Back', headerTintColor: iconColor }}
-          />
-          <Stack.Screen
-            name="completed-workouts"
-            getComponent={() => require('./completed-workouts').default}
-            options={{ title: "Completed Workouts", headerBackTitle: 'Back', headerTintColor: iconColor }}
-          />
-          <Stack.Screen
-            name="workout-templates"
-            getComponent={() => require('./workout-templates').default}
-            options={{ title: "Workout Templates", headerBackTitle: 'Back', headerTintColor: iconColor }}
-          />
-          <Stack.Screen
-            name="template-detail"
-            getComponent={() => require('./template-detail').default}
-            options={{ title: "Template Details", headerBackTitle: 'Back', headerTintColor: iconColor }}
-          />
-          <Stack.Screen
-            name="upcomingworkouts"
-            getComponent={() => require('./upcomingworkouts').default}
-            options={{ title: "Upcoming Workouts", headerBackTitle: 'Back', headerTintColor: iconColor }}
-          />
-        </Stack.Navigator>
+        <AuthProvider>
+          <Gate />
+        </AuthProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

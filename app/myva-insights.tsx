@@ -3,6 +3,11 @@ import { useRef, useState } from 'react';
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 import ExportTemplatesButton from "../components/ExportTemplatesButton";
 
+// import { signOut } from 'firebase/auth';
+// import { auth } from '../FirebaseConfig';
+
+
+
 //for now treating the myva-insights screen as a debug screen
 
 export default function MyvaInsightsScreen() {
@@ -19,6 +24,13 @@ export default function MyvaInsightsScreen() {
   const cardBg = isDark ? "#1a1a1a" : "#f2f2f2";
   const dividerColor = isDark ? "#333" : "#ccc";
   const toggleBg = isDark ? "#1a1a1a" : "#e8e8e8";
+
+
+
+  // async function signOutt() {
+  //   try { await signOut(auth); } catch { } // Gate sees user=null, flips back to AuthStack
+  // }
+  // signOutt()
 
   const handleSwipeOpen = () => {
     setCardVisible(false);
