@@ -21,7 +21,7 @@ import SignInScreen from '../auth/SignInScreen';
 import SignUpScreen from '../auth/SignUpScreen';
 
 
-import { useLiveWorkout } from '../stores/liveWorkout';
+import { useWorkoutStore } from '../stores/workoutStore';
 
 
 const Tab = createBottomTabNavigator();
@@ -199,8 +199,8 @@ export default function RootLayout() {
   const scheme = useColorScheme();
   const isDarkMode = scheme === 'dark';
   const iconColor = isDarkMode ? '#fff' : '#000';
-  const isActive = useLiveWorkout((s) => s.isActive);
-  const tick = useLiveWorkout((s) => s.tick);
+  const isActive = useWorkoutStore((s) => s.isActive);
+  const tick = useWorkoutStore((s) => s.tick);
 
   useEffect(() => {
     const id = setInterval(() => {

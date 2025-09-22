@@ -1,20 +1,10 @@
 import { FontAwesome5, Ionicons, MaterialIcons } from '@expo/vector-icons';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect } from "@react-navigation/native";
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from "expo-router";
-import { useCallback, useEffect, useState } from "react";
-import { ScrollView } from 'react-native';
-
-import {
-  Text,
-  TouchableOpacity,
-  useColorScheme,
-  View,
-} from "react-native";
-
-import { useLiveWorkout } from '../stores/liveWorkout';
-
+import React, { useEffect, useState } from "react";
+import { ScrollView, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+import { useWorkoutStore } from '../stores/workoutStore';
 
 interface Workout {
   id: number;
@@ -24,92 +14,26 @@ interface Workout {
   date: string;
 }
 
-// ---- Draft helpers (match keys/shape you used in AddWorkout) ----
-const DRAFT_KEY = "workout_draft_v1";
-type DraftTimer = {
-  startedAt: number;
-  isRunning: boolean;
-  totalPauseMs: number;
-  lastStateChangeAt: number;
-};
-type WorkoutDraft = {
-  id: string;
-  status: "active" | "completed" | "abandoned";
-  mode: "live" | "template";
-  workoutName?: string;
-  dateISO?: string;
-  exercises?: any[];
-  timer?: DraftTimer;
-  elapsedSeconds?: number; // <— add this
-};
-
-async function loadDraft(): Promise<WorkoutDraft | null> {
-  try {
-    const raw = await AsyncStorage.getItem(DRAFT_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch { return null; }
-}
-async function clearDraft() { try { await AsyncStorage.removeItem(DRAFT_KEY); } catch { } }
-
-// derive elapsed from wall-clock
-function getElapsedSec(t?: DraftTimer) {
-  if (!t || !t.startedAt) return 0;
-  const now = Date.now();
-  const base = t.isRunning ? now : t.lastStateChangeAt || now;
-  return Math.max(0, Math.floor((base - t.startedAt - (t.totalPauseMs || 0)) / 1000));
-}
-
-
 export default function HomeScreen() {
   const router = useRouter();
   const scheme = useColorScheme();
   const [workoutsThisWeek, setWorkoutsThisWeek] = useState(0);
 
+  // ⬇️ Store selectors
+  const isActive = useWorkoutStore((s) => s.isActive);
+  const elapsedMs = useWorkoutStore((s) => s.elapsedMs);
+  const liveExercises = useWorkoutStore((s) => s.liveExercises ?? []);
+  const workoutName = useWorkoutStore((s) => s.liveMeta?.workoutName ?? ''); // if you added liveMeta
+  const tick = useWorkoutStore((s) => s.tick);
 
-  const [draft, setDraft] = useState<WorkoutDraft | null>(null);
-  const [elapsed, setElapsed] = useState(0);
-
-  useFocusEffect(
-    useCallback(() => {
-      let mounted = true;
-      (async () => {
-        const d = await loadDraft();
-        if (!mounted) return;
-        if (d && d.status === "active" && d.mode === "live" && (d.exercises?.length ?? 0) > 0) {
-          setDraft(d);
-          const initial = d.timer ? getElapsedSec(d.timer) : Math.max(0, Math.floor(d.elapsedSeconds ?? 0));
-          setElapsed(initial);
-        } else {
-          setDraft(null);
-          setElapsed(0);
-        }
-      })();
-      return () => { mounted = false; };
-    }, [])
-  );
-
+  // Tick the timer every second while active (harmless if you also tick in _layout)
   useEffect(() => {
-    (async () => {
-      const d = await loadDraft();
-      if (d && d.status === "active" && d.mode === "live" && (d.exercises?.length ?? 0) > 0) {
-        setDraft(d);
-        const initial = d.timer ? getElapsedSec(d.timer) : Math.max(0, Math.floor(d.elapsedSeconds ?? 0));
-        setElapsed(initial);
-      } else {
-        setDraft(null);
-        setElapsed(0);
-      }
-    })();
-  }, []);
-
-  useEffect(() => {
-    if (!draft) return;
+    if (!isActive) return;
     const id = setInterval(() => {
-      const next = draft.timer ? getElapsedSec(draft.timer) : Math.max(0, Math.floor(draft.elapsedSeconds ?? 0));
-      setElapsed(next);
+      try { tick(); } catch {}
     }, 1000);
     return () => clearInterval(id);
-  }, [draft]);
+  }, [isActive, tick]);
 
   const backgroundColor = scheme === "dark" ? "#000" : "#d1d1d1";
   const textColor = scheme === "dark" ? "#fff" : "#000";
@@ -134,13 +58,12 @@ export default function HomeScreen() {
     },
   ];
 
-  // Load workout data and compute this week's count
+  // Load workout data and compute this week's count (unchanged)
   useEffect(() => {
     const loadWorkoutCount = async () => {
       try {
         const stored = await AsyncStorage.getItem("savedWorkouts");
         if (!stored) return;
-
         const parsed: Workout[] = JSON.parse(stored);
         const count = getWorkoutsThisWeek(parsed);
         setWorkoutsThisWeek(count);
@@ -148,16 +71,13 @@ export default function HomeScreen() {
         console.error("Failed to load workout count", err);
       }
     };
-
     loadWorkoutCount();
   }, []);
 
-  // Helper: Count workouts in past 7 days
   function getWorkoutsThisWeek(workouts: Workout[]) {
     const now = new Date();
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(now.getDate() - 6);
-
     return workouts.filter((w) => {
       const workoutDate = new Date(w.date);
       return workoutDate >= sevenDaysAgo && workoutDate <= now;
@@ -165,12 +85,12 @@ export default function HomeScreen() {
   }
 
   function getGradientColors(count: number): string[] {
-    if (count <= 1) return ["#ff5f6d", "#ffc371"];       // red-orange
-    if (count === 2) return ["#ff8800", "#ffd700"];      // orange-yellow
-    if (count === 3) return ["#ffd700", "#a0e426"];      // yellow-green
-    if (count === 4) return ["#70e000", "#00c853"];      // lime to bright green
-    if (count >= 5) return ["#00b894", "#00cec9"];       // emerald to teal
-    return ["#666", "#999"]; // fallback gray
+    if (count <= 1) return ["#ff5f6d", "#ffc371"];
+    if (count === 2) return ["#ff8800", "#ffd700"];
+    if (count === 3) return ["#ffd700", "#a0e426"];
+    if (count === 4) return ["#70e000", "#00c853"];
+    if (count >= 5) return ["#00b894", "#00cec9"];
+    return ["#666", "#999"];
   }
 
   function clock(ms: number) {
@@ -181,17 +101,14 @@ export default function HomeScreen() {
     return `${hh}:${mm}:${ss}`;
   }
 
-      const isActive = useLiveWorkout((s) => s.isActive);
-    const elapsedMs = useLiveWorkout((s) => s.elapsedMs);
-
+  // Show “Continue” if there’s an active session OR there are unsaved live exercises
+  const shouldShowContinue = isActive || liveExercises.length > 0;
 
   function ContinueWorkoutItem() {
-    if (!draft) return null;
+    if (!shouldShowContinue) return null;
 
-    const cardBg = cardColor; // same group background
+    const cardBg = cardColor;
     const labelColor = scheme === "dark" ? "#cbd5e1" : "#475569";
-
-
 
     return (
       <View
@@ -223,12 +140,11 @@ export default function HomeScreen() {
               Continue Live Workout
             </Text>
             <Text style={{ marginTop: 4, color: labelColor }}>
-              {draft.workoutName ? `${draft.workoutName} · ` : ""}
-              {isActive ? <Text>Live: {clock(elapsedMs)}</Text> : <Text>No live workout</Text>}
+              {workoutName ? `${workoutName} · ` : ""}
+              {isActive ? <Text>Live: {clock(elapsedMs)}</Text> : <Text>Paused</Text>}
             </Text>
           </View>
 
-          {/* Right-side “Resume” chip to match your UI language */}
           <View
             style={{
               paddingVertical: 8,
@@ -246,7 +162,6 @@ export default function HomeScreen() {
     );
   }
 
-
   return (
     <ScrollView style={{ flex: 1, backgroundColor }} contentContainerStyle={{ padding: 16 }}>
       <View>
@@ -260,23 +175,10 @@ export default function HomeScreen() {
             flexWrap: "wrap",
           }}
         >
-          <Text
-            style={{
-              fontSize: 22,
-              fontWeight: "600",
-              color: textColor,
-              marginRight: 6,
-            }}
-          >
+          <Text style={{ fontSize: 22, fontWeight: "600", color: textColor, marginRight: 6 }}>
             Today ·
           </Text>
-          <Text
-            style={{
-              fontSize: 16,
-              color: "#888",
-              fontWeight: "400",
-            }}
-          >
+          <Text style={{ fontSize: 16, color: "#888", fontWeight: "400" }}>
             {new Date().toLocaleDateString(undefined, {
               weekday: "long",
               year: "numeric",
@@ -286,6 +188,7 @@ export default function HomeScreen() {
           </Text>
         </View>
 
+        {/* Weekly count pill */}
         <View style={{ alignItems: "center", marginBottom: 30 }}>
           <LinearGradient
             colors={getGradientColors(workoutsThisWeek)}
@@ -302,16 +205,11 @@ export default function HomeScreen() {
               shadowRadius: 3,
             }}
           >
-            <Text style={{
-              color: "#fff",
-              fontWeight: "bold",
-              fontSize: 14,
-            }}>
+            <Text style={{ color: "#fff", fontWeight: "bold", fontSize: 14 }}>
               {workoutsThisWeek} Workouts This Week
             </Text>
           </LinearGradient>
         </View>
-
 
         {/* Grouped Navigation Panel */}
         <View
@@ -342,12 +240,9 @@ export default function HomeScreen() {
             >
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <View style={{ marginRight: 10 }}>{buttons[idx].icon}</View>
-                <Text style={{ fontSize: 17, color: textColor }}>
-                  {buttons[idx].title}
-                </Text>
+                <Text style={{ fontSize: 17, color: textColor }}>{title}</Text>
               </View>
 
-              {/* Divider */}
               {idx < buttons.length - 1 && (
                 <View
                   style={{
@@ -364,6 +259,8 @@ export default function HomeScreen() {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Continue Live Workout (from store) */}
         <ContinueWorkoutItem />
       </View>
     </ScrollView>

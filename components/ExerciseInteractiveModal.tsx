@@ -158,17 +158,6 @@ export default function ExerciseEditorModal({
         const subHide = Keyboard.addListener(hideEvent, onHide);
         return () => { subShow.remove(); subHide.remove(); };
     }, []);
-    // useEffect(() => {
-    //     if (visible && trackTime) {
-    //         modalTimerRef.current = setInterval(() => {
-    //             setModalTimer((prev) => prev + 1);
-    //         }, 1000);
-    //     }
-    //     return () => {
-    //         if (modalTimerRef.current) clearInterval(modalTimerRef.current);
-    //         modalTimerRef.current = null;
-    //     };
-    // }, [visible, trackTime]);
 
     useEffect(() => {
         if (!pendingFocusId) return;
@@ -197,11 +186,7 @@ export default function ExerciseEditorModal({
         });
     }, [pendingFocusId, onPendingFocusHandled]);
 
-    // useEffect(() => {
-    //     // Whenever we open the modal for a different exercise,
-    //     // or open/close, reset the counter from the prop.
-    //     setModalTimer(initialEditDuration || 0);
-    // }, [visible, initialEditDuration]);
+
     const {
         displaySeconds: modalElapsed,
         finalize: finalizeModalTimer,
@@ -348,23 +333,6 @@ export default function ExerciseEditorModal({
                                 <TouchableOpacity onPress={confirmClose} style={{ padding: 4, minWidth: 50 }}>
                                     <AntDesign name="close" size={24} color={textPrimary} />
                                 </TouchableOpacity>
-                                {/* <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                                    {exerciseNameBlurred && !!lockedExerciseTitle && (
-                                        <Text
-                                            numberOfLines={1}
-                                            ellipsizeMode="tail"
-                                            style={{
-                                                color: textPrimary,
-                                                fontSize: 16,
-                                                fontWeight: "bold",
-                                                textAlign: "center",
-                                                maxWidth: "90%",
-                                            }}
-                                        >
-                                            {lockedExerciseTitle}
-                                        </Text>
-                                    )}
-                                </View> */}
                                 {trackTime && (
                                     <View style={{ flexDirection: "row" }}>
                                         <Ionicons name="time-outline" size={18} color={textPrimary} style={{ marginRight: 6 }} />
@@ -373,7 +341,6 @@ export default function ExerciseEditorModal({
                                         </Text>
                                     </View>
                                 )}
-
                                 <TouchableOpacity
                                     onPress={() => {
                                         onCloseWithDuration?.(finalizeModalTimer()); // ✅ Save the timer before closing
@@ -542,28 +509,6 @@ export default function ExerciseEditorModal({
                                             </Animated.View>
                                         ))}
                                     </ScrollView>
-
-                                    {/* Save button at bottom for user ease
-                                    {!keyboardVisible && (
-                                        <TouchableOpacity
-                                            onPress={onSave}
-                                            style={{
-                                                backgroundColor: blueAccent,
-                                                paddingVertical: 16,
-                                                borderRadius: 12,
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                borderWidth: 1,
-                                                borderColor: borderColor,
-                                                marginTop: 10,
-                                                marginBottom: insets.bottom
-                                            }}
-                                        >
-                                            <Text style={{ color: "white", fontWeight: "bold", fontSize: 16 }}>
-                                                Save Exercise
-                                            </Text>
-                                        </TouchableOpacity>
-                                    )} */}
                                 </>
                             )}
                         </View>
