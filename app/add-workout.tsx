@@ -170,11 +170,6 @@ export default function AddWorkout() {
         stop: stopWorkoutTimer,           // <-- add this from the hook
     } = useAccurateTimer(sessionKeyRef.current, isFocused && mode === "live");
 
-    const formatElapsedTime = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, "0")}`;
-    };
 
     type Metrics = {
         totalExercises: number;
