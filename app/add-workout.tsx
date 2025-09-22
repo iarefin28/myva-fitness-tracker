@@ -1,7 +1,7 @@
 import { useRoute } from "@react-navigation/native";
 import { useNavigation, useRouter } from "expo-router";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import { ActionSheetIOS, Alert, Keyboard, Platform, ScrollView, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
+import { ActionSheetIOS, Alert, Keyboard, Platform, Text, TextInput, TouchableOpacity, TouchableWithoutFeedback, useColorScheme, View } from "react-native";
 
 import DraggableExercisePanel from "@/components/DraggableExercisePanel";
 import ExerciseInteractiveModal from "../components/ExerciseInteractiveModal";
@@ -13,45 +13,9 @@ import { AntDesign, Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useIsFocused } from "@react-navigation/native";
 import { nanoid } from 'nanoid/non-secure';
-import { AppState, Pressable } from "react-native";
+import { Pressable } from "react-native";
 
-import { useLocalSearchParams } from "expo-router";
-import { useLiveWorkout } from '../stores/liveWorkout';
-
-// // ---- AUTOSAVE: tiny storage helpers ----
-const DRAFT_KEY = "workout_draft_v1";
-
-type DraftTimer = {
-    startedAt: number;
-    isRunning: boolean;
-    totalPauseMs: number;
-    lastStateChangeAt: number;
-};
-
-type WorkoutDraft = {
-    id: string;
-    status: "active" | "completed" | "abandoned";
-    mode: "live" | "template";
-    workoutName: string;
-    preWorkoutNote: string;
-    postWorkoutNote: string;
-    dateISO: string;
-    exercises: Exercise[];
-    durationOverrideMin: number | null;
-    sessionKey: string;
-    elapsedSeconds: number;   // snapshot for UI
-    timer: DraftTimer;        // synthetic wall-clock timer for Home card
-};
-
-async function saveDraft(d: WorkoutDraft) {
-    try { await AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(d)); } catch { }
-}
-async function loadDraft(): Promise<WorkoutDraft | null> {
-    try { const raw = await AsyncStorage.getItem(DRAFT_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
-}
-async function clearDraft() { try { await AsyncStorage.removeItem(DRAFT_KEY); } catch { } }
-
-
+import { useWorkoutStore } from '../stores/workoutStore';
 
 export default function AddWorkout() {
     const route = useRoute();
@@ -73,27 +37,24 @@ export default function AddWorkout() {
     const textColor = scheme === "dark" ? "#ffffff" : "#000000";
     const borderColor = scheme === "dark" ? "#444" : "#ccc";
     const cardColor = scheme === "dark" ? "#1e1e1e" : "#d1d1d1";
-    
+
     const inputBg = scheme === "dark" ? "#2a2a2a" : "#fff";
     const dividerColor = scheme === "dark" ? "#333" : "#ccc";
 
     // ───── Workout Info State ─────
-    const [workoutName, setWorkoutName] = useState("");
-    const [preWorkoutNote, setPreWorkoutNote] = useState("");
-    const [postWorkoutNote, setPostWorkoutNote] = useState("");
     const [date, setDate] = useState(new Date());
     const [showDatePicker, setShowDatePicker] = useState(false);
 
     // ───── Modal & Exercise State ─────
     const [modalVisible, setModalVisible] = useState(false);
     const [exerciseName, setExerciseName] = useState("");
-    const [exercises, setExercises] = useState<Exercise[]>([]);
-    const exercisesRef = useRef<Exercise[]>([]);
     const [exerciseNameBlurred, setExerciseNameBlurred] = useState(false);
     const [lockedExerciseTitle, setLockedExerciseTitle] = useState("");
     const [exerciseType, setExerciseType] = useState<ExerciseType>("unknown");;
-    const scrollViewRef = useRef<ScrollView>(null);
     const [tags, setTags] = useState<TagState>({});
+
+    const elapsedMs = useWorkoutStore((s) => s.elapsedMs);
+    const isActive = useWorkoutStore((s) => s.isActive);
 
     // ───── Action Management State ─────
     const [actionsList, setActionsList] = useState<ExerciseAction[]>([]);
@@ -114,9 +75,23 @@ export default function AddWorkout() {
     const autoMinutes = Math.ceil((totalApproxSeconds ?? 0) / 60);
     const currentMinutes = durationOverrideMin ?? autoMinutes;
 
-    const isActive = useLiveWorkout(s => s.isActive);
-    const start = useLiveWorkout(s => s.start);
-    const stop = useLiveWorkout(s => s.stop);
+    const start = useWorkoutStore(s => s.start);
+    const stop = useWorkoutStore(s => s.stop);
+
+    // Live exercises from the unified store
+    const liveExercises = useWorkoutStore((s) => s.liveExercises);
+    const setAllLiveExercises = useWorkoutStore((s) => s.setAllLiveExercises);
+    const pushLiveExercise = useWorkoutStore((s) => s.pushLiveExercise);
+    const replaceLiveExerciseAt = useWorkoutStore((s) => s.replaceLiveExerciseAt);
+    const removeLiveExerciseAt = useWorkoutStore((s) => s.removeLiveExerciseAt);
+    const clearLiveExercises = useWorkoutStore((s) => s.clearLiveExercises);
+    const workoutName = useWorkoutStore(s => s.liveMeta.workoutName);
+    const preWorkoutNote = useWorkoutStore(s => s.liveMeta.preWorkoutNote);
+    const postWorkoutNote = useWorkoutStore(s => s.liveMeta.postWorkoutNote);
+
+    const setWorkoutName = useWorkoutStore(s => s.setWorkoutName);
+    const setPreWorkoutNote = useWorkoutStore(s => s.setPreNote);
+    const setPostWorkoutNote = useWorkoutStore(s => s.setPostNote);
 
     // Clamp to [auto, 999]
     const clampMinutes = (m: number) => Math.min(999, Math.max(autoMinutes, m));
@@ -135,12 +110,12 @@ export default function AddWorkout() {
         return () => {
             //if (mode === 'live') stop();
         };
-    }, [mode, start]);
+    }, [mode, isActive, start]);
 
 
     useEffect(() => {
         const total = estimateWorkoutDurationSeconds(
-            (exercises ?? []).map(ex => ({
+            (liveExercises ?? []).map(ex => ({
                 ...ex,
                 computedDurationInSeconds:
                     typeof ex.computedDurationInSeconds === "number"
@@ -150,7 +125,7 @@ export default function AddWorkout() {
         );
         // if user has an override, use that (minutes → seconds)
         setTotalApproxSeconds(durationOverrideMin != null ? durationOverrideMin * 60 : total);
-    }, [exercises, durationOverrideMin]);
+    }, [liveExercises, durationOverrideMin]);
 
     useEffect(() => {
         const loadTemplate = async () => {
@@ -163,8 +138,7 @@ export default function AddWorkout() {
             const found = parsed.find((t: any) => t.id.toString() === templateId.toString());
             if (!found) return;
 
-            setExercises(found.exercises);
-            exercisesRef.current = found.exercises;
+            setAllLiveExercises(found.exercises);
 
             if (mode === "live") {
                 setWorkoutName(`${found.name} Copy`);
@@ -226,7 +200,7 @@ export default function AddWorkout() {
     }
     // ───── Workout Save (To Implement) ─────
     const saveWorkout = useCallback(async () => {
-        const exs = exercisesRef.current ?? exercises;
+        const exs = liveExercises;
         if (!workoutName || (exs?.length ?? 0) === 0) return;
 
         const computedApprox = estimateWorkoutDurationSeconds(exs);
@@ -304,9 +278,12 @@ export default function AddWorkout() {
                 };
                 list.push(liveWorkout);
                 await AsyncStorage.setItem(key, JSON.stringify(list, null, 2));
-                await clearDraft();
+                clearLiveExercises();
                 stopWorkoutTimer();
                 stop();
+                setWorkoutName('');
+                setPreWorkoutNote('');
+                setPostWorkoutNote('');
             }
 
 
@@ -314,24 +291,21 @@ export default function AddWorkout() {
         } catch (e) {
             console.error("Failed to save workout:", e);
         }
-    }, [mode, workoutName, preWorkoutNote, postWorkoutNote, date, exercises, editingTemplateId]);
+    }, [mode, workoutName, preWorkoutNote, postWorkoutNote, date, liveExercises, editingTemplateId]);
 
 
     const disabledColor = scheme === "dark" ? "#666" : "#bbb";
     const canSave =
         (workoutName?.trim().length ?? 0) > 0 &&
-        ((exercisesRef.current?.length ?? exercises.length) > 0);
+        (liveExercises.length > 0);
 
-          function clock(ms: number) {
-    const s = Math.floor(ms / 1000);
-    const hh = String(Math.floor(s / 3600)).padStart(2, '0');
-    const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
-    const ss = String(s % 60).padStart(2, '0');
-    return `${hh}:${mm}:${ss}`;
-  }
-
-
-    const elapsedMs = useLiveWorkout((s) => s.elapsedMs);
+    function clock(ms: number) {
+        const s = Math.floor(ms / 1000);
+        const hh = String(Math.floor(s / 3600)).padStart(2, '0');
+        const mm = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
+        const ss = String(s % 60).padStart(2, '0');
+        return `${hh}:${mm}:${ss}`;
+    }
 
     // ───── Layout Effect for Header Buttons ─────
     useLayoutEffect(() => {
@@ -435,7 +409,7 @@ export default function AddWorkout() {
                 </TouchableOpacity>
             )
         });
-    }, [navigation, textColor, saveWorkout, elapsedMs, isActive, mode, canSave, workoutName, exercises.length]);
+    }, [navigation, textColor, saveWorkout, elapsedMs, isActive, mode, canSave, workoutName, liveExercises.length]);
 
     // ───── Modal & Exercise Handlers ─────
     const closeModal = () => {
@@ -454,51 +428,47 @@ export default function AddWorkout() {
             !workoutName?.trim() &&
             !preWorkoutNote?.trim() &&
             !postWorkoutNote?.trim() &&
-            (!exercises || exercises.length === 0);
+            (liveExercises.length === 0);             // <- use store array
+
+        const discardAndExit = async () => {
+            try { stopWorkoutTimer(); } catch { }
+            try { clearLiveExercises(); } catch { }    // <- clear the store
+            try { stop(); } catch { }                  // <- your live timer store stop()
+            try { setWorkoutName(''); setPreWorkoutNote(''); setPostWorkoutNote(''); } catch { }
+            navigation.goBack();
+        };
 
         if (isWorkoutEmpty) {
-            try { stopWorkoutTimer(); } catch { }
-            Promise.resolve(clearDraft()).finally(() => {
-                navigation.goBack();
-            });
-            stop();
+            // no dialog; just tear down
+            discardAndExit();
             return;
         }
 
-        if (Platform.OS === "ios") {
+        if (Platform.OS === 'ios') {
             ActionSheetIOS.showActionSheetWithOptions(
                 {
-                    message:
-                        "Are you sure you want to discard this workout? Your current progress will be lost.",
-                    options: ["Cancel", "Delete"],
+                    message: 'Are you sure you want to discard this workout? Your current progress will be lost.',
+                    options: ['Cancel', 'Delete'],
                     cancelButtonIndex: 0,
                     destructiveButtonIndex: 1,
-                    userInterfaceStyle: "dark",
+                    userInterfaceStyle: 'dark',
                 },
                 async (buttonIndex) => {
                     if (buttonIndex === 1) {
-                        try { stopWorkoutTimer(); } catch { }
-                        await clearDraft();
-                        navigation.goBack();
-                        stop();
+                        await discardAndExit();             // <- clear store + draft + timer
                     }
                 }
             );
         } else {
             Alert.alert(
-                "Discard Workout?",
-                "Are you sure you want to discard this workout? This action cannot be undone.",
+                'Discard Workout?',
+                'Are you sure you want to discard this workout? This action cannot be undone.',
                 [
-                    { text: "Cancel", style: "cancel" },
+                    { text: 'Cancel', style: 'cancel' },
                     {
-                        text: "Discard",
-                        style: "destructive",
-                        onPress: async () => {
-                            try { stopWorkoutTimer(); } catch { }
-                            await clearDraft();
-                            navigation.goBack();
-                            stop();
-                        },
+                        text: 'Discard',
+                        style: 'destructive',
+                        onPress: () => { discardAndExit(); } // <- clear store + draft + timer
                     },
                 ]
             );
@@ -543,27 +513,22 @@ export default function AddWorkout() {
             type: exerciseType,
             actions: computeNumberedActions(actionsList),
             editDurationInSeconds: editDurationRef.current,
-            computedDurationInSeconds: computedDurationInSeconds,
+            computedDurationInSeconds,
             tags,
         };
 
-        // debug prints
-        console.log("Computed Duration (s):", computedDurationInSeconds);
-        console.log("Exercise to be saved:");
-        console.log(JSON.stringify(newExercise, null, 2));
+        if (editIndex !== null) {
+            replaceLiveExerciseAt(editIndex, newExercise);
+        } else {
+            pushLiveExercise(newExercise);
+        }
 
-        setExercises(prev => {
-            const updated = [...prev];
-            if (editIndex !== null) {
-                updated[editIndex] = newExercise;
-            } else {
-                updated.push(newExercise);
-            }
-
-            exercisesRef.current = updated;
-            closeModal();
-            return updated;
-        });
+        // ✅ reset modal state so you SEE the result in the list
+        closeModal();                   // hide modal
+        setEditIndex(null);             // so next open is “add” not “edit”
+        setExerciseName('');
+        setActionsList([]);             // start fresh
+        editDurationRef.current = 0;    // reset local edit timer if you use one
     };
 
     // ───── Action Handlers ─────
@@ -690,18 +655,9 @@ export default function AddWorkout() {
     };
 
     const handleDeleteExercise = (indexToDelete: number) => {
-        console.log("Exercises BEFORE delete:");
-        console.log(JSON.stringify(exercises, null, 2));
-
-        const updated = exercises.filter((_, idx) => idx !== indexToDelete);
-
-        console.log(`Deleting exercise at index: ${indexToDelete}`);
-        console.log("Exercises AFTER delete:");
-        console.log(JSON.stringify(updated, null, 2));
-
-        setExercises(updated);
-        exercisesRef.current = updated;
+        removeLiveExerciseAt(indexToDelete);
     };
+
     // ───── Date Picker Handler ─────
     const onChangeDate = (event: any, selectedDate?: Date) => {
         setShowDatePicker(Platform.OS === "ios");
@@ -738,107 +694,6 @@ export default function AddWorkout() {
         const minutes = Math.ceil((sec || 0) / 60);
         return `${minutes} min${minutes !== 1 ? "s" : ""}`;
     }
-
-    // stable id for this session (so you can resume the *same* run)
-    const sessionIdRef = useRef<string>(() => {
-        // reuse timer key as the session id seed (1:1)
-        return sessionKeyRef.current;
-    }) as React.MutableRefObject<string>;
-    if (typeof sessionIdRef.current === 'function') sessionIdRef.current = sessionIdRef.current();
-
-    const buildDraft = useCallback((): WorkoutDraft => {
-        // synthesize a wall-clock timer so Home can show elapsed robustly
-        const now = Date.now();
-        const pseudoStartedAt = Math.max(0, now - (elapsedTime ?? 0) * 1000);
-
-        return {
-            id: sessionIdRef.current,
-            status: "active",
-            mode,
-            workoutName,
-            preWorkoutNote,
-            postWorkoutNote,
-            dateISO: date.toISOString(),
-            exercises: (exercisesRef.current ?? exercises) ?? [],
-            durationOverrideMin,
-            sessionKey: sessionKeyRef.current,
-            elapsedSeconds: elapsedTime ?? 0,
-            timer: {
-                startedAt: pseudoStartedAt,
-                isRunning: true,             // simple assumption for Home display
-                totalPauseMs: 0,
-                lastStateChangeAt: now,
-            },
-        };
-    }, [mode, workoutName, preWorkoutNote, postWorkoutNote, date, exercises, durationOverrideMin, elapsedTime]);
-
-
-    // simple throttle
-    const lastSaveRef = useRef(0);
-    const THROTTLE_MS = 600;
-
-    const autosaveNow = useCallback(async () => {
-        const now = Date.now();
-        if (now - lastSaveRef.current < THROTTLE_MS) return;
-        lastSaveRef.current = now;
-        const d = buildDraft();
-        if (d.mode === "live" && (d.exercises?.length ?? 0) > 0) {
-            await saveDraft(d);
-            try { persistWorkoutTimer?.(); } catch { }
-        }
-    }, [buildDraft, persistWorkoutTimer]);
-
-    // 3a) Save on important state changes
-    useEffect(() => { autosaveNow(); }, [
-        workoutName, preWorkoutNote, postWorkoutNote,
-        exercises, durationOverrideMin, elapsedTime
-    ]);
-
-    // 3b) Save when app backgrounds (final unthrottled flush)
-    useEffect(() => {
-        const sub = AppState.addEventListener("change", (s) => {
-            if (s !== "active") { saveDraft({ ...buildDraft(), status: "active" }); }
-        });
-        return () => sub.remove();
-    }, [buildDraft]);
-
-    // 3c) When you mutate exercises via setters, also write through exercisesRef
-    useEffect(() => { exercisesRef.current = exercises; }, [exercises]);
-
-    const { resume } = useLocalSearchParams<{ resume?: string | string[] }>();
-    const hasHydratedFromDraftRef = useRef(false);
-
-    useLayoutEffect(() => {
-        if (hasHydratedFromDraftRef.current) return;
-
-        (async () => {
-            // normalize param: could be "1" or ["1"]
-            const resumeParam = Array.isArray(resume) ? resume[0] : resume;
-            const wantsResume = resumeParam === "1";
-
-            const d = await loadDraft();
-            const eligible = !!d && d.status === "active" && d.mode === "live" && (d.exercises?.length ?? 0) > 0;
-
-            // allow resume if:
-            //  - user tapped "Continue" (wantsResume)
-            //  - OR this is a fresh AddWorkout screen (no local exercises yet) and a draft exists
-            const allowResume = (wantsResume && eligible) || (eligible && (exercisesRef.current?.length ?? exercises.length ?? 0) === 0);
-            if (!allowResume) return;
-
-            // --- hydrate exactly as you already do ---
-            setWorkoutName(d.workoutName || "");
-            setPreWorkoutNote(d.preWorkoutNote || "");
-            setPostWorkoutNote(d.postWorkoutNote || "");
-            setDate(new Date(d.dateISO || Date.now()));
-            setDurationOverrideMin(d.durationOverrideMin ?? null);
-            setExercises(d.exercises ?? []);
-            exercisesRef.current = d.exercises ?? [];
-
-            sessionKeyRef.current = d.sessionKey || sessionKeyRef.current;
-
-            hasHydratedFromDraftRef.current = true;
-        })();
-    }, [resume]);
 
     return (
         <>
@@ -893,43 +748,6 @@ export default function AddWorkout() {
                                 }}
                             />
                         )}
-                        {/* Divider
-                        {mode === "live" && (
-                            <View style={{
-                                height: 1,
-                                backgroundColor: dividerColor,
-                                opacity: 0.4,
-                                marginVertical: 7
-                            }} />
-                        )} */}
-                        {/* Hiding this for now will revisit it later */}
-                        {/* Workout Date
-                        {mode === "live" && (
-                            <View style={{
-                                flexDirection: "row",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                marginBottom: 10,
-                                minHeight: 35
-                            }}>
-                                <Text style={{ fontSize: 15, color: textColor }}>Workout Date</Text>
-                                <View style={{
-                                    height: 30,
-                                    justifyContent: "center"
-                                }}>
-                                    <DateTimePicker
-                                        value={date}
-                                        mode="date"
-                                        display="default"
-                                        onChange={(event, selectedDate) => {
-                                            if (selectedDate) setDate(selectedDate);
-                                        }}
-                                        style={{ transform: [{ scale: 0.85 }] }}
-                                    />
-                                </View>
-                            </View>
-                        )}
-                        {/* Divider */}
                         {mode === "live" && (
                             <View style={{
                                 height: 1,
@@ -996,18 +814,14 @@ export default function AddWorkout() {
                         <View>
                             <TouchableOpacity
                                 onPress={() => {
-                                    // ensure a fresh add flow
                                     setExerciseName("");
                                     setExerciseType("unknown");
                                     setActionsList([]);
                                     setLockedExerciseTitle("");
                                     setExerciseNameBlurred(false);
                                     setEditIndex(null);
-
-                                    // ⬇️ Reset per-exercise timer for a new exercise
                                     setEditDuration(0);
                                     editDurationRef.current = 0;
-
                                     setTags({});
                                     setModalVisible(true);
                                 }}
@@ -1026,7 +840,7 @@ export default function AddWorkout() {
 
 
                             {/* Approximate total workout time — templates only */}
-                            {mode === "template" && (exercises?.length ?? 0) > 0 && (
+                            {mode === "template" && (liveExercises?.length ?? 0) > 0 && (
                                 <View style={{ marginTop: 8 }}>
                                     <Text
                                         style={{
@@ -1138,11 +952,11 @@ export default function AddWorkout() {
                     </View>
 
                     {/* Draggable Exercise Panel with List of Exercises */}
-                    {exercises.length > 0 && (
+                    {liveExercises.length > 0 && (
                         <DraggableExercisePanel
-                            exercises={exercises}
+                            exercises={liveExercises}
                             onPressExercise={(index) => {
-                                const exercise = exercises[index];
+                                const exercise = liveExercises[index];
                                 setEditIndex(index);
                                 setExerciseName(exercise.name);
                                 setExerciseType(exercise.type);
