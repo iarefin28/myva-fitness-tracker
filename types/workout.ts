@@ -14,6 +14,8 @@ export interface WorkoutNote extends WorkoutItemBase {
 export interface WorkoutExercise extends WorkoutItemBase {
   type: 'exercise';
   name: string;
+  status: 'active' | 'completed';
+  completedAt?: number | null;
 }
 
 export interface WorkoutCustom extends WorkoutItemBase {
@@ -23,48 +25,55 @@ export interface WorkoutCustom extends WorkoutItemBase {
 
 export type WorkoutItem = WorkoutNote | WorkoutExercise | WorkoutCustom;
 
+export interface WorkoutActionLogEntry {
+  id: string;
+  at: number;
+  kind: 'add' | 'edit' | 'complete' | 'delete'; // ← added delete
+  itemId: string;
+  payload?: any;
+}
+
 export interface WorkoutDraft {
   id: string;
   name: string;
-  createdAt: number; // ms
+  createdAt: number;
   items: WorkoutItem[];
-  startedAt: number; // ms (when the workout started)
-  pausedAt?: number | null; // when paused, else null/undefined
-
-  // Pointer to the "current" item in this workout (usually latest)
+  startedAt: number;
+  pausedAt?: number | null;
   activeItemId?: string | null;
+  actionLog?: WorkoutActionLogEntry[];
 }
 
 export interface WorkoutSaved {
   id: string;
   name: string;
-  createdAt: number; // ms
+  createdAt: number;
   durationSec: number;
   items: WorkoutItem[];
+  actionLog?: WorkoutActionLogEntry[];
 }
 
 export interface WorkoutState {
   draft: WorkoutDraft | null;
   history: WorkoutSaved[];
 
-  // computed helpers
   elapsedSeconds: () => number;
 
-  // actions
   startDraft: (name?: string) => void;
   setDraftName: (name: string) => void;
 
-  addNote: (text: string) => string;      // returns new id
-  addExercise: (name: string) => string;  // returns new id
-  addCustom: (text: string) => string;    // returns new id
+  addNote: (text: string) => string;
+  addExercise: (name: string) => string;
+  addCustom: (text: string) => string;
 
+  updateItem: (id: string, next: { name?: string; text?: string }) => boolean;
+  completeItem: (id: string) => boolean;
+  deleteItem: (id: string) => boolean; // ← NEW
   setActiveItem: (id: string | null) => void;
 
-  // timer control
   pause: () => void;
   resume: () => void;
 
-  // finalize (not used while disabled in UI)
   finishAndSave: () => { id: string };
   clearDraft: () => void;
 }

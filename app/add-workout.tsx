@@ -1,5 +1,5 @@
 import { useWorkoutStore } from '@/store/workoutStore';
-import type { WorkoutItem } from '@/types/workout';
+import type { WorkoutExercise, WorkoutItem } from '@/types/workout';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     Alert,
@@ -28,6 +28,8 @@ export default function AddWorkout() {
   const addExercise = useWorkoutStore((s) => s.addExercise);
   const addCustom = useWorkoutStore((s) => s.addCustom);
   const updateItem = useWorkoutStore((s) => (s as any).updateItem) as (id: string, next: { name?: string; text?: string }) => boolean;
+  const completeItem = useWorkoutStore((s) => (s as any).completeItem) as (id: string) => boolean;
+  const deleteItem = useWorkoutStore((s) => (s as any).deleteItem) as (id: string) => boolean;
   const setActiveItem = useWorkoutStore((s) => s.setActiveItem);
   const elapsedSeconds = useWorkoutStore((s) => s.elapsedSeconds);
   const pause = useWorkoutStore((s) => (s as any).pause);
@@ -51,17 +53,17 @@ export default function AddWorkout() {
   const [customOpen, setCustomOpen] = useState(false);
   const [finishOpen, setFinishOpen] = useState(false);
 
-  // New: editing context
+  // Editing context
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingKind, setEditingKind] = useState<SheetKind | null>(null);
-  const [initialValue, setInitialValue] = useState(''); // to detect changes
+  const [initialValue, setInitialValue] = useState('');
 
-  // ---------- Modal inputs ----------
+  // Inputs
   const [exerciseName, setExerciseName] = useState('');
   const [noteText, setNoteText] = useState('');
   const [customText, setCustomText] = useState('');
 
-  // ---------- Refs ----------
+  // Refs
   const exerciseInputRef = useRef<TextInput | null>(null);
   const noteInputRef = useRef<TextInput | null>(null);
   const customInputRef = useRef<TextInput | null>(null);
@@ -69,7 +71,7 @@ export default function AddWorkout() {
   const isClosingRef = useRef(false);
   const lastSavedRef = useRef<{ exercise?: string; note?: string; custom?: string }>({});
 
-  // Focus after sheet entrance animation
+  // Focus after sheet animation
   useEffect(() => { if (exerciseOpen) { const t = setTimeout(() => exerciseInputRef.current?.focus(), 250); return () => clearTimeout(t); } }, [exerciseOpen]);
   useEffect(() => { if (noteOpen)     { const t = setTimeout(() => noteInputRef.current?.focus(), 250);     return () => clearTimeout(t); } }, [noteOpen]);
   useEffect(() => { if (customOpen)   { const t = setTimeout(() => customInputRef.current?.focus(), 250);   return () => clearTimeout(t); } }, [customOpen]);
@@ -95,7 +97,7 @@ export default function AddWorkout() {
     prevCountRef.current = items.length;
   }, [items.length]);
 
-  // ---------- Open modals (new vs edit) ----------
+  // Open modals (new vs edit)
   const openNew = (kind: SheetKind) => {
     setEditingId(null);
     setEditingKind(kind);
@@ -109,7 +111,7 @@ export default function AddWorkout() {
     setEditingId(item.id);
     setEditingKind(item.type);
     if (item.type === 'exercise') {
-      const val = (item as any).name ?? '';
+      const val = (item as WorkoutExercise).name ?? '';
       setExerciseName(val); setInitialValue(val); setExerciseOpen(true);
     } else {
       const val = (item as any).text ?? '';
@@ -119,28 +121,41 @@ export default function AddWorkout() {
     }
   };
 
-  // ---------- Save helpers ----------
+  // Debounced autosave while editing an ACTIVE exercise
+  useEffect(() => {
+    if (!(editingId && editingKind === 'exercise')) return;
+    const it = items.find(i => i.id === editingId) as WorkoutExercise | undefined;
+    if (!it || it.status === 'completed') return;
+    const next = exerciseName.trim();
+    if (next === (it.name ?? '')) return;
+    const t = setTimeout(() => {
+      updateItem(editingId, { name: next });
+      setActiveItem(editingId);
+    }, 500);
+    return () => clearTimeout(t);
+  }, [exerciseName, editingId, editingKind, items, updateItem, setActiveItem]);
+
+  // Save helpers
   const performSave = (kind: SheetKind, rawValue: string, setOpen: (v: boolean) => void, clearInput: () => void) => {
     const v = (rawValue ?? '').trim();
     if (!v) { setOpen(false); return; }
 
-    // EDIT MODE
     if (editingId && editingKind === kind) {
-      const changed = v !== (initialValue ?? '');
-      if (changed) {
-        if (kind === 'exercise') updateItem(editingId, { name: v });
-        else updateItem(editingId, { text: v });
-        setActiveItem(editingId);
+      if (kind === 'exercise') {
+        const it = items.find(i => i.id === editingId) as WorkoutExercise | undefined;
+        if (it?.status === 'completed') { setOpen(false); return; }
+        const changed = v !== (it?.name ?? '');
+        if (changed) updateItem(editingId, { name: v });
+      } else {
+        const from = (items.find(i => i.id === editingId) as any)?.text ?? '';
+        if (v !== from) updateItem(editingId, { text: v });
       }
-      clearInput();
-      setOpen(false);
-      setEditingId(null);
-      setEditingKind(null);
-      setInitialValue('');
+      setActiveItem(editingId);
+      clearInput(); setOpen(false);
+      setEditingId(null); setEditingKind(null); setInitialValue('');
       return;
     }
 
-    // ADD MODE
     let newId = '';
     if (kind === 'exercise') newId = addExercise(v);
     else if (kind === 'note') newId = addNote(v);
@@ -155,6 +170,29 @@ export default function AddWorkout() {
     isClosingRef.current = true;
     try { performSave(kind, rawValue, setOpen, clearInput); }
     finally { setTimeout(() => { isClosingRef.current = false; }, 300); }
+  };
+
+  // Delete helper
+  const confirmDelete = (id: string, kind: SheetKind, setOpen: (v: boolean) => void, clearInput: () => void) => {
+    Alert.alert(
+      'Delete item?',
+      kind === 'exercise' ? 'This will remove the exercise.' : (kind === 'note' ? 'This will remove the note.' : 'This will remove the custom entry.'),
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            deleteItem(id);
+            clearInput();
+            setOpen(false);
+            setEditingId(null);
+            setEditingKind(null);
+            setInitialValue('');
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -195,19 +233,22 @@ export default function AddWorkout() {
             const isActive = draft?.activeItemId
               ? draft.activeItemId === item.id
               : items.length > 0 && items[items.length - 1].id === item.id;
-            const primaryText = item.type === 'exercise' ? (item as any).name : (item as any).text;
+            const primaryText = item.type === 'exercise' ? (item as WorkoutExercise).name : (item as any).text;
+            const isCompleted = item.type === 'exercise' && (item as WorkoutExercise).status === 'completed';
             return (
               <TouchableOpacity
                 activeOpacity={0.8}
                 onPress={() => setActiveItem(item.id)}
-                onLongPress={() => openEdit(item)} // ← long press to edit
+                onLongPress={() => openEdit(item)}
               >
                 <View style={[styles.card, isActive && styles.cardActive]}>
                   <View style={styles.cardHeader}>
-                    <Text style={styles.cardType}>{item.type.toUpperCase()}</Text>
+                    <Text style={styles.cardType}>
+                      {item.type.toUpperCase()} {isCompleted ? '· COMPLETED' : ''}
+                    </Text>
                     <Text style={styles.cardTime}>{new Date(item.createdAt).toLocaleTimeString()}</Text>
                   </View>
-                  <Text style={styles.cardText}>{primaryText}</Text>
+                  <Text style={[styles.cardText, isCompleted && { opacity: 0.7 }]}>{primaryText}</Text>
                 </View>
               </TouchableOpacity>
             );
@@ -230,32 +271,56 @@ export default function AddWorkout() {
         onDismiss={() => { if (!exerciseOpen) handleSheetClose('exercise', exerciseName, setExerciseOpen, () => setExerciseName('')); }}
         animationType="slide" presentationStyle="pageSheet"
       >
-        <Sheet
-          title={editingId && editingKind === 'exercise' ? 'Edit Exercise' : 'Add Exercise'}
-          rightLabel={(exerciseName.trim().length ? 'Save' : 'Close')}
-          onRightPress={() => {
-            if (exerciseName.trim().length) performSave('exercise', exerciseName, setExerciseOpen, () => setExerciseName(''));
-            else setExerciseOpen(false);
-          }}
-        >
-          <TextInput
-            ref={exerciseInputRef}
-            value={exerciseName}
-            onChangeText={setExerciseName}
-            placeholder="Exercise name"
-            placeholderTextColor="#777"
-            style={styles.sheetInput}
-            autoFocus
-          />
-          {/* Keep primary CTA for add as well */}
-          <TouchableOpacity
-            style={[styles.sheetPrimary, { opacity: exerciseName.trim().length ? 1 : 0.65 }]}
-            disabled={!exerciseName.trim().length}
-            onPress={() => performSave('exercise', exerciseName, setExerciseOpen, () => setExerciseName(''))}
-          >
-            <Text style={styles.sheetPrimaryText}>{editingId && editingKind === 'exercise' ? 'Save Changes' : 'Add Exercise'}</Text>
-          </TouchableOpacity>
-        </Sheet>
+        {(() => {
+          const isEdit = !!(editingId && editingKind === 'exercise');
+          const it = isEdit ? (items.find(i => i.id === editingId) as WorkoutExercise | undefined) : undefined;
+          const isCompleted = !!(it && it.status === 'completed');
+          const rightLabel = isCompleted ? 'Close' : (exerciseName.trim().length ? 'Save' : 'Close');
+
+          return (
+            <Sheet
+              title={isEdit ? (isCompleted ? 'Exercise (Completed)' : 'Edit Exercise') : 'Add Exercise'}
+              leftLabel={isEdit ? 'Delete' : undefined}
+              onLeftPress={isEdit ? () => editingId && confirmDelete(editingId, 'exercise', setExerciseOpen, () => setExerciseName('')) : undefined}
+              rightLabel={rightLabel}
+              onRightPress={() => {
+                if (rightLabel === 'Save') performSave('exercise', exerciseName, setExerciseOpen, () => setExerciseName(''));
+                else setExerciseOpen(false);
+              }}
+            >
+              {isCompleted && (
+                <View style={styles.badgeLocked}><Text style={styles.badgeLockedText}>LOCKED · Completed</Text></View>
+              )}
+
+              <TextInput
+                ref={exerciseInputRef}
+                value={exerciseName}
+                onChangeText={setExerciseName}
+                placeholder="Exercise name"
+                placeholderTextColor="#777"
+                style={[styles.sheetInput, isCompleted && { opacity: 0.6 }]}
+                autoFocus
+                editable={!isCompleted}
+              />
+
+              {!isEdit && (
+                <TouchableOpacity
+                  style={[styles.sheetPrimary, { opacity: exerciseName.trim().length ? 1 : 0.65 }]}
+                  disabled={!exerciseName.trim().length}
+                  onPress={() => performSave('exercise', exerciseName, setExerciseOpen, () => setExerciseName(''))}
+                >
+                  <Text style={styles.sheetPrimaryText}>Add Exercise</Text>
+                </TouchableOpacity>
+              )}
+
+              {isEdit && !isCompleted && (
+                <TouchableOpacity style={styles.sheetDanger} onPress={() => editingId && completeItem(editingId)}>
+                  <Text style={styles.sheetDangerText}>Complete Exercise</Text>
+                </TouchableOpacity>
+              )}
+            </Sheet>
+          );
+        })()}
       </Modal>
 
       {/* Note */}
@@ -267,7 +332,9 @@ export default function AddWorkout() {
       >
         <Sheet
           title={editingId && editingKind === 'note' ? 'Edit Note' : 'Add Note'}
-          rightLabel={(noteText.trim().length ? 'Save' : 'Close')}
+          leftLabel={editingId && editingKind === 'note' ? 'Delete' : undefined}
+          onLeftPress={editingId && editingKind === 'note' ? () => editingId && confirmDelete(editingId, 'note', setNoteOpen, () => setNoteText('')) : undefined}
+          rightLabel={noteText.trim().length ? 'Save' : 'Close'}
           onRightPress={() => {
             if (noteText.trim().length) performSave('note', noteText, setNoteOpen, () => setNoteText(''));
             else setNoteOpen(false);
@@ -302,7 +369,9 @@ export default function AddWorkout() {
       >
         <Sheet
           title={editingId && editingKind === 'custom' ? 'Edit Custom' : 'Add Custom'}
-          rightLabel={(customText.trim().length ? 'Save' : 'Close')}
+          leftLabel={editingId && editingKind === 'custom' ? 'Delete' : undefined}
+          onLeftPress={editingId && editingKind === 'custom' ? () => editingId && confirmDelete(editingId, 'custom', setCustomOpen, () => setCustomText('')) : undefined}
+          rightLabel={customText.trim().length ? 'Save' : 'Close'}
           onRightPress={() => {
             if (customText.trim().length) performSave('custom', customText, setCustomOpen, () => setCustomText(''));
             else setCustomOpen(false);
@@ -346,25 +415,44 @@ export default function AddWorkout() {
 // ---------- Reusable Sheet ----------
 function Sheet({
   title,
+  leftLabel,
+  onLeftPress,
   rightLabel = 'Close',
   onRightPress,
   children,
 }: {
   title: string;
+  leftLabel?: string;
+  onLeftPress?: () => void;
   rightLabel?: string;
   onRightPress?: () => void;
   children: React.ReactNode;
 }) {
   const isSave = rightLabel.toLowerCase() === 'save';
+  const showLeft = !!leftLabel;
+
   return (
     <SafeAreaView style={styles.sheetRoot}>
       <View style={styles.grabber} />
-      <View style={styles.sheetHeader}>
-        <Text style={styles.sheetTitle}>{title}</Text>
-        <Pressable onPress={onRightPress} style={[styles.closeBtn, isSave && styles.saveBtn]}>
-          <Text style={[styles.closeText, isSave && styles.saveText]}>{rightLabel}</Text>
-        </Pressable>
+      <View style={styles.sheetHeaderRow}>
+        {/* Left */}
+        <View style={styles.sheetSide}>
+          {showLeft && (
+            <Pressable onPress={onLeftPress} style={styles.deleteBtn}>
+              <Text style={styles.deleteText}>{leftLabel}</Text>
+            </Pressable>
+          )}
+        </View>
+        {/* Center title */}
+        <Text style={styles.sheetTitle} numberOfLines={1}>{title}</Text>
+        {/* Right */}
+        <View style={styles.sheetSide}>
+          <Pressable onPress={onRightPress} style={[styles.closeBtn, isSave && styles.saveBtn]}>
+            <Text style={[styles.closeText, isSave && styles.saveText]}>{rightLabel}</Text>
+          </Pressable>
+        </View>
       </View>
+
       <View style={styles.sheetBody}>{children}</View>
     </SafeAreaView>
   );
@@ -405,18 +493,32 @@ const styles = StyleSheet.create({
   // Sheet
   sheetRoot: { flex: 1, backgroundColor: '#0b0b0b' },
   grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: '#333', marginTop: 8, marginBottom: 4 },
-  sheetHeader: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 8 },
-  sheetTitle: { color: 'white', fontSize: 18, fontWeight: '800', flex: 1 },
-  closeBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#151515' },
+
+  sheetHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 },
+  sheetSide: { width: 88, alignItems: 'flex-start', justifyContent: 'center' }, // fixed width to center title
+  sheetTitle: { flex: 1, textAlign: 'center', color: 'white', fontSize: 18, fontWeight: '800' },
+
+  closeBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#151515', alignSelf: 'flex-end' },
   closeText: { color: '#0A84FF', fontWeight: '800' },
   saveBtn: { backgroundColor: '#0A84FF' },
   saveText: { color: 'white' },
+
+  deleteBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#3b0b0b' },
+  deleteText: { color: '#ef4444', fontWeight: '800' },
+
   sheetBody: { flex: 1, padding: 16, gap: 12 },
 
   sheetInput: { borderWidth: 1, borderColor: '#333', backgroundColor: '#141414', color: 'white',
     paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10 },
+
   sheetPrimary: { backgroundColor: '#0A84FF', paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
   sheetPrimaryText: { color: 'white', fontSize: 16, fontWeight: '800' },
+
+  sheetDanger: { backgroundColor: '#ef4444', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+  sheetDangerText: { color: 'white', fontSize: 15, fontWeight: '800' },
+
+  badgeLocked: { borderWidth: 1, borderColor: '#3f3f46', backgroundColor: '#18181b', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, alignSelf: 'flex-start' },
+  badgeLockedText: { color: '#e5e7eb', fontSize: 12, fontWeight: '700', letterSpacing: 0.3 },
 
   summary: { color: '#d1d5db', marginBottom: 12, fontSize: 15 },
 

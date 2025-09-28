@@ -1,5 +1,7 @@
 import type {
+    WorkoutActionLogEntry,
     WorkoutDraft,
+    WorkoutExercise,
     WorkoutItem,
     WorkoutSaved,
     WorkoutState,
@@ -10,14 +12,20 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
+const log = (draft: WorkoutDraft, entry: Omit<WorkoutActionLogEntry, 'id' | 'at'>): WorkoutActionLogEntry[] => {
+  const list = draft.actionLog ?? [];
+  return [...list, { id: uid(), at: Date.now(), ...entry }];
+};
+
 const makeDraft = (name: string): WorkoutDraft => ({
   id: uid(),
   name,
   createdAt: Date.now(),
   items: [],
-  startedAt: Date.now(), // timer starts immediately
+  startedAt: Date.now(),
   pausedAt: null,
   activeItemId: null,
+  actionLog: [],
 });
 
 export const useWorkoutStore = create<WorkoutState>()(
@@ -43,43 +51,75 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({ draft: { ...d, name } });
       },
 
+      // Adds
       addNote: (text) => {
         const d = get().draft; if (!d) return '';
         const item: WorkoutItem = { id: uid(), type: 'note', text, createdAt: Date.now() };
-        const items = [...d.items, item];
-        set({ draft: { ...d, items, activeItemId: item.id } });
+        set({ draft: { ...d, items: [...d.items, item], activeItemId: item.id, actionLog: log(d, { kind: 'add', itemId: item.id, payload: { type: 'note' } }) } });
         return item.id;
       },
-
       addExercise: (name) => {
         const d = get().draft; if (!d) return '';
-        const item: WorkoutItem = { id: uid(), type: 'exercise', name, createdAt: Date.now() };
-        const items = [...d.items, item];
-        set({ draft: { ...d, items, activeItemId: item.id } });
+        const item: WorkoutExercise = { id: uid(), type: 'exercise', name, createdAt: Date.now(), status: 'active', completedAt: null };
+        set({ draft: { ...d, items: [...d.items, item], activeItemId: item.id, actionLog: log(d, { kind: 'add', itemId: item.id, payload: { type: 'exercise' } }) } });
         return item.id;
       },
-
       addCustom: (text) => {
         const d = get().draft; if (!d) return '';
         const item: WorkoutItem = { id: uid(), type: 'custom', text, createdAt: Date.now() };
-        const items = [...d.items, item];
-        set({ draft: { ...d, items, activeItemId: item.id } });
+        set({ draft: { ...d, items: [...d.items, item], activeItemId: item.id, actionLog: log(d, { kind: 'add', itemId: item.id, payload: { type: 'custom' } }) } });
         return item.id;
       },
 
-      // NEW: update an existing item by id
+      // Updates / complete / delete
       updateItem: (id, next) => {
         const d = get().draft; if (!d) return false;
-        let changed = false;
+        let changed = false; let payload: any = {};
         const items = d.items.map((it) => {
           if (it.id !== id) return it;
-          changed = true;
-          if (it.type === 'exercise' && 'name' in next) return { ...it, name: next.name };
-          if (it.type !== 'exercise' && 'text' in next) return { ...it, text: next.text };
+          if (it.type === 'exercise' && it.status === 'completed') return it; // lock
+          if (it.type === 'exercise' && 'name' in next && typeof next.name === 'string') {
+            const to = next.name.trim(); if (!to || to === (it as WorkoutExercise).name) return it;
+            payload = { nameFrom: (it as WorkoutExercise).name, nameTo: to };
+            changed = true;
+            return { ...(it as WorkoutExercise), name: to };
+          }
+          if (it.type !== 'exercise' && 'text' in next && typeof next.text === 'string') {
+            const from = (it as any).text ?? '';
+            const to = next.text.trim(); if (to === from) return it;
+            payload = { textFrom: from, textTo: to };
+            changed = true;
+            return { ...(it as any), text: to };
+          }
           return it;
         });
         if (!changed) return false;
-        set({ draft: { ...d, items, activeItemId: id } });
+        set({ draft: { ...d, items, activeItemId: id, actionLog: log(d, { kind: 'edit', itemId: id, payload }) } });
+        return true;
+      },
+
+      completeItem: (id) => {
+        const d = get().draft; if (!d) return false;
+        let changed = false;
+        const items = d.items.map((it) => {
+          if (it.id !== id || it.type !== 'exercise') return it;
+          if (it.status === 'completed') return it;
+          changed = true;
+          return { ...(it as WorkoutExercise), status: 'completed', completedAt: Date.now() };
+        });
+        if (!changed) return false;
+        set({ draft: { ...d, items, activeItemId: id, actionLog: log(d, { kind: 'complete', itemId: id }) } });
+        return true;
+      },
+
+      deleteItem: (id) => {
+        const d = get().draft; if (!d) return false;
+        const exists = d.items.some(i => i.id === id);
+        if (!exists) return false;
+        const items = d.items.filter(i => i.id !== id);
+        // choose new active pointer: last item or null
+        const activeItemId = items.length ? items[items.length - 1].id : null;
+        set({ draft: { ...d, items, activeItemId, actionLog: log(d, { kind: 'delete', itemId: id }) } });
         return true;
       },
 
@@ -88,6 +128,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({ draft: { ...d, activeItemId: id } });
       },
 
+      // Timer
       pause: () => {
         const d = get().draft; if (!d || d.pausedAt) return;
         set({ draft: { ...d, pausedAt: Date.now() } });
@@ -98,11 +139,12 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({ draft: { ...d, startedAt: d.startedAt + pausedFor, pausedAt: null } });
       },
 
+      // Finalize (kept for later)
       finishAndSave: () => {
         const d = get().draft; if (!d) throw new Error('No active workout to finish');
         const durationSec = get().elapsedSeconds();
         const saved: WorkoutSaved = {
-          id: d.id, name: d.name?.trim() || 'Workout', createdAt: d.createdAt, items: d.items, durationSec,
+          id: d.id, name: d.name?.trim() || 'Workout', createdAt: d.createdAt, items: d.items, durationSec, actionLog: d.actionLog,
         };
         const history = [saved, ...get().history];
         set({ history, draft: null });
@@ -112,10 +154,10 @@ export const useWorkoutStore = create<WorkoutState>()(
       clearDraft: () => set({ draft: null }),
     }),
     {
-      name: 'myva_workout_store_v2',
+      name: 'myva_workout_store_v4',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ draft: s.draft, history: s.history }),
-      version: 2,
+      version: 4,
       migrate: (p) => p as any,
     }
   )
