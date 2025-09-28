@@ -1,16 +1,16 @@
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Dimensions, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
-import { ExerciseType } from "../types/workout";
+import { ExerciseType } from "../types/workout-old";
 import RpeSelector from "./RpeSelector";
 
 import * as Haptics from 'expo-haptics';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-    runOnJS,
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
+  runOnJS,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 
 

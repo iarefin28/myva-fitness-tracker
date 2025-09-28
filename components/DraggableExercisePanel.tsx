@@ -3,15 +3,15 @@ import React from 'react';
 import { Dimensions, ScrollView, Text, useColorScheme, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
-    Easing,
-    Extrapolate,
-    interpolate,
-    useAnimatedStyle,
-    useSharedValue,
-    withTiming,
+  Easing,
+  Extrapolate,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
 } from 'react-native-reanimated';
 
-import type { Exercise } from "../types/workout";
+import type { Exercise } from "../types/workout-old";
 import ExerciseCard from './ExerciseCard';
 
 type Props = {

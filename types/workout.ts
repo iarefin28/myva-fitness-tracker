@@ -1,58 +1,59 @@
-import type { TagGroup } from "./tags";
+export type WorkoutItemType = 'exercise' | 'note' | 'custom';
 
-export type UnitWeight = "lb" | "kg";
-export type UnitTime = "sec" | "min";
-
-export type ExerciseType =
-  | "weighted"
-  | "bodyweight"
-  | "duration"
-  | "unknown"
-  | "weighted distance"
-  | "weighted duration";
-
-export interface SetAction {
+export interface WorkoutItemBase {
   id: string;
-  type: "set";
-  setNumber: number;
-  reps: string;
-  weight?: string;
-  weightUnit?: string;  // e.g., lb/kg
-  value?: string;       // for duration or distance
-  valueUnit?: string;   // e.g., sec/min or m/ft
-  note?: string;
-  isWarmup?: false;
-  RPE?: -1;
+  type: WorkoutItemType;
+  createdAt: number; // ms
 }
 
-export interface RestAction {
-  id: string;
-  type: "rest";
-  restNumber: number;
-  value: string,
-  restInSeconds: number
+export interface WorkoutNote extends WorkoutItemBase {
+  type: 'note';
+  text: string;
 }
 
-export type ExerciseAction = SetAction | RestAction;
-export type TagState = Partial<Record<TagGroup, string>>;
-
-export interface Exercise {
+export interface WorkoutExercise extends WorkoutItemBase {
+  type: 'exercise';
   name: string;
-  type: ExerciseType;
-  actions: ExerciseAction[];
-  editDurationInSeconds?: number;
-  computedDurationInSeconds: number;
-  tags?: TagState
 }
 
-export interface Workout {
-  workoutName: string;
-  date: Date;
-  preWorkoutNote?: string;
-  postWorkoutNote?: string;
-  exercises: Exercise[];
-  approxDurationInSeconds: number; // ← estimated (saved on live too)
+export interface WorkoutCustom extends WorkoutItemBase {
+  type: 'custom';
+  text: string;
+}
 
-  //TO-DO: add actual duration in seconds to live workouts so we can do comparisons for templates and stuff
-  //actualDurationInSeconds?: number;   // ← only meaningful for live
+export type WorkoutItem = WorkoutNote | WorkoutExercise | WorkoutCustom;
+
+export interface WorkoutDraft {
+  id: string;
+  name: string;
+  createdAt: number;
+  items: WorkoutItem[];
+  startedAt: number;
+  pausedAt?: number | null; // NEW
+}
+
+export interface WorkoutSaved {
+  id: string;
+  name: string;
+  createdAt: number; // ms
+  durationSec: number;
+  items: WorkoutItem[];
+}
+
+export interface WorkoutState {
+  draft: WorkoutDraft | null;
+  history: WorkoutSaved[];
+
+  // computed helpers
+  elapsedSeconds: () => number;
+
+  // actions
+  startDraft: (name?: string) => void;
+  setDraftName: (name: string) => void;
+  addNote: (text: string) => void;
+  addExercise: (name: string) => void;
+  addCustom: (text: string) => void;
+
+  finishAndSave: () => { id: string };
+  clearDraft: () => void;
 }

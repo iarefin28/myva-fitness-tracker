@@ -5,7 +5,7 @@ import { KeyboardAvoidingView, Modal, Platform, ScrollView, Text, TouchableOpaci
 import { ActionSheetIOS, Alert, Keyboard, useColorScheme } from "react-native";
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
-import type { ExerciseAction, ExerciseType, TagState } from "../types/workout";
+import type { ExerciseAction, ExerciseType, TagState } from "../types/workout-old";
 import ActionInput from "./ActionInput";
 import ExerciseAutocomplete from "./ExerciseAutocomplete";
 
