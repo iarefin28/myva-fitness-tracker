@@ -6,6 +6,22 @@ export interface WorkoutItemBase {
   createdAt: number; // ms
 }
 
+export type ExerciseType = 'weighted' | 'bodyweight' | 'timed' | 'distance';
+
+export interface UserExercise {
+  id: string;
+  uid: string;
+  name: string;
+  nameLower: string;
+  type: ExerciseType;
+  howTo?: string;
+  tags?: string[];
+  createdAt: number;
+  updatedAt: number;
+  usageCount?: number;
+  lastUsedAt?: number;
+}
+
 export interface WorkoutNote extends WorkoutItemBase {
   type: 'note';
   text: string;
@@ -16,6 +32,7 @@ export interface WorkoutExercise extends WorkoutItemBase {
   name: string;
   status: 'active' | 'completed';
   completedAt?: number | null;
+  exerciseId?: string;
 }
 
 export interface WorkoutCustom extends WorkoutItemBase {
