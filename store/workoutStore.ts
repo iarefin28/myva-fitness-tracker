@@ -60,15 +60,17 @@ export const useWorkoutStore = create<WorkoutState>()(
             },
             addExercise: (name: string, exerciseId?: string) => {
                 const d = get().draft; if (!d) return '';
-                const item: WorkoutItem = {
+                const item: WorkoutExercise = {
                     id: uid(),
                     type: 'exercise',
                     name,
                     createdAt: Date.now(),
                     status: 'active',
                     completedAt: null,
-                    ...(exerciseId ? { exerciseId } : {}),
-                } as any;
+                    exerciseId,          // optional, fine if undefined
+                    entries: [],         // if you want to start empty
+                    activeEntryId: null, // if you track a pointer
+                };
                 const items = [...d.items, item];
                 set({ draft: { ...d, items, activeItemId: item.id } });
                 return item.id;

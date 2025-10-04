@@ -10,18 +10,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import CustomAddButton from '@/components/CustomAddButton';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { AuthProvider, useAuth } from '../auth/AuthProvider';
+import SignInScreen from '../auth/SignInScreen';
+import SignUpScreen from '../auth/SignUpScreen';
 import AddWorkoutScreen from './add-workout';
 import CalendarScreen from './calendar';
 import ChartsScreen from './charts';
 import IndexScreen from './index';
 import MyvaInsightsScreen from './myva-insights';
 
-import { AuthProvider, useAuth } from '../auth/AuthProvider';
-import SignInScreen from '../auth/SignInScreen';
-import SignUpScreen from '../auth/SignUpScreen';
 
-
-import { useWorkoutStore } from '../stores/workoutStore';
+import { useWorkoutStore } from '../store/workoutStore';
 
 
 const Tab = createBottomTabNavigator();
@@ -175,6 +174,11 @@ function AppStack() {
         name="upcomingworkouts"
         getComponent={() => require('./upcomingworkouts').default}
         options={{ title: "Upcoming Workouts", headerBackTitle: 'Back', headerTintColor: iconColor }}
+      />
+      <Stack.Screen
+        name="addNewExercise"
+        getComponent={() => require('./addNewExercise').default}
+        options={{ title: "Add New Exercise", headerBackTitle: 'Back', headerTintColor: iconColor }}
       />
     </Stack.Navigator>
   );

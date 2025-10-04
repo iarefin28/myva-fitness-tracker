@@ -112,7 +112,7 @@ export interface WorkoutState {
   setDraftName: (name: string) => void;
 
   addNote: (text: string) => string;
-  addExercise: (name: string) => string;
+  addExercise: (name: string, exerciseId?: string) => string;
   addCustom: (text: string) => string;
 
   updateItem: (id: string, next: { name?: string; text?: string }) => boolean;
