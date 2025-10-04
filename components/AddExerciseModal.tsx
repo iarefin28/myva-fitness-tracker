@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {
     FlatList,
     Keyboard,
+    KeyboardAvoidingView,
     Modal,
     Platform,
     Pressable,
@@ -22,10 +23,9 @@ export type AddExerciseModalProps = {
   onClose: () => void;
   initialQuery?: string;
   onQueryChange?: (q: string) => void;
-  // Optional overrides/fallbacks
   exercises?: Exercise[];
   onSelectExercise?: (ex: Exercise) => void;
-  onAddNew?: (name: string) => void; // <- used by the Add CTAs
+  onAddNew?: (name: string) => void;
 };
 
 export default function AddExerciseModal({
@@ -114,7 +114,7 @@ export default function AddExerciseModal({
     onQueryChange?.(t);
   };
 
-  const keyExtractor = useCallback((item: Exercise) => item.id, []);
+  const keyExtractor = useCallback((item: Exercise) => String(item.id ?? item.name), []);
 
   const handlePick = (ex: Exercise) => {
     onSelectExercise?.(ex);
@@ -124,8 +124,26 @@ export default function AddExerciseModal({
   const handleAddNew = () => {
     const name = query.trim();
     if (!name) return;
-    onAddNew?.(name); // you’ll navigate on this in parent
+    onAddNew?.(name); // You'll navigate in parent
   };
+
+  // Footer renderer for "Add '{query}'" at the END of search list
+  const renderSearchFooter = useCallback(() => {
+    if (!hasResults || !canSuggestAdd) return null;
+    return (
+      <Pressable
+        onPress={handleAddNew}
+        style={({ pressed }) => [styles.row, { paddingHorizontal: 16 }, pressed && styles.rowPressed]}
+        android_ripple={{ color: "#1f2937" }}
+      >
+        <View style={styles.rowTextWrap}>
+          <Text style={styles.rowTitle}>+ Add “{query.trim()}” to your exercises</Text>
+          <Text style={styles.rowSub}>Create a new exercise in your library</Text>
+        </View>
+        <Ionicons name="add-circle" size={20} color="#0A84FF" />
+      </Pressable>
+    );
+  }, [hasResults, canSuggestAdd, query]);
 
   return (
     <Modal
@@ -229,10 +247,9 @@ export default function AddExerciseModal({
                     <Text style={styles.rowTitle}>{item.name}</Text>
                     {item.subtitle ? <Text style={styles.rowSub}>{item.subtitle}</Text> : null}
                   </View>
-                  {/* REPLACED chevron with blue "Add" pill */}
-                  <View style={styles.suggestionAddBtn}>
-                    <Text style={styles.suggestionAddText}>Add</Text>
-                  </View>
+
+                  {/* Right accessory: blue plus icon */}
+                  <Ionicons name="add-circle" size={20} color="#0A84FF" />
                 </Pressable>
               )}
               ListEmptyComponent={() => (
@@ -251,59 +268,39 @@ export default function AddExerciseModal({
           </View>
         ) : (
           // Real search active
-          <View style={styles.body}>
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            keyboardVerticalOffset={0}
+          >
             {hasResults ? (
-              <>
-                {/* Top "Add new" row when results exist and user typed */}
-                {canSuggestAdd && (
+              <FlatList
+                data={filteredList}
+                keyExtractor={keyExtractor}
+                ItemSeparatorComponent={() => <View style={styles.sep} />}
+                keyboardShouldPersistTaps="handled"
+                renderItem={({ item }) => (
                   <Pressable
-                    onPress={handleAddNew}
+                    onPress={() => handlePick(item)}
                     style={({ pressed }) => [
                       styles.row,
                       { paddingHorizontal: 16 },
                       pressed && styles.rowPressed,
                     ]}
-                    android_ripple={{ color: "#1f2937" }}
                   >
                     <View style={styles.rowTextWrap}>
-                      <Text style={styles.rowTitle}>+ Add “{query.trim()}” to your exercises</Text>
-                      <Text style={styles.rowSub}>Create a new exercise in your library</Text>
+                      <Text style={styles.rowTitle}>{item.name}</Text>
+                      {item.subtitle ? <Text style={styles.rowSub}>{item.subtitle}</Text> : null}
                     </View>
-                    <View style={styles.suggestionAddBtn}>
-                      <Text style={styles.suggestionAddText}>Add</Text>
-                    </View>
+                    {/* Right accessory: blue plus icon */}
+                    <Ionicons name="add-circle" size={20} color="#0A84FF" />
                   </Pressable>
                 )}
-
-                <FlatList
-                  data={filteredList}
-                  keyExtractor={keyExtractor}
-                  ItemSeparatorComponent={() => <View style={styles.sep} />}
-                  keyboardShouldPersistTaps="handled"
-                  renderItem={({ item }) => (
-                    <Pressable
-                      onPress={() => handlePick(item)}
-                      style={({ pressed }) => [
-                        styles.row,
-                        { paddingHorizontal: 16 },
-                        pressed && styles.rowPressed,
-                      ]}
-                    >
-                      <View style={styles.rowTextWrap}>
-                        <Text style={styles.rowTitle}>{item.name}</Text>
-                        {item.subtitle ? <Text style={styles.rowSub}>{item.subtitle}</Text> : null}
-                      </View>
-                      {/* Blue "Add" pill on each result */}
-                      <View style={styles.suggestionAddBtn}>
-                        <Text style={styles.suggestionAddText}>Add</Text>
-                      </View>
-                    </Pressable>
-                  )}
-                />
-              </>
+                ListFooterComponent={renderSearchFooter}
+              />
             ) : query.trim().length > 0 ? (
               // Empty-state CTA when NO results and user typed something
-              <View style={[styles.emptyStateWrap, { padding: 24 }]}>
+              <View style={styles.emptyStateWrap}>
                 <Pressable
                   onPress={handleAddNew}
                   style={({ pressed }) => [
@@ -318,13 +315,11 @@ export default function AddExerciseModal({
                   <Text style={styles.suggestionEmptyText}>
                     No matches found. Tap here to add a new exercise
                   </Text>
-                  <View style={styles.suggestionAddBtn}>
-                    <Text style={styles.suggestionAddText}>Add</Text>
-                  </View>
+                  <Ionicons name="add-circle" size={20} color="#0A84FF" />
                 </Pressable>
               </View>
             ) : null}
-          </View>
+          </KeyboardAvoidingView>
         )}
       </SafeAreaView>
     </Modal>
@@ -424,20 +419,14 @@ const styles = StyleSheet.create({
   emptyTitle: { color: "#d1d5db", fontWeight: "700", marginBottom: 4 },
   emptySub: { color: "#9ca3af" },
 
-  // New / reused for Add pills & empty CTA
-  suggestionAddBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 999,
-    backgroundColor: "#0A84FF",
-    marginLeft: 12,
+  // Centered empty state between top and keyboard
+  emptyStateWrap: {
+    flex: 1,
+    justifyContent: "center",
+    padding: 24,
   },
-  suggestionAddText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  emptyStateWrap: { flex: 1, justifyContent: "center" },
+
+  // CTA card reused for empty state
   suggestionEmpty: {
     flexDirection: "row",
     alignItems: "center",
