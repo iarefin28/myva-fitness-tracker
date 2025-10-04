@@ -7,6 +7,34 @@ export interface WorkoutItemBase {
 }
 
 export type ExerciseType = 'weighted' | 'bodyweight' | 'timed' | 'distance';
+export type ExerciseEntryKind = 'set' | 'rest' | 'note';
+
+export interface ExerciseSetWeighted {
+  id: string;
+  kind: 'set';
+  weight: number;
+  reps: number;
+  createdAt: number;
+  status: 'active' | 'completed';      // ← NEW
+  completedAt?: number | null;         // ← NEW
+}
+
+export interface ExerciseRestEntry {
+  id: string;
+  kind: 'rest';
+  seconds: number;
+  createdAt: number;
+}
+
+export interface ExerciseNoteEntry {
+  id: string;
+  kind: 'note';
+  text: string;
+  createdAt: number;
+}
+
+export type ExerciseEntry = ExerciseSetWeighted | ExerciseRestEntry | ExerciseNoteEntry;
+
 
 export interface UserExercise {
   id: string;
@@ -33,7 +61,10 @@ export interface WorkoutExercise extends WorkoutItemBase {
   status: 'active' | 'completed';
   completedAt?: number | null;
   exerciseId?: string;
+  entries?: ExerciseEntry[];
+  activeEntryId?: string | null;   // ← pointer to the current set/rest/note on this exercise
 }
+
 
 export interface WorkoutCustom extends WorkoutItemBase {
   type: 'custom';
@@ -59,6 +90,7 @@ export interface WorkoutDraft {
   pausedAt?: number | null;
   activeItemId?: string | null;
   actionLog?: WorkoutActionLogEntry[];
+  ongoingRest?: { exerciseId: string; entryId: string; startedAt: number } | null; // ← simple rest tracker
 }
 
 export interface WorkoutSaved {
@@ -88,9 +120,18 @@ export interface WorkoutState {
   deleteItem: (id: string) => boolean; // ← NEW
   setActiveItem: (id: string | null) => void;
 
+  addWeightedSet: (exerciseId: string, weight: number, reps: number) => string;
+  addExerciseRest: (exerciseId: string, seconds: number) => string;
+  addExerciseNote: (exerciseId: string, text: string) => string;
+
+  setActiveEntry: (exerciseId: string, entryId: string | null) => void;
+  startRestForEntry: (exerciseId: string, entryId: string) => void;
+  stopRest: () => void;
+
   pause: () => void;
   resume: () => void;
 
   finishAndSave: () => { id: string };
   clearDraft: () => void;
+
 }

@@ -161,6 +161,90 @@ export const useWorkoutStore = create<WorkoutState>()(
             },
 
             clearDraft: () => set({ draft: null }),
+
+            addWeightedSet: (exerciseId, weight, reps) => {
+                const d = get().draft; if (!d) return '';
+                const id = uid();
+                const entry = { id, kind: 'set' as const, weight, reps, createdAt: Date.now(), status: 'active', completedAt: null };
+                const items = d.items.map((it) => {
+                    if (it.type !== 'exercise' || it.id !== exerciseId) return it;
+                    const entries = [...(it.entries ?? []), entry];
+                    return { ...it, entries, activeEntryId: id };
+                });
+                set({ draft: { ...d, items, activeItemId: exerciseId, actionLog: log(d, { kind: 'add_set', itemId: exerciseId, payload: { entryId: id, weight, reps } }) } });
+                return id;
+            },
+
+
+            addExerciseRest: (exerciseId, seconds) => {
+                const d = get().draft; if (!d) return '';
+                const id = uid();
+                const entry = { id, kind: 'rest' as const, seconds, createdAt: Date.now() };
+                const items = d.items.map((it) => {
+                    if (it.type !== 'exercise' || it.id !== exerciseId) return it;
+                    const entries = [...(it.entries ?? []), entry];
+                    return { ...it, entries, activeEntryId: id };
+                });
+                set({ draft: { ...d, items, activeItemId: exerciseId, actionLog: log(d, { kind: 'add_rest', itemId: exerciseId, payload: { entryId: id, seconds } }) } });
+                return id;
+            },
+
+            addExerciseNote: (exerciseId, text) => {
+                const d = get().draft; if (!d) return '';
+                const id = uid();
+                const entry = { id, kind: 'note' as const, text: text.trim(), createdAt: Date.now() };
+                const items = d.items.map((it) => {
+                    if (it.type !== 'exercise' || it.id !== exerciseId) return it;
+                    const entries = [...(it.entries ?? []), entry];
+                    return { ...it, entries, activeEntryId: id };
+                });
+                set({ draft: { ...d, items, activeItemId: exerciseId } });
+                return id;
+            },
+
+            // NEW: change the pointer within an exercise
+            setActiveEntry: (exerciseId, entryId) => {
+                const d = get().draft; if (!d) return;
+                const items = d.items.map((it) => {
+                    if (it.type !== 'exercise' || it.id !== exerciseId) return it;
+                    return { ...it, activeEntryId: entryId ?? null };
+                });
+                set({ draft: { ...d, items } });
+            },
+
+            // NEW: start/stop an in-workout rest linked to a rest entry
+            startRestForEntry: (exerciseId, entryId) => {
+                const d = get().draft; if (!d) return;
+                set({
+                    draft: {
+                        ...d, ongoingRest: { exerciseId, entryId, startedAt: Date.now() },
+                        actionLog: log(d, { kind: 'start_rest', itemId: exerciseId, payload: { entryId } })
+                    }
+                });
+            },
+            stopRest: () => {
+                const d = get().draft; if (!d) return;
+                set({ draft: { ...d, ongoingRest: null } });
+            },
+
+            completeCurrentSet: (exerciseId) => {
+                const d = get().draft; if (!d) return false;
+                let completedId: string | null = null;
+                const items = d.items.map((it) => {
+                    if (it.type !== 'exercise' || it.id !== exerciseId) return it;
+                    const targetId = it.activeEntryId;
+                    const entries = (it.entries ?? []).map((en) => {
+                        if (en.id !== targetId || en.kind !== 'set' || en.status === 'completed') return en;
+                        completedId = en.id;
+                        return { ...en, status: 'completed', completedAt: Date.now() };
+                    });
+                    return { ...it, entries }; // keep pointer on the set; UI can clear it when needed
+                });
+                if (!completedId) return false;
+                set({ draft: { ...d, items, actionLog: log(d, { kind: 'complete_set', itemId: exerciseId, payload: { entryId: completedId } }) } });
+                return true;
+            },
+
         }),
         {
             name: 'myva_workout_store_v4',

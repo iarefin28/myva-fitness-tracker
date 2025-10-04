@@ -1,6 +1,9 @@
 import { useWorkoutStore } from '@/store/workoutStore';
 import type { WorkoutExercise, WorkoutItem } from '@/types/workout';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
     Alert,
     FlatList,
@@ -16,13 +19,18 @@ import {
     View,
 } from 'react-native';
 
-import { auth } from '@/FirebaseConfig'; // adjust to your export
+
+import { auth } from '@/FirebaseConfig';
 import { useExerciseLibrary } from '@/store/exerciseLibrary';
 import type { ExerciseType, UserExercise } from '@/types/workout';
 
 type SheetKind = 'exercise' | 'note' | 'custom';
 
 export default function AddWorkout() {
+    const navigation = useNavigation();
+    const router = useRouter();
+
+
     // ---------- Store ----------
     const draft = useWorkoutStore((s) => s.draft);
     const history = useWorkoutStore((s) => s.history);
@@ -38,8 +46,63 @@ export default function AddWorkout() {
     const elapsedSeconds = useWorkoutStore((s) => s.elapsedSeconds);
     const pause = useWorkoutStore((s) => (s as any).pause);
     const resume = useWorkoutStore((s) => (s as any).resume);
+    const addWeightedSet = useWorkoutStore((s) => (s as any).addWeightedSet) as (id: string, w: number, r: number) => string;
+    const addExerciseRest = useWorkoutStore((s) => (s as any).addExerciseRest) as (id: string, sec: number) => string;
+    const addExerciseNote = useWorkoutStore((s) => (s as any).addExerciseNote) as (id: string, txt: string) => string;
+    const setActiveEntry = useWorkoutStore((s) => (s as any).setActiveEntry) as (exId: string, entryId: string | null) => void;
+    const startRestForEntry = useWorkoutStore((s) => (s as any).startRestForEntry) as (exId: string, entryId: string) => void;
+    const stopRest = useWorkoutStore((s) => (s as any).stopRest) as () => void;
+    const completeCurrentSet = useWorkoutStore((s) => (s as any).completeCurrentSet);
+    const clearDraft = useWorkoutStore((s) => (s as any).clearDraft) as () => void;
 
-    useEffect(() => { if (!draft) startDraft(''); }, [draft, startDraft]);
+    // ---------- Header special effects ----------
+    const onDiscard = () => {
+        Alert.alert(
+            'Discard workout?',
+            'This will permanently delete the current draft, timer, and action log.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Discard',
+                    style: 'destructive',
+                    onPress: () => {
+                        try {
+                            isDiscardingRef.current = true;
+                            clearDraft();           // <- store wipe
+                            router.back();          // or router.replace('/')
+                        } finally {
+                            // optional: reset the flag shortly after unmount safety
+                            setTimeout(() => { isDiscardingRef.current = false; }, 500);
+                        }
+                    },
+                },
+            ]
+        );
+    };
+
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerTitle: 'Add Workout',
+            headerRight: () => (
+                <Pressable
+                    onPress={onDiscard}
+                    hitSlop={10}
+                    accessibilityLabel="Discard workout"
+                >
+                    <Ionicons name="trash-outline" size={22} color="#ef4444" />
+                </Pressable>
+            ),
+        });
+    }, [navigation]);
+
+
+
+    const isDiscardingRef = useRef(false);
+
+    // replace your existing effect with:
+    useEffect(() => {
+        if (!draft && !isDiscardingRef.current) startDraft('');
+    }, [draft, startDraft]);
 
     // ---------- Live tick ----------
     const [tick, setTick] = useState(0);
@@ -56,6 +119,15 @@ export default function AddWorkout() {
     const [noteOpen, setNoteOpen] = useState(false);
     const [customOpen, setCustomOpen] = useState(false);
     const [finishOpen, setFinishOpen] = useState(false);
+    // Inline composer visibility + fields
+    const [showSetForm, setShowSetForm] = useState(false);
+    const [showRestForm, setShowRestForm] = useState(false);
+    const [showExNoteForm, setShowExNoteForm] = useState(false);
+
+    const [setWeight, setSetWeight] = useState<string>('135');
+    const [setReps, setSetReps] = useState<string>('5');
+    const [restSeconds, setRestSeconds] = useState<string>('90');
+    const [exNoteText, setExNoteText] = useState<string>('');
 
     // Editing context
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -317,6 +389,9 @@ export default function AddWorkout() {
                         ? (items.find(i => i.id === editingId) as WorkoutExercise | undefined)
                         : undefined;
                     const isCompleted = !!(it && it.status === 'completed');
+                    const currentEntry = (it?.entries ?? []).find(e => e.id === it?.activeEntryId);
+                    const isCurrentSet = currentEntry?.kind === 'set';
+                    const isCurrentRest = currentEntry?.kind === 'rest';
 
                     // Right button label logic
                     const canSaveAdd =
@@ -468,6 +543,192 @@ export default function AddWorkout() {
                                     </TouchableOpacity>
                                 </View>
                             )}
+
+                            {/* Quick actions (only in EDIT and not completed) */}
+                            {isEdit && !isCompleted && (
+                                <View style={{ gap: 10 }}>
+                                    <View style={styles.quickRow}>
+                                        <TouchableOpacity style={[styles.quickBtn, styles.btnBlue]} onPress={() => {
+                                            setShowSetForm((v) => !v);
+                                            setShowRestForm(false); setShowExNoteForm(false);
+                                        }}>
+                                            <Text style={styles.quickBtnText}>+ Set</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={[styles.quickBtn, styles.btnGray]} onPress={() => {
+                                            setShowRestForm((v) => !v);
+                                            setShowSetForm(false); setShowExNoteForm(false);
+                                        }}>
+                                            <Text style={styles.quickBtnText}>+ Rest</Text>
+                                        </TouchableOpacity>
+                                        <TouchableOpacity style={[styles.quickBtn, styles.btnYellow]} onPress={() => {
+                                            setShowExNoteForm((v) => !v);
+                                            setShowSetForm(false); setShowRestForm(false);
+                                        }}>
+                                            <Text style={[styles.quickBtnText, { color: '#111' }]}>+ Note</Text>
+                                        </TouchableOpacity>
+                                    </View>
+
+                                    {/* Set form (weighted) */}
+                                    {showSetForm && (
+                                        <View style={styles.inlineCard}>
+                                            <Text style={styles.inlineTitle}>
+                                                {isCurrentSet ? 'Current Set' : 'Add Set (Weighted)'}
+                                            </Text>
+
+                                            <View style={styles.inlineRow}>
+                                                <TextInput
+                                                    value={setWeight}
+                                                    onChangeText={setSetWeight}
+                                                    keyboardType="numeric"
+                                                    placeholder="Weight"
+                                                    placeholderTextColor="#777"
+                                                    style={[styles.sheetInput, { flex: 1 }]}
+                                                    editable={!isCurrentSet}
+                                                />
+                                                <TextInput
+                                                    value={setReps}
+                                                    onChangeText={setSetReps}
+                                                    keyboardType="numeric"
+                                                    placeholder="Reps"
+                                                    placeholderTextColor="#777"
+                                                    style={[styles.sheetInput, { flex: 1 }]}
+                                                    editable={!isCurrentSet}
+                                                />
+                                            </View>
+
+                                            <View style={styles.duoRow}>
+                                                {/* Left = Add Set (disabled when pointer is on a set) */}
+                                                <TouchableOpacity
+                                                    style={[styles.duoBtn, styles.btnPrimary, isCurrentSet && styles.btnDisabled]}
+                                                    disabled={isCurrentSet}
+                                                    onPress={() => {
+                                                        if (!editingId) return;
+                                                        const w = parseFloat(setWeight);
+                                                        const r = parseInt(setReps, 10);
+                                                        if (Number.isFinite(w) && Number.isFinite(r) && r > 0) {
+                                                            addWeightedSet(editingId, w, r);
+                                                            // keep fields for speed; pointer now points to the set
+                                                        }
+                                                    }}
+                                                >
+                                                    <Text style={styles.duoBtnText}>{isCurrentSet ? 'Add Set' : 'Add Set'}</Text>
+                                                </TouchableOpacity>
+
+                                                {/* Right = Complete Set (enabled only when pointer is on a set) */}
+                                                <TouchableOpacity
+                                                    style={[styles.duoBtn, styles.btnSuccess, !isCurrentSet && styles.btnDisabled]}
+                                                    disabled={!isCurrentSet}
+                                                    onPress={() => {
+                                                        if (!editingId) return;
+                                                        if (completeCurrentSet(editingId)) {
+                                                            // optional: unlock for next set
+                                                            setActiveEntry(editingId, null);
+                                                        }
+                                                    }}
+                                                >
+                                                    <Text style={styles.duoBtnText}>Complete Set</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    )}
+
+                                    {/* Rest form */}
+                                    {showRestForm && (
+                                        <View style={styles.inlineCard}>
+                                            <Text style={styles.inlineTitle}>
+                                                {isCurrentRest ? 'Current Rest' : 'Add Rest'}
+                                            </Text>
+
+                                            <TextInput
+                                                value={restSeconds}
+                                                onChangeText={setRestSeconds}
+                                                keyboardType="numeric"
+                                                placeholder="Seconds"
+                                                placeholderTextColor="#777"
+                                                style={styles.sheetInput}
+                                                editable={!isCurrentRest}
+                                            />
+
+                                            <View style={styles.duoRow}>
+                                                {/* Left = Add Rest (disabled when pointer is on a rest) */}
+                                                <TouchableOpacity
+                                                    style={[styles.duoBtn, styles.btnPrimary, isCurrentRest && styles.btnDisabled]}
+                                                    disabled={isCurrentRest}
+                                                    onPress={() => {
+                                                        if (!editingId) return;
+                                                        const sec = parseInt(restSeconds, 10);
+                                                        if (Number.isFinite(sec) && sec > 0) addExerciseRest(editingId, sec);
+                                                    }}
+                                                >
+                                                    <Text style={styles.duoBtnText}>Add Rest</Text>
+                                                </TouchableOpacity>
+
+                                                {/* Right = Start Rest (enabled only when pointer is on a rest) */}
+                                                <TouchableOpacity
+                                                    style={[styles.duoBtn, styles.btnSuccess, !isCurrentRest && styles.btnDisabled]}
+                                                    disabled={!isCurrentRest}
+                                                    onPress={() => {
+                                                        if (!editingId || !it?.activeEntryId) return;
+                                                        startRestForEntry(editingId, it.activeEntryId);
+                                                    }}
+                                                >
+                                                    <Text style={styles.duoBtnText}>Start Rest</Text>
+                                                </TouchableOpacity>
+                                            </View>
+                                        </View>
+                                    )}
+
+                                    {/* Exercise note form */}
+                                    {showExNoteForm && (
+                                        <View style={styles.inlineCard}>
+                                            <Text style={styles.inlineTitle}>Add Note</Text>
+                                            <TextInput
+                                                value={exNoteText}
+                                                onChangeText={setExNoteText}
+                                                placeholder="Type a quick note about this exercise…"
+                                                placeholderTextColor="#777"
+                                                multiline
+                                                style={[styles.sheetInput, { minHeight: 90, textAlignVertical: 'top' }]}
+                                            />
+                                            <TouchableOpacity
+                                                style={styles.sheetPrimary}
+                                                onPress={() => {
+                                                    if (!editingId) return;
+                                                    const t = exNoteText.trim();
+                                                    if (t) {
+                                                        addExerciseNote(editingId, t);
+                                                        setExNoteText('');
+                                                        setShowExNoteForm(false);
+                                                    }
+                                                }}
+                                            >
+                                                <Text style={styles.sheetPrimaryText}>Save Note</Text>
+                                            </TouchableOpacity>
+                                        </View>
+                                    )}
+                                </View>
+                            )}
+
+                            {isEdit && it?.entries?.length ? (
+                                <View style={{ gap: 8, marginTop: 4 }}>
+                                    {it.entries!.slice().sort((a, b) => a.createdAt - b.createdAt).map(en => (
+                                        <View key={en.id} style={styles.entryRow}>
+                                            {en.kind === 'set' && (
+                                                <Text style={styles.entryText}>Set · {en.weight} × {en.reps}</Text>
+                                            )}
+                                            {en.kind === 'rest' && (
+                                                <Text style={styles.entryText}>Rest · {en.seconds}s</Text>
+                                            )}
+                                            {en.kind === 'note' && (
+                                                <Text style={styles.entryText}>Note · {(en as any).text}</Text>
+                                            )}
+                                            <Text style={styles.entryTime}>
+                                                {new Date(en.createdAt).toLocaleTimeString()}
+                                            </Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            ) : null}
 
                             {/* Existing edit-only actions remain */}
                             {isEdit && !isCompleted && (
@@ -722,4 +983,31 @@ const styles = StyleSheet.create({
     },
     segmentText: { color: '#9ca3af', fontWeight: '700', textTransform: 'capitalize' },
     segmentTextActive: { color: 'white' },
+
+    quickRow: { flexDirection: 'row', gap: 8 },
+    quickBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: '#2a2a2a' },
+    quickBtnText: { color: 'white', fontWeight: '800' },
+
+    inlineCard: { backgroundColor: '#121212', borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 12, gap: 8 },
+    inlineTitle: { color: '#d1d5db', fontWeight: '800' },
+    inlineRow: { flexDirection: 'row', gap: 8 },
+
+    entryRow: { backgroundColor: '#111', borderWidth: 1, borderColor: '#242424', borderRadius: 10, padding: 10, flexDirection: 'row', justifyContent: 'space-between' },
+    entryText: { color: 'white', fontWeight: '700' },
+    entryTime: { color: '#9ca3af', fontSize: 12 },
+
+    nextBtn: {
+        backgroundColor: '#22C55E',
+        paddingVertical: 12,
+        borderRadius: 10,
+        alignItems: 'center',
+        marginTop: 6,
+    },
+    nextBtnText: { color: 'white', fontSize: 15, fontWeight: '800' },
+    duoRow: { flexDirection: 'row', gap: 8 },
+    duoBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
+    duoBtnText: { color: 'white', fontSize: 15, fontWeight: '800' },
+    btnPrimary: { backgroundColor: '#0A84FF' },
+    btnSuccess: { backgroundColor: '#22C55E' },
+    btnDisabled: { opacity: 0.5 },
 });
