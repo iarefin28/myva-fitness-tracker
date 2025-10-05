@@ -19,7 +19,7 @@ import { auth } from "@/FirebaseConfig";
 import { useExerciseLibrary } from "@/store/exerciseLibrary";
 // IMPORTANT: match the path your other screens use in this navigator:
 import type { ExerciseType } from "@/types/workout";
-import { useWorkoutStore } from "../stores/workoutStore"; // <-- unify with _layout usage
+import { useWorkoutStore } from "../store/workoutStore"; // <-- unify with _layout usage
 
 type RouteParams = { name?: string; addToDraft?: string };
 

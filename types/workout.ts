@@ -135,15 +135,6 @@ export interface WorkoutState {
   updateItem: (id: string, next: { name?: string; text?: string }) => boolean;
   completeItem: (id: string) => boolean;
   deleteItem: (id: string) => boolean; // ← NEW
-  setActiveItem: (id: string | null) => void;
-
-  addWeightedSet: (exerciseId: string, weight: number, reps: number) => string;
-  addExerciseRest: (exerciseId: string, seconds: number) => string;
-  addExerciseNote: (exerciseId: string, text: string) => string;
-
-  setActiveEntry: (exerciseId: string, entryId: string | null) => void;
-  startRestForEntry: (exerciseId: string, entryId: string) => void;
-  stopRest: () => void;
 
   pause: () => void;
   resume: () => void;

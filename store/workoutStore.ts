@@ -7,7 +7,6 @@ import type {
     WorkoutState,
 } from '@/types/workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { nanoid } from 'nanoid/non-secure';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -164,129 +163,6 @@ export const useWorkoutStore = create<WorkoutState>()(
             },
 
             clearDraft: () => set({ draft: null }),
-
-            addWeightedSet: (exerciseId, weight, reps) => {
-                const d = get().draft; if (!d) return '';
-                const id = uid();
-                const entry = { id, kind: 'set' as const, weight, reps, createdAt: Date.now(), status: 'active', completedAt: null };
-                const items = d.items.map((it) => {
-                    if (it.type !== 'exercise' || it.id !== exerciseId) return it;
-                    const entries = [...(it.entries ?? []), entry];
-                    return { ...it, entries, activeEntryId: id };
-                });
-                set({ draft: { ...d, items, activeItemId: exerciseId, actionLog: log(d, { kind: 'add_set', itemId: exerciseId, payload: { entryId: id, weight, reps } }) } });
-                return id;
-            },
-
-
-            addExerciseRest: (exerciseId, seconds) => {
-                const d = get().draft; if (!d) return '';
-                const id = uid();
-                const entry = { id, kind: 'rest' as const, seconds, createdAt: Date.now() };
-                const items = d.items.map((it) => {
-                    if (it.type !== 'exercise' || it.id !== exerciseId) return it;
-                    const entries = [...(it.entries ?? []), entry];
-                    return { ...it, entries, activeEntryId: id };
-                });
-                set({ draft: { ...d, items, activeItemId: exerciseId, actionLog: log(d, { kind: 'add_rest', itemId: exerciseId, payload: { entryId: id, seconds } }) } });
-                return id;
-            },
-
-            addExerciseNote: (exerciseId, text) => {
-                const d = get().draft; if (!d) return '';
-                const id = uid();
-                const entry = { id, kind: 'note' as const, text: text.trim(), createdAt: Date.now() };
-                const items = d.items.map((it) => {
-                    if (it.type !== 'exercise' || it.id !== exerciseId) return it;
-                    const entries = [...(it.entries ?? []), entry];
-                    return { ...it, entries, activeEntryId: id };
-                });
-                set({ draft: { ...d, items, activeItemId: exerciseId } });
-                return id;
-            },
-
-            // NEW: change the pointer within an exercise
-            setActiveEntry: (exerciseId, entryId) => {
-                const d = get().draft; if (!d) return;
-                const items = d.items.map((it) => {
-                    if (it.type !== 'exercise' || it.id !== exerciseId) return it;
-                    return { ...it, activeEntryId: entryId ?? null };
-                });
-                set({ draft: { ...d, items } });
-            },
-
-            // NEW: start/stop an in-workout rest linked to a rest entry
-            startRestForEntry: (exerciseId, entryId) => {
-                const d = get().draft; if (!d) return;
-                set({
-                    draft: {
-                        ...d, ongoingRest: { exerciseId, entryId, startedAt: Date.now() },
-                        actionLog: log(d, { kind: 'start_rest', itemId: exerciseId, payload: { entryId } })
-                    }
-                });
-            },
-            stopRest: () => {
-                const d = get().draft; if (!d) return;
-                set({ draft: { ...d, ongoingRest: null } });
-            },
-
-            completeCurrentSet: (exerciseId) => {
-                const d = get().draft; if (!d) return false;
-                let completedId: string | null = null;
-                const items = d.items.map((it) => {
-                    if (it.type !== 'exercise' || it.id !== exerciseId) return it;
-                    const targetId = it.activeEntryId;
-                    const entries = (it.entries ?? []).map((en) => {
-                        if (en.id !== targetId || en.kind !== 'set' || en.status === 'completed') return en;
-                        completedId = en.id;
-                        return { ...en, status: 'completed', completedAt: Date.now() };
-                    });
-                    return { ...it, entries }; // keep pointer on the set; UI can clear it when needed
-                });
-                if (!completedId) return false;
-                set({ draft: { ...d, items, actionLog: log(d, { kind: 'complete_set', itemId: exerciseId, payload: { entryId: completedId } }) } });
-                return true;
-            },
-            planSet: (exerciseId: string, plannedWeight: number, plannedReps: number, unit?: 'lb' | 'kg') =>
-                set((s) => {
-                    if (!s.draft) return s;
-                    const items = s.draft.items.map((it) => {
-                        if (it.id !== exerciseId || it.type !== 'exercise') return it;
-                        return {
-                            ...it,
-                            entries: [
-                                ...it.entries,
-                                {
-                                    id: nanoid(),
-                                    kind: 'set',
-                                    plannedWeight,
-                                    plannedReps,
-                                    unit,
-                                    createdAt: Date.now(),
-                                },
-                            ],
-                        };
-                    });
-                    return { draft: { ...s.draft, items } };
-                }),
-
-            completeSet: (exerciseId: string, setId: string, weight: number, reps: number, unit?: 'lb' | 'kg') =>
-                set((s) => {
-                    if (!s.draft) return s;
-                    const items = s.draft.items.map((it) => {
-                        if (it.id !== exerciseId || it.type !== 'exercise') return it;
-                        return {
-                            ...it,
-                            entries: it.entries.map((e) =>
-                                e.id === setId
-                                    ? { ...e, weight, reps, unit: unit ?? e.unit, completedAt: Date.now() }
-                                    : e
-                            ),
-                        };
-                    });
-                    return { draft: { ...s.draft, items } };
-                }),
-
         }),
         {
             name: 'myva_workout_store_v4',
