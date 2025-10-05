@@ -7,6 +7,7 @@ import type {
     WorkoutState,
 } from '@/types/workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { nanoid } from 'nanoid/non-secure';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -246,6 +247,45 @@ export const useWorkoutStore = create<WorkoutState>()(
                 set({ draft: { ...d, items, actionLog: log(d, { kind: 'complete_set', itemId: exerciseId, payload: { entryId: completedId } }) } });
                 return true;
             },
+            planSet: (exerciseId: string, plannedWeight: number, plannedReps: number, unit?: 'lb' | 'kg') =>
+                set((s) => {
+                    if (!s.draft) return s;
+                    const items = s.draft.items.map((it) => {
+                        if (it.id !== exerciseId || it.type !== 'exercise') return it;
+                        return {
+                            ...it,
+                            entries: [
+                                ...it.entries,
+                                {
+                                    id: nanoid(),
+                                    kind: 'set',
+                                    plannedWeight,
+                                    plannedReps,
+                                    unit,
+                                    createdAt: Date.now(),
+                                },
+                            ],
+                        };
+                    });
+                    return { draft: { ...s.draft, items } };
+                }),
+
+            completeSet: (exerciseId: string, setId: string, weight: number, reps: number, unit?: 'lb' | 'kg') =>
+                set((s) => {
+                    if (!s.draft) return s;
+                    const items = s.draft.items.map((it) => {
+                        if (it.id !== exerciseId || it.type !== 'exercise') return it;
+                        return {
+                            ...it,
+                            entries: it.entries.map((e) =>
+                                e.id === setId
+                                    ? { ...e, weight, reps, unit: unit ?? e.unit, completedAt: Date.now() }
+                                    : e
+                            ),
+                        };
+                    });
+                    return { draft: { ...s.draft, items } };
+                }),
 
         }),
         {

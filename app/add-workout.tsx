@@ -20,12 +20,8 @@ import {
 } from 'react-native';
 
 import AddExerciseModal from "@/components/AddExerciseModal";
-import { auth } from '@/FirebaseConfig';
-import { useExerciseLibrary } from '@/store/exerciseLibrary';
-import type { ExerciseType, UserExercise } from '@/types/workout';
+import EditExerciseModal from "@/components/EditExerciseModal";
 import { InteractionManager } from "react-native";
-
-
 
 type SheetKind = 'exercise' | 'note' | 'custom';
 
@@ -44,17 +40,9 @@ export default function AddWorkout() {
     const updateItem = useWorkoutStore((s) => (s as any).updateItem) as (id: string, next: { name?: string; text?: string }) => boolean;
     const completeItem = useWorkoutStore((s) => (s as any).completeItem) as (id: string) => boolean;
     const deleteItem = useWorkoutStore((s) => (s as any).deleteItem) as (id: string) => boolean;
-    // NOTE: we’re no longer using active selection in the UI
-    // const setActiveItem = useWorkoutStore((s) => s.setActiveItem);
     const elapsedSeconds = useWorkoutStore((s) => s.elapsedSeconds);
     const pause = useWorkoutStore((s) => (s as any).pause);
     const resume = useWorkoutStore((s) => (s as any).resume);
-    const addWeightedSet = useWorkoutStore((s) => (s as any).addWeightedSet) as (id: string, w: number, r: number) => string;
-    const addExerciseRest = useWorkoutStore((s) => (s as any).addExerciseRest) as (id: string, sec: number) => string;
-    const addExerciseNote = useWorkoutStore((s) => (s as any).addExerciseNote) as (id: string, txt: string) => string;
-    const setActiveEntry = useWorkoutStore((s) => (s as any).setActiveEntry) as (exId: string, entryId: string | null) => void;
-    const startRestForEntry = useWorkoutStore((s) => (s as any).startRestForEntry) as (exId: string, entryId: string) => void;
-    const completeCurrentSet = useWorkoutStore((s) => (s as any).completeCurrentSet);
     const clearDraft = useWorkoutStore((s) => (s as any).clearDraft) as () => void;
 
     // ---------- Header ----------
@@ -121,31 +109,20 @@ export default function AddWorkout() {
     const [customOpen, setCustomOpen] = useState(false);
     const [finishOpen, setFinishOpen] = useState(false);
 
-    // Inline composer visibility + fields (for EDIT modal)
-    const [showSetForm, setShowSetForm] = useState(false);
-    const [showRestForm, setShowRestForm] = useState(false);
-    const [showExNoteForm, setShowExNoteForm] = useState(false);
-
-    const [setWeight, setSetWeight] = useState<string>('135');
-    const [setReps, setSetReps] = useState<string>('5');
-    const [restSeconds, setRestSeconds] = useState<string>('90');
-    const [exNoteText, setExNoteText] = useState<string>('');
 
     // Editing context (used by EDIT modal)
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editingKind, setEditingKind] = useState<SheetKind | null>(null);
-    const [initialValue, setInitialValue] = useState('');
 
     // Inputs
-    const [exerciseName, setExerciseName] = useState(''); // used by BOTH, but autofocus removed for ADD modal
     const [noteText, setNoteText] = useState('');
     const [customText, setCustomText] = useState('');
 
     // Refs (no autoFocus on ADD)
     const noteInputRef = useRef<TextInput | null>(null);
-    const customInputRef = useRef<TextInput | null>(null);
 
-    const isClosingRef = useRef(false);
+
+    const customInputRef = useRef<TextInput | null>(null);
 
     useEffect(() => { if (finishOpen) pause(); else resume(); }, [finishOpen, pause, resume]);
 
@@ -173,8 +150,6 @@ export default function AddWorkout() {
             // ADD modal
             setEditingId(null);
             setEditingKind(null);
-            setInitialValue('');
-            setExerciseName('');
             setAddExerciseOpen(true);
             return;
         }
@@ -200,30 +175,8 @@ export default function AddWorkout() {
     const openEditExercise = (item: WorkoutItem) => {
         if (item.type !== 'exercise') return;
         setSelectedExerciseId(item.id);
-        setEditingId(item.id);
-        setEditingKind('exercise');
-        const val = (item as WorkoutExercise).name ?? '';
-        setExerciseName(val);
-        setInitialValue(val);
-        setShowSetForm(false);
-        setShowRestForm(false);
-        setShowExNoteForm(false);
-        setEditExerciseOpen(true); // open on top
+        setEditExerciseOpen(true);
     };
-
-    // Debounced autosave (EDIT modal only)
-    useEffect(() => {
-        if (!(editingId && editingKind === 'exercise' && editExerciseOpen)) return;
-        const it = items.find(i => i.id === editingId) as WorkoutExercise | undefined;
-        if (!it || it.status === 'completed') return;
-        const next = exerciseName.trim();
-        if (next === (it.name ?? '')) return;
-        const t = setTimeout(() => {
-            updateItem(editingId, { name: next });
-            // no setActiveItem — selection UX removed
-        }, 500);
-        return () => clearTimeout(t);
-    }, [exerciseName, editingId, editingKind, editExerciseOpen, items, updateItem]);
 
     // Save helpers
     const performSave = (
@@ -239,7 +192,7 @@ export default function AddWorkout() {
             const from = (items.find(i => i.id === editingId) as any)?.text ?? '';
             if (v !== from) updateItem(editingId, { text: v });
             clearInput(); setOpen(false);
-            setEditingId(null); setEditingKind(null); setInitialValue('');
+            setEditingId(null); setEditingKind(null);
             return;
         }
 
@@ -273,42 +226,12 @@ export default function AddWorkout() {
                         setOpen(false);
                         setEditingId(null);
                         setEditingKind(null);
-                        setInitialValue('');
                         if (selectedExerciseId === id) setSelectedExerciseId(null);
                     },
                 },
             ]
         );
     };
-
-    // Library
-    const uid = auth?.currentUser?.uid ?? null;
-    const libReady = useExerciseLibrary((s) => s.ready);
-    const hydrateLibrary = useExerciseLibrary((s) => s.hydrateLibrary);
-    const searchLocal = useExerciseLibrary((s) => s.searchLocal);
-    const ensureExercise = useExerciseLibrary((s) => s.ensureExercise);
-    const byName = useExerciseLibrary((s) => s.byName);
-    const libraryExercises = useExerciseLibrary((s) => s.exercises);
-
-    useEffect(() => {
-        if (uid && !libReady) hydrateLibrary(uid);
-    }, [uid, libReady, hydrateLibrary]);
-
-    // Add-Exercise modal helpers
-    const [showCreateForm, setShowCreateForm] = useState(false);
-    const [newType, setNewType] = useState<ExerciseType>('weighted');
-    const [newHowTo, setNewHowTo] = useState('');
-    const [isCreating, setIsCreating] = useState(false);
-
-    const suggestions = useMemo<UserExercise[]>(() => {
-        if (!exerciseName.trim()) return [];
-        return searchLocal(exerciseName, 8);
-    }, [exerciseName, searchLocal]);
-
-    const exactMatchId = useMemo(() => {
-        const key = exerciseName.trim().toLowerCase();
-        return key ? byName[key] : undefined;
-    }, [exerciseName, byName]);
 
     return (
         <SafeAreaView style={styles.root}>
@@ -350,8 +273,16 @@ export default function AddWorkout() {
                         return (
                             <TouchableOpacity
                                 activeOpacity={0.8}
-                                // TAP opens the EDIT modal on top (no long press, no selection state)
-                                onPress={() => (item.type === 'exercise' ? openEditExercise(item) : setEditingId(item.id), item.type !== 'exercise' ? (setEditingKind(item.type as any), item.type === 'note' ? setNoteOpen(true) : setCustomOpen(true)) : null)}
+                                onPress={() => {
+                                    if (item.type === 'exercise') {
+                                        openEditExercise(item);
+                                        return;
+                                    }
+                                    // unchanged for note/custom
+                                    setEditingId(item.id);
+                                    setEditingKind(item.type as any);
+                                    item.type === 'note' ? setNoteOpen(true) : setCustomOpen(true);
+                                }}
                             >
                                 <View style={[styles.card /* no active border */]}>
                                     <View style={styles.cardHeader}>
@@ -387,227 +318,11 @@ export default function AddWorkout() {
             />
 
             {/* --------- EDIT EXERCISE MODAL (tap to open on top) --------- */}
-            <Modal
+            <EditExerciseModal
                 visible={editExerciseOpen}
-                onRequestClose={() => setEditExerciseOpen(false)}
-                animationType="slide"
-                presentationStyle="pageSheet"
-            >
-                {(() => {
-                    const it = (items.find(i => i.id === selectedExerciseId) as WorkoutExercise | undefined);
-                    const isCompleted = !!(it && it.status === 'completed');
-                    const currentEntry = (it?.entries ?? []).find(e => e.id === it?.activeEntryId);
-                    const isCurrentSet = currentEntry?.kind === 'set';
-                    const isCurrentRest = currentEntry?.kind === 'rest';
-
-                    return (
-                        <Sheet
-                            title={isCompleted ? 'Exercise (Completed)' : 'Edit Exercise'}
-                            leftLabel={selectedExerciseId ? 'Delete' : undefined}
-                            onLeftPress={
-                                selectedExerciseId
-                                    ? () => confirmDelete(selectedExerciseId, 'exercise', setEditExerciseOpen, () => setExerciseName(''))
-                                    : undefined
-                            }
-                            rightLabel={exerciseName.trim().length && !isCompleted ? 'Save' : 'Close'}
-                            onRightPress={() => {
-                                if (selectedExerciseId && !isCompleted && exerciseName.trim().length) {
-                                    updateItem(selectedExerciseId, { name: exerciseName.trim() });
-                                }
-                                setEditExerciseOpen(false);
-                            }}
-                        >
-                            {isCompleted && (
-                                <View style={styles.badgeLocked}><Text style={styles.badgeLockedText}>LOCKED · Completed</Text></View>
-                            )}
-
-                            <TextInput
-                                value={exerciseName}
-                                onChangeText={setExerciseName}
-                                placeholder="Exercise name"
-                                placeholderTextColor="#777"
-                                style={[styles.sheetInput, isCompleted && { opacity: 0.6 }]}
-                                editable={!isCompleted}
-                            />
-
-                            {/* Quick actions (EDIT only) */}
-                            {!isCompleted && (
-                                <View style={{ gap: 10 }}>
-                                    <View style={styles.quickRow}>
-                                        <TouchableOpacity style={[styles.quickBtn, styles.btnBlue]} onPress={() => {
-                                            setShowSetForm((v) => !v);
-                                            setShowRestForm(false); setShowExNoteForm(false);
-                                        }}>
-                                            <Text style={styles.quickBtnText}>+ Set</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity style={[styles.quickBtn, styles.btnGray]} onPress={() => {
-                                            setShowRestForm((v) => !v);
-                                            setShowSetForm(false); setShowExNoteForm(false);
-                                        }}>
-                                            <Text style={styles.quickBtnText}>+ Rest</Text>
-                                        </TouchableOpacity>
-                                        <TouchableOpacity style={[styles.quickBtn, styles.btnYellow]} onPress={() => {
-                                            setShowExNoteForm((v) => !v);
-                                            setShowSetForm(false); setShowRestForm(false);
-                                        }}>
-                                            <Text style={[styles.quickBtnText, { color: '#111' }]}>+ Note</Text>
-                                        </TouchableOpacity>
-                                    </View>
-
-                                    {/* Set form (weighted) */}
-                                    {showSetForm && (
-                                        <View style={styles.inlineCard}>
-                                            <Text style={styles.inlineTitle}>{isCurrentSet ? 'Current Set' : 'Add Set (Weighted)'}</Text>
-
-                                            <View style={styles.inlineRow}>
-                                                <TextInput
-                                                    value={setWeight}
-                                                    onChangeText={setSetWeight}
-                                                    keyboardType="numeric"
-                                                    placeholder="Weight"
-                                                    placeholderTextColor="#777"
-                                                    style={[styles.sheetInput, { flex: 1 }]}
-                                                    editable={!isCurrentSet}
-                                                />
-                                                <TextInput
-                                                    value={setReps}
-                                                    onChangeText={setSetReps}
-                                                    keyboardType="numeric"
-                                                    placeholder="Reps"
-                                                    placeholderTextColor="#777"
-                                                    style={[styles.sheetInput, { flex: 1 }]}
-                                                    editable={!isCurrentSet}
-                                                />
-                                            </View>
-
-                                            <View style={styles.duoRow}>
-                                                <TouchableOpacity
-                                                    style={[styles.duoBtn, styles.btnPrimary, isCurrentSet && styles.btnDisabled]}
-                                                    disabled={isCurrentSet}
-                                                    onPress={() => {
-                                                        if (!selectedExerciseId) return;
-                                                        const w = parseFloat(setWeight);
-                                                        const r = parseInt(setReps, 10);
-                                                        if (Number.isFinite(w) && Number.isFinite(r) && r > 0) {
-                                                            addWeightedSet(selectedExerciseId, w, r);
-                                                        }
-                                                    }}
-                                                >
-                                                    <Text style={styles.duoBtnText}>Add Set</Text>
-                                                </TouchableOpacity>
-
-                                                <TouchableOpacity
-                                                    style={[styles.duoBtn, styles.btnSuccess, !isCurrentSet && styles.btnDisabled]}
-                                                    disabled={!isCurrentSet}
-                                                    onPress={() => {
-                                                        if (!selectedExerciseId) return;
-                                                        if (completeCurrentSet(selectedExerciseId)) {
-                                                            setActiveEntry(selectedExerciseId, null);
-                                                        }
-                                                    }}
-                                                >
-                                                    <Text style={styles.duoBtnText}>Complete Set</Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        </View>
-                                    )}
-
-                                    {/* Rest form */}
-                                    {showRestForm && (
-                                        <View style={styles.inlineCard}>
-                                            <Text style={styles.inlineTitle}>{isCurrentRest ? 'Current Rest' : 'Add Rest'}</Text>
-
-                                            <TextInput
-                                                value={restSeconds}
-                                                onChangeText={setRestSeconds}
-                                                keyboardType="numeric"
-                                                placeholder="Seconds"
-                                                placeholderTextColor="#777"
-                                                style={styles.sheetInput}
-                                                editable={!isCurrentRest}
-                                            />
-
-                                            <View style={styles.duoRow}>
-                                                <TouchableOpacity
-                                                    style={[styles.duoBtn, styles.btnPrimary, isCurrentRest && styles.btnDisabled]}
-                                                    disabled={isCurrentRest}
-                                                    onPress={() => {
-                                                        if (!selectedExerciseId) return;
-                                                        const sec = parseInt(restSeconds, 10);
-                                                        if (Number.isFinite(sec) && sec > 0) addExerciseRest(selectedExerciseId, sec);
-                                                    }}
-                                                >
-                                                    <Text style={styles.duoBtnText}>Add Rest</Text>
-                                                </TouchableOpacity>
-
-                                                <TouchableOpacity
-                                                    style={[styles.duoBtn, styles.btnSuccess, !isCurrentRest && styles.btnDisabled]}
-                                                    disabled={!isCurrentRest}
-                                                    onPress={() => {
-                                                        if (!selectedExerciseId || !it?.activeEntryId) return;
-                                                        startRestForEntry(selectedExerciseId, it.activeEntryId);
-                                                    }}
-                                                >
-                                                    <Text style={styles.duoBtnText}>Start Rest</Text>
-                                                </TouchableOpacity>
-                                            </View>
-                                        </View>
-                                    )}
-
-                                    {/* Exercise note form */}
-                                    {showExNoteForm && (
-                                        <View style={styles.inlineCard}>
-                                            <Text style={styles.inlineTitle}>Add Note</Text>
-                                            <TextInput
-                                                value={exNoteText}
-                                                onChangeText={setExNoteText}
-                                                placeholder="Type a quick note about this exercise…"
-                                                placeholderTextColor="#777"
-                                                multiline
-                                                style={[styles.sheetInput, { minHeight: 90, textAlignVertical: 'top' }]}
-                                            />
-                                            <TouchableOpacity
-                                                style={styles.sheetPrimary}
-                                                onPress={() => {
-                                                    if (!selectedExerciseId) return;
-                                                    const t = exNoteText.trim();
-                                                    if (t) {
-                                                        addExerciseNote(selectedExerciseId, t);
-                                                        setExNoteText('');
-                                                        setShowExNoteForm(false);
-                                                    }
-                                                }}
-                                            >
-                                                <Text style={styles.sheetPrimaryText}>Save Note</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    )}
-                                </View>
-                            )}
-
-                            {/* Entries list */}
-                            {it?.entries?.length ? (
-                                <View style={{ gap: 8, marginTop: 4 }}>
-                                    {it.entries!.slice().sort((a, b) => a.createdAt - b.createdAt).map(en => (
-                                        <View key={en.id} style={styles.entryRow}>
-                                            {en.kind === 'set' && <Text style={styles.entryText}>Set · {en.weight} × {en.reps}</Text>}
-                                            {en.kind === 'rest' && <Text style={styles.entryText}>Rest · {en.seconds}s</Text>}
-                                            {en.kind === 'note' && <Text style={styles.entryText}>Note · {(en as any).text}</Text>}
-                                            <Text style={styles.entryTime}>{new Date(en.createdAt).toLocaleTimeString()}</Text>
-                                        </View>
-                                    ))}
-                                </View>
-                            ) : null}
-
-                            {!isCompleted && selectedExerciseId && (
-                                <TouchableOpacity style={styles.sheetDanger} onPress={() => completeItem(selectedExerciseId)}>
-                                    <Text style={styles.sheetDangerText}>Complete Exercise</Text>
-                                </TouchableOpacity>
-                            )}
-                        </Sheet>
-                    );
-                })()}
-            </Modal>
+                exerciseId={selectedExerciseId}
+                onClose={() => setEditExerciseOpen(false)}
+            />
 
             {/* --------- NOTE MODAL --------- */}
             <Modal
@@ -819,23 +534,6 @@ const styles = StyleSheet.create({
     finishConfirm: { backgroundColor: '#22C55E', paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
     finishConfirmText: { color: 'white', fontSize: 16, fontWeight: '800' },
 
-    suggestionRow: {
-        backgroundColor: '#121212',
-        borderWidth: 1, borderColor: '#2a2a2a',
-        borderRadius: 10, padding: 10,
-        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    },
-    suggestionName: { color: 'white', fontSize: 15, fontWeight: '700' },
-    suggestionType: { color: '#9ca3af', fontSize: 12, textTransform: 'capitalize' },
-
-    suggestionEmpty: {
-        backgroundColor: '#121212',
-        borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10,
-        padding: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    },
-    suggestionEmptyText: { color: '#9ca3af', fontSize: 13 },
-    suggestionAddBtn: { backgroundColor: '#0A84FF', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
-    suggestionAddText: { color: 'white', fontWeight: '800' },
 
     segment: {
         flexDirection: 'row', backgroundColor: '#111', borderRadius: 10, padding: 4, gap: 6,
@@ -846,13 +544,6 @@ const styles = StyleSheet.create({
     segmentText: { color: '#9ca3af', fontWeight: '700', textTransform: 'capitalize' },
     segmentTextActive: { color: 'white' },
 
-    quickRow: { flexDirection: 'row', gap: 8 },
-    quickBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: '#2a2a2a' },
-    quickBtnText: { color: 'white', fontWeight: '800' },
-
-    inlineCard: { backgroundColor: '#121212', borderWidth: 1, borderColor: '#2a2a2a', borderRadius: 10, padding: 12, gap: 8 },
-    inlineTitle: { color: '#d1d5db', fontWeight: '800' },
-    inlineRow: { flexDirection: 'row', gap: 8 },
 
     entryRow: { backgroundColor: '#111', borderWidth: 1, borderColor: '#242424', borderRadius: 10, padding: 10, flexDirection: 'row', justifyContent: 'space-between' },
     entryText: { color: 'white', fontWeight: '700' },

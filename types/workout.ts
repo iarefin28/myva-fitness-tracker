@@ -19,6 +19,23 @@ export interface ExerciseSetWeighted {
   completedAt?: number | null;         // ← NEW
 }
 
+export interface ExerciseSetEntry {
+  id: string;
+  kind: 'set';
+
+  // ✅ New planned fields
+  plannedWeight?: number;
+  plannedReps?: number;
+
+  // ✅ New completed fields
+  weight?: number;
+  reps?: number;
+
+  unit?: 'lb' | 'kg';
+  createdAt: number;
+  completedAt?: number;
+}
+
 export interface ExerciseRestEntry {
   id: string;
   kind: 'rest';
@@ -135,3 +152,5 @@ export interface WorkoutState {
   clearDraft: () => void;
 
 }
+
+
