@@ -66,28 +66,25 @@ export default function IndexScreen() {
 
   // -------- Responsive layout sizes --------
   const HERO_HEIGHT = useMemo(() => Math.round(Math.max(120, Math.min(220, width * 0.40))), [width]);
-  const CTA_HEIGHT = useMemo(() => Math.round(Math.max(42, Math.min(56, 44 * Math.min(1.2, Math.max(0.9, fontScale))))), [fontScale]);
+  const CTA_HEIGHT = useMemo(
+    () => Math.round(Math.max(42, Math.min(56, 44 * Math.min(1.2, Math.max(0.9, fontScale))))),
+    [fontScale]
+  );
   const SUBTITLE_MIN_HEIGHT = useMemo(() => Math.round(Math.max(32, HERO_HEIGHT * 0.22)), [HERO_HEIGHT]);
-  const RIGHT_SLOT_WIDTH = useMemo(() => Math.min(120, Math.max(74, Math.round(width * 0.18))), [width]);
+  const RIGHT_SLOT_WIDTH = useMemo(() => Math.min(120, Math.round(Math.max(74, width * 0.18))), [width]);
+
+  // Uniform responsive row height (≈14% of width), clamped for consistency and a11y-safe
+  const ROW_H = React.useMemo(
+    () => Math.round(Math.max(52, Math.min(72, (width * 0.14) / Math.min(fontScale, 1.2)))),
+    [width, fontScale]
+  );
 
   // -------- Quick actions --------
   const buttons = [
-    {
-      title: "View Completed Workouts",
-      path: COMPLETED_WORKOUTS_ROUTE,
-      icon: (c: string) => <MaterialIcons name="check-circle-outline" size={22} color={c} />,
-    },
-    {
-      title: "View Upcoming Workouts",
-      path: UPCOMING_WORKOUTS_ROUTE,
-      icon: (c: string) => <Ionicons name="calendar-outline" size={22} color={c} />,
-    },
-    {
-      title: "Saved Workout Templates",
-      path: TEMPLATES_ROUTE,
-      icon: (c: string) => <Ionicons name="bookmark-outline" size={22} color={c} />,
-    },
-  ];
+    { title: "View Completed Workouts", path: COMPLETED_WORKOUTS_ROUTE, icon: (c: string) => <MaterialIcons name="check-circle-outline" size={22} color={c} />, disabled: false },
+    { title: "View Upcoming Workouts", path: UPCOMING_WORKOUTS_ROUTE, icon: (c: string) => <Ionicons name="calendar-outline" size={22} color={c} />, disabled: true },
+    { title: "Saved Workout Templates", path: TEMPLATES_ROUTE, icon: (c: string) => <Ionicons name="bookmark-outline" size={22} color={c} />, disabled: true },
+  ] as const;
 
   const onStartOrOpen = () => {
     if (!draft) startDraft("");
@@ -185,38 +182,40 @@ export default function IndexScreen() {
 
         {/* ---------- QUICK ACTIONS ---------- */}
         <View style={{ borderRadius: 12, overflow: "hidden", backgroundColor: cardBg }}>
-          {buttons.map(({ title, path, icon }, idx) => (
-            <TouchableOpacity
-              key={title}
-              onPress={() => router.push(path as any)}
-              style={{
-                paddingVertical: 14,
-                paddingHorizontal: 14,
-                backgroundColor: cardBg,
-              }}
-            >
-              <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <View style={{ marginRight: 10 }}>{icon(textColor)}</View>
-                  <Text style={{ fontSize: 16, color: textColor }}>{title}</Text>
+          {buttons.map(({ title, path, icon, disabled }, idx) => {
+            const rowTextColor = disabled ? subText : textColor;
+            const rowIconColor = rowTextColor;
+            return (
+              <TouchableOpacity
+                key={title}
+                onPress={() => { if (!disabled) router.push(path as any); }}
+                disabled={disabled}
+                style={{
+                  backgroundColor: cardBg,
+                  opacity: disabled ? 0.55 : 1,
+                  height: ROW_H,                // <-- fixed, uniform height
+                  paddingHorizontal: 14,
+                  justifyContent: "center",
+                  borderTopWidth: idx === 0 ? 0 : 1,  // <-- divider without changing row height
+                  borderTopColor: dividerColor,
+                }}
+              >
+                <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+                  <View style={{ flexDirection: "row", alignItems: "center", flex: 1, minWidth: 0 }}>
+                    <View style={{ marginRight: 10 }}>{icon(rowIconColor)}</View>
+                    <Text
+                      style={{ fontSize: 16, color: rowTextColor, flexShrink: 1 }}
+                      numberOfLines={1}                  // <-- prevent wrapping (which would bump height)
+                      ellipsizeMode="tail"
+                    >
+                      {title}
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={subText} />
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={subText} />
-              </View>
-
-              {idx < buttons.length - 1 && (
-                <View
-                  style={{
-                    height: 1,
-                    backgroundColor: dividerColor,
-                    opacity: 0.7,
-                    marginTop: 14,
-                    marginBottom: 0,
-                    marginLeft: 44,
-                  }}
-                />
-              )}
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* ---------- RECENT WORKOUTS ---------- */}
