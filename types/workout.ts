@@ -1,3 +1,5 @@
+// --- Types for the set flow (planned vs actual) ---
+
 export type WorkoutItemType = 'exercise' | 'note' | 'custom';
 
 export interface WorkoutItemBase {
@@ -6,65 +8,25 @@ export interface WorkoutItemBase {
   createdAt: number; // ms
 }
 
-export type ExerciseType = 'weighted' | 'bodyweight' | 'timed' | 'distance';
-export type ExerciseEntryKind = 'set' | 'rest' | 'note';
+export type ExerciseStatus = 'inProgress' | 'completed';
 
-export interface ExerciseSetWeighted {
+export interface WorkoutExerciseSet {
   id: string;
-  kind: 'set';
-  weight: number;
-  reps: number;
+  plannedWeight: number;
+  plannedReps: number;
   createdAt: number;
-  status: 'active' | 'completed';      // ← NEW
-  completedAt?: number | null;         // ← NEW
+
+  completedWeight?: number;
+  completedReps?: number;
+  completedAt?: number; // ms when completed
 }
 
-export interface ExerciseSetEntry {
-  id: string;
-  kind: 'set';
-
-  // ✅ New planned fields
-  plannedWeight?: number;
-  plannedReps?: number;
-
-  // ✅ New completed fields
-  weight?: number;
-  reps?: number;
-
-  unit?: 'lb' | 'kg';
-  createdAt: number;
-  completedAt?: number;
-}
-
-export interface ExerciseRestEntry {
-  id: string;
-  kind: 'rest';
-  seconds: number;
-  createdAt: number;
-}
-
-export interface ExerciseNoteEntry {
-  id: string;
-  kind: 'note';
-  text: string;
-  createdAt: number;
-}
-
-export type ExerciseEntry = ExerciseSetWeighted | ExerciseRestEntry | ExerciseNoteEntry;
-
-
-export interface UserExercise {
-  id: string;
-  uid: string;
+export interface WorkoutExercise extends WorkoutItemBase {
+  type: 'exercise';
   name: string;
-  nameLower: string;
-  type: ExerciseType;
-  howTo?: string;
-  tags?: string[];
-  createdAt: number;
-  updatedAt: number;
-  usageCount?: number;
-  lastUsedAt?: number;
+  libId?: string;          // optional reference to library exercise
+  status: ExerciseStatus;  // inProgress | completed
+  sets: WorkoutExerciseSet[];
 }
 
 export interface WorkoutNote extends WorkoutItemBase {
@@ -72,76 +34,76 @@ export interface WorkoutNote extends WorkoutItemBase {
   text: string;
 }
 
-export interface WorkoutExercise extends WorkoutItemBase {
-  type: 'exercise';
-  name: string;
-  status: 'active' | 'completed';
-  completedAt?: number | null;
-  exerciseId?: string;
-  entries?: ExerciseEntry[];
-  activeEntryId?: string | null;   // ← pointer to the current set/rest/note on this exercise
-}
-
-
 export interface WorkoutCustom extends WorkoutItemBase {
   type: 'custom';
   text: string;
 }
 
-export type WorkoutItem = WorkoutNote | WorkoutExercise | WorkoutCustom;
-
-export interface WorkoutActionLogEntry {
-  id: string;
-  at: number;
-  kind: 'add' | 'edit' | 'complete' | 'delete'; // ← added delete
-  itemId: string;
-  payload?: any;
-}
+export type WorkoutItem = WorkoutExercise | WorkoutNote | WorkoutCustom;
 
 export interface WorkoutDraft {
   id: string;
   name: string;
-  createdAt: number;
-  items: WorkoutItem[];
-  startedAt: number;
+  startedAt: number;           // timer anchor
   pausedAt?: number | null;
-  activeItemId?: string | null;
+  items: WorkoutItem[];
   actionLog?: WorkoutActionLogEntry[];
-  ongoingRest?: { exerciseId: string; entryId: string; startedAt: number } | null; // ← simple rest tracker
 }
 
 export interface WorkoutSaved {
   id: string;
   name: string;
-  createdAt: number;
-  durationSec: number;
+  startedAt: number;
+  endedAt: number;
   items: WorkoutItem[];
-  actionLog?: WorkoutActionLogEntry[];
+}
+
+export interface WorkoutActionLogEntry {
+  id: string;
+  at: number; // ms
+  kind:
+    | 'start'
+    | 'pause'
+    | 'resume'
+    | 'add'
+    | 'update'
+    | 'delete'
+    | 'complete_item'
+    | 'exercise_add_set'
+    | 'exercise_complete_set';
+  itemId?: string;
+  payload?: any;
 }
 
 export interface WorkoutState {
   draft: WorkoutDraft | null;
   history: WorkoutSaved[];
 
-  elapsedSeconds: () => number;
-
-  startDraft: (name?: string) => void;
+  // basic flows
+  startDraft: (name: string) => void;
   setDraftName: (name: string) => void;
 
+  addExercise: (name: string, libId?: string) => string;
   addNote: (text: string) => string;
-  addExercise: (name: string, exerciseId?: string) => string;
   addCustom: (text: string) => string;
 
   updateItem: (id: string, next: { name?: string; text?: string }) => boolean;
   completeItem: (id: string) => boolean;
-  deleteItem: (id: string) => boolean; // ← NEW
+  deleteItem: (id: string) => boolean;
 
+  // timer controls
+  elapsedSeconds: () => number;
   pause: () => void;
   resume: () => void;
 
+  // finish & clear
   finishAndSave: () => { id: string };
   clearDraft: () => void;
 
+  // --- NEW: exercise set API ---
+  addExerciseSet: (exerciseId: string, plannedWeight: number, plannedReps: number) => string;
+  completeExerciseSet: (exerciseId: string, setId: string, completedWeight: number, completedReps: number) => boolean;
+
+  // convenient selector (optional)
+  getExercise: (exerciseId: string) => WorkoutExercise | null;
 }
-
-

@@ -10,166 +10,206 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+// helper
+const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
 
-const log = (draft: WorkoutDraft, entry: Omit<WorkoutActionLogEntry, 'id' | 'at'>): WorkoutActionLogEntry[] => {
-    const list = draft.actionLog ?? [];
-    return [...list, { id: uid(), at: Date.now(), ...entry }];
+// small log helper (optional)
+const pushLog = (d: WorkoutDraft, entry: Omit<WorkoutActionLogEntry, 'id' | 'at'>) => {
+  const next: WorkoutActionLogEntry = { id: uid(), at: Date.now(), ...entry };
+  return [...(d.actionLog ?? []), next];
 };
 
-const makeDraft = (name: string): WorkoutDraft => ({
-    id: uid(),
-    name,
-    createdAt: Date.now(),
-    items: [],
-    startedAt: Date.now(),
-    pausedAt: null,
-    activeItemId: null,
-    actionLog: [],
-});
-
 export const useWorkoutStore = create<WorkoutState>()(
-    persist(
-        (set, get) => ({
-            draft: null,
-            history: [],
+  persist(
+    (set, get) => ({
+      draft: null,
+      history: [],
 
-            elapsedSeconds: () => {
-                const d = get().draft;
-                if (!d) return 0;
-                const stop = d.pausedAt ?? Date.now();
-                return Math.max(0, Math.floor((stop - d.startedAt) / 1000));
-            },
+      // --- basics (keep yours if already present) ---
+      startDraft: (name) => {
+        const d: WorkoutDraft = {
+          id: uid(),
+          name,
+          startedAt: Date.now(),
+          pausedAt: null,
+          items: [],
+          actionLog: [],
+        };
+        set({ draft: d });
+      },
 
-            startDraft: (name = '') => {
-                if (get().draft) return;
-                set({ draft: makeDraft(name) });
-            },
+      setDraftName: (name) => {
+        const d = get().draft; if (!d) return;
+        set({ draft: { ...d, name } });
+      },
 
-            setDraftName: (name) => {
-                const d = get().draft; if (!d) return;
-                set({ draft: { ...d, name } });
-            },
+      addExercise: (name, libId) => {
+        const d = get().draft; if (!d) return '';
+        const item: WorkoutExercise = {
+          id: uid(),
+          type: 'exercise',
+          name,
+          libId,
+          status: 'inProgress',
+          createdAt: Date.now(),
+          sets: [],
+        };
+        set({
+          draft: {
+            ...d,
+            items: [...d.items, item],
+            actionLog: pushLog(d, { kind: 'add', itemId: item.id, payload: { type: 'exercise' } }),
+          },
+        });
+        return item.id;
+      },
 
-            // Adds
-            addNote: (text) => {
-                const d = get().draft; if (!d) return '';
-                const item: WorkoutItem = { id: uid(), type: 'note', text, createdAt: Date.now() };
-                set({ draft: { ...d, items: [...d.items, item], activeItemId: item.id, actionLog: log(d, { kind: 'add', itemId: item.id, payload: { type: 'note' } }) } });
-                return item.id;
-            },
-            addExercise: (name: string, exerciseId?: string) => {
-                const d = get().draft; if (!d) return '';
-                const item: WorkoutExercise = {
-                    id: uid(),
-                    type: 'exercise',
-                    name,
-                    createdAt: Date.now(),
-                    status: 'active',
-                    completedAt: null,
-                    exerciseId,          // optional, fine if undefined
-                    entries: [],         // if you want to start empty
-                    activeEntryId: null, // if you track a pointer
-                };
-                const items = [...d.items, item];
-                set({ draft: { ...d, items, activeItemId: item.id } });
-                return item.id;
-            },
-            addCustom: (text) => {
-                const d = get().draft; if (!d) return '';
-                const item: WorkoutItem = { id: uid(), type: 'custom', text, createdAt: Date.now() };
-                set({ draft: { ...d, items: [...d.items, item], activeItemId: item.id, actionLog: log(d, { kind: 'add', itemId: item.id, payload: { type: 'custom' } }) } });
-                return item.id;
-            },
+      addNote: (text) => {
+        const d = get().draft; if (!d) return '';
+        const item: WorkoutItem = { id: uid(), type: 'note', text, createdAt: Date.now() };
+        set({
+          draft: {
+            ...d,
+            items: [...d.items, item],
+            actionLog: pushLog(d, { kind: 'add', itemId: item.id, payload: { type: 'note' } }),
+          },
+        });
+        return item.id;
+      },
 
-            // Updates / complete / delete
-            updateItem: (id, next) => {
-                const d = get().draft; if (!d) return false;
-                let changed = false; let payload: any = {};
-                const items = d.items.map((it) => {
-                    if (it.id !== id) return it;
-                    if (it.type === 'exercise' && it.status === 'completed') return it; // lock
-                    if (it.type === 'exercise' && 'name' in next && typeof next.name === 'string') {
-                        const to = next.name.trim(); if (!to || to === (it as WorkoutExercise).name) return it;
-                        payload = { nameFrom: (it as WorkoutExercise).name, nameTo: to };
-                        changed = true;
-                        return { ...(it as WorkoutExercise), name: to };
-                    }
-                    if (it.type !== 'exercise' && 'text' in next && typeof next.text === 'string') {
-                        const from = (it as any).text ?? '';
-                        const to = next.text.trim(); if (to === from) return it;
-                        payload = { textFrom: from, textTo: to };
-                        changed = true;
-                        return { ...(it as any), text: to };
-                    }
-                    return it;
-                });
-                if (!changed) return false;
-                set({ draft: { ...d, items, activeItemId: id, actionLog: log(d, { kind: 'edit', itemId: id, payload }) } });
-                return true;
-            },
+      addCustom: (text) => {
+        const d = get().draft; if (!d) return '';
+        const item: WorkoutItem = { id: uid(), type: 'custom', text, createdAt: Date.now() };
+        set({
+          draft: {
+            ...d,
+            items: [...d.items, item],
+            actionLog: pushLog(d, { kind: 'add', itemId: item.id, payload: { type: 'custom' } }),
+          },
+        });
+        return item.id;
+      },
 
-            completeItem: (id) => {
-                const d = get().draft; if (!d) return false;
-                let changed = false;
-                const items = d.items.map((it) => {
-                    if (it.id !== id || it.type !== 'exercise') return it;
-                    if (it.status === 'completed') return it;
-                    changed = true;
-                    return { ...(it as WorkoutExercise), status: 'completed', completedAt: Date.now() };
-                });
-                if (!changed) return false;
-                set({ draft: { ...d, items, activeItemId: id, actionLog: log(d, { kind: 'complete', itemId: id }) } });
-                return true;
-            },
+      updateItem: (id, next) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.map((it) => {
+          if (it.id !== id) return it;
+          if (it.type === 'exercise' && next.name) return { ...it, name: next.name } as WorkoutExercise;
+          if ((it.type === 'note' || it.type === 'custom') && next.text !== undefined) return { ...it, text: next.text } as any;
+          return it;
+        });
+        set({ draft: { ...d, items, actionLog: pushLog(d, { kind: 'update', itemId: id, payload: next }) } });
+        return true;
+      },
 
-            deleteItem: (id) => {
-                const d = get().draft; if (!d) return false;
-                const exists = d.items.some(i => i.id === id);
-                if (!exists) return false;
-                const items = d.items.filter(i => i.id !== id);
-                // choose new active pointer: last item or null
-                const activeItemId = items.length ? items[items.length - 1].id : null;
-                set({ draft: { ...d, items, activeItemId, actionLog: log(d, { kind: 'delete', itemId: id }) } });
-                return true;
-            },
+      completeItem: (id) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.map((it) => {
+          if (it.id !== id) return it;
+          if (it.type === 'exercise') return { ...it, status: 'completed' } as WorkoutExercise;
+          return it;
+        });
+        set({ draft: { ...d, items, actionLog: pushLog(d, { kind: 'complete_item', itemId: id }) } });
+        return true;
+      },
 
-            setActiveItem: (id) => {
-                const d = get().draft; if (!d) return;
-                set({ draft: { ...d, activeItemId: id } });
-            },
+      deleteItem: (id) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.filter((it) => it.id !== id);
+        set({ draft: { ...d, items, actionLog: pushLog(d, { kind: 'delete', itemId: id }) } });
+        return true;
+      },
 
-            // Timer
-            pause: () => {
-                const d = get().draft; if (!d || d.pausedAt) return;
-                set({ draft: { ...d, pausedAt: Date.now() } });
-            },
-            resume: () => {
-                const d = get().draft; if (!d || !d.pausedAt) return;
-                const pausedFor = Date.now() - d.pausedAt;
-                set({ draft: { ...d, startedAt: d.startedAt + pausedFor, pausedAt: null } });
-            },
+      // --- NEW: Set APIs ---
+      addExerciseSet: (exerciseId, plannedWeight, plannedReps) => {
+        const d = get().draft; if (!d) return '';
+        const setId = uid();
+        const nextSet: WorkoutExerciseSet = {
+          id: setId,
+          plannedWeight,
+          plannedReps,
+          createdAt: Date.now(),
+        };
+        const items = d.items.map((it) => {
+          if (it.id !== exerciseId || it.type !== 'exercise') return it;
+          return { ...it, sets: [...it.sets, nextSet] } as WorkoutExercise;
+        });
+        set({
+          draft: {
+            ...d,
+            items,
+            actionLog: pushLog(d, { kind: 'exercise_add_set', itemId: exerciseId, payload: { setId } }),
+          },
+        });
+        return setId;
+      },
 
-            // Finalize (kept for later)
-            finishAndSave: () => {
-                const d = get().draft; if (!d) throw new Error('No active workout to finish');
-                const durationSec = get().elapsedSeconds();
-                const saved: WorkoutSaved = {
-                    id: d.id, name: d.name?.trim() || 'Workout', createdAt: d.createdAt, items: d.items, durationSec, actionLog: d.actionLog,
-                };
-                const history = [saved, ...get().history];
-                set({ history, draft: null });
-                return { id: saved.id };
-            },
+      completeExerciseSet: (exerciseId, setId, completedWeight, completedReps) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.map((it) => {
+          if (it.id !== exerciseId || it.type !== 'exercise') return it;
+          const sets = it.sets.map((s) =>
+            s.id === setId
+              ? { ...s, completedWeight, completedReps, completedAt: Date.now() }
+              : s
+          );
+          return { ...it, sets } as WorkoutExercise;
+        });
+        set({
+          draft: {
+            ...d,
+            items,
+            actionLog: pushLog(d, { kind: 'exercise_complete_set', itemId: exerciseId, payload: { setId } }),
+          },
+        });
+        return true;
+      },
 
-            clearDraft: () => set({ draft: null }),
-        }),
-        {
-            name: 'myva_workout_store_v4',
-            storage: createJSONStorage(() => AsyncStorage),
-            partialize: (s) => ({ draft: s.draft, history: s.history }),
-            version: 4,
-            migrate: (p) => p as any,
-        }
-    )
+      // Optional selector
+      getExercise: (exerciseId) => {
+        const d = get().draft; if (!d) return null;
+        const it = d.items.find((i) => i.id === exerciseId && i.type === 'exercise') as WorkoutExercise | undefined;
+        return it ?? null;
+      },
+
+      // --- timer / finish (keep your originals if already there) ---
+      elapsedSeconds: () => {
+        const d = get().draft; if (!d) return 0;
+        const now = Date.now();
+        if (d.pausedAt) return Math.floor((d.pausedAt - d.startedAt) / 1000);
+        return Math.floor((now - d.startedAt) / 1000);
+      },
+
+      pause: () => {
+        const d = get().draft; if (!d || d.pausedAt) return;
+        set({ draft: { ...d, pausedAt: Date.now(), actionLog: pushLog(d, { kind: 'pause' }) } });
+      },
+
+      resume: () => {
+        const d = get().draft; if (!d || !d.pausedAt) return;
+        set({ draft: { ...d, pausedAt: null, actionLog: pushLog(d, { kind: 'resume' }) } });
+      },
+
+      finishAndSave: () => {
+        const d = get().draft; if (!d) return { id: '' };
+        const saved: WorkoutSaved = {
+          id: uid(),
+          name: d.name,
+          startedAt: d.startedAt,
+          endedAt: Date.now(),
+          items: d.items,
+        };
+        set({ history: [saved, ...get().history], draft: null });
+        return { id: saved.id };
+      },
+
+      clearDraft: () => set({ draft: null }),
+    }),
+    {
+      name: 'myva_workout_store_v5',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (s) => ({ draft: s.draft, history: s.history }),
+      version: 5,
+    }
+  )
 );

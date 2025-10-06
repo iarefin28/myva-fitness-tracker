@@ -38,12 +38,14 @@ export default function AddWorkout() {
     const addExercise = useWorkoutStore((s) => s.addExercise);
     const addCustom = useWorkoutStore((s) => s.addCustom);
     const updateItem = useWorkoutStore((s) => (s as any).updateItem) as (id: string, next: { name?: string; text?: string }) => boolean;
-    const completeItem = useWorkoutStore((s) => (s as any).completeItem) as (id: string) => boolean;
     const deleteItem = useWorkoutStore((s) => (s as any).deleteItem) as (id: string) => boolean;
+    const completeItem = useWorkoutStore((s) => (s as any).completeItem) as (id: string) => boolean;
+
     const elapsedSeconds = useWorkoutStore((s) => s.elapsedSeconds);
     const pause = useWorkoutStore((s) => (s as any).pause);
     const resume = useWorkoutStore((s) => (s as any).resume);
     const clearDraft = useWorkoutStore((s) => (s as any).clearDraft) as () => void;
+
 
     // ---------- Header ----------
     const onDiscard = () => {
@@ -322,6 +324,8 @@ export default function AddWorkout() {
                 visible={editExerciseOpen}
                 exerciseId={selectedExerciseId}
                 onClose={() => setEditExerciseOpen(false)}
+                onDiscard={() => { if (selectedExerciseId) deleteItem(selectedExerciseId); }}
+                onCompleteExercise={() => { if (selectedExerciseId) completeItem(selectedExerciseId); }}
             />
 
             {/* --------- NOTE MODAL --------- */}
