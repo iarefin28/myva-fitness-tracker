@@ -17,8 +17,7 @@ import AddWorkoutScreen from './add-workout';
 import CalendarScreen from './calendar';
 import ChartsScreen from './charts';
 import IndexScreen from './index';
-import MyvaInsightsScreen from './myva-insights';
-
+import UserScreen from './UserScreen';
 
 import { useWorkoutStore } from '../store/workoutStore';
 
@@ -120,9 +119,16 @@ function TabLayout() {
               tabBarIcon: ({ color, size }) => <Ionicons name="calendar" size={size} color={color} />,
             }}
           />
-          <Tab.Screen
+          {/* <Tab.Screen
             name="MYVA Insights"
             component={MyvaInsightsScreen}
+            options={{
+              tabBarIcon: ({ color, size }) => <Ionicons name="sparkles" size={size} color={color} />,
+            }}
+          /> */}
+          <Tab.Screen
+            name="Your Profile"
+            component={UserScreen}
             options={{
               tabBarIcon: ({ color, size }) => <Ionicons name="sparkles" size={size} color={color} />,
             }}

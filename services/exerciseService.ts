@@ -1,14 +1,14 @@
 // services/exerciseService.ts
 import { app, /* or db */ } from '@/FirebaseConfig'; // adjust to your export
 import {
-    addDoc, collection, doc,
-    endAt,
-    getDocs, getFirestore,
-    orderBy,
-    limit as qlimit,
-    query, serverTimestamp,
-    startAt,
-    updateDoc
+  addDoc, collection, doc,
+  endAt,
+  getDocs, getFirestore,
+  orderBy,
+  limit as qlimit,
+  query, serverTimestamp,
+  startAt,
+  updateDoc
 } from 'firebase/firestore';
 
 const db = /* if you export db from FirebaseConfig use it, else: */ getFirestore(app);

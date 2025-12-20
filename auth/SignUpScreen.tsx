@@ -5,15 +5,15 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore';
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import {
-    Keyboard,
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-    useColorScheme,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  useColorScheme,
 } from 'react-native';
 import { auth, db } from '../FirebaseConfig';
 
@@ -59,16 +59,31 @@ export default function SignUpScreen() {
         await updateProfile(cred.user, { displayName: cleanName });
       }
 
-      await setDoc(doc(db, 'users', cred.user.uid), {
+      /*
+        For the first MYVA user this setDoc code will create the users collection in Firestore. The users collection will contain all information relevant to the user specifically 
+        and it is a precursor to the social ecosystem of MYVA. The schema of this collection is currently defined below for phase one. If new fields are added, 
+        adding it below will add it for new users. If adding fields later, need to look into adding the fields for old users but this should not be a problem now since MYVA will 
+        initially have just 2 users. 
+      */
+      await setDoc(doc(db, "users", cred.user.uid), {
         uid: cred.user.uid,
         email: cred.user.email,
         displayName: cleanName || null,
+
+        // SOCIAL FOUNDATION
+        friends: [], // accepted friends
+        coaches: [], // future use 
+        trainees: [], // future use with coaches array
+
+        // FUTURE-PROOF SETTINGS
+        settings: {
+          theme: "system",
+        },
+
         createdAt: serverTimestamp(),
       });
 
       Keyboard.dismiss();
-      // Optionally route to app/home
-      // nav.reset({ index: 0, routes: [{ name: 'Home' }] });
     } catch (e: any) {
       setErr(e?.message ?? 'Sign up failed');
     } finally {
