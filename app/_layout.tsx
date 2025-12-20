@@ -8,14 +8,14 @@ import { Host } from 'react-native-portalize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 
-import CustomAddButton from '@/components/CustomAddButton';
+// import CustomAddButton from '@/components/CustomAddButton';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthProvider, useAuth } from '../auth/AuthProvider';
 import SignInScreen from '../auth/SignInScreen';
 import SignUpScreen from '../auth/SignUpScreen';
 import AddWorkoutScreen from './add-workout';
-import CalendarScreen from './calendar';
-import ChartsScreen from './charts';
+// import CalendarScreen from './calendar';
+// import ChartsScreen from './charts';
 import IndexScreen from './index';
 import UserScreen from './UserScreen';
 
@@ -92,6 +92,7 @@ function TabLayout() {
               tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
             }}
           />
+          {/*
           <Tab.Screen
             name="Charts"
             component={ChartsScreen}
@@ -119,6 +120,7 @@ function TabLayout() {
               tabBarIcon: ({ color, size }) => <Ionicons name="calendar" size={size} color={color} />,
             }}
           />
+          */}
           {/* <Tab.Screen
             name="MYVA Insights"
             component={MyvaInsightsScreen}
