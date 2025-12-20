@@ -32,6 +32,7 @@ export default function AddWorkout() {
     // ---------- Store ----------
     const draft = useWorkoutStore((s) => s.draft);
     const history = useWorkoutStore((s) => s.history);
+    const finishAndSave = useWorkoutStore((s) => s.finishAndSave);
     const startDraft = useWorkoutStore((s) => s.startDraft);
     const setDraftName = useWorkoutStore((s) => s.setDraftName);
     const addNote = useWorkoutStore((s) => s.addNote);
@@ -45,6 +46,7 @@ export default function AddWorkout() {
     const pause = useWorkoutStore((s) => (s as any).pause);
     const resume = useWorkoutStore((s) => (s as any).resume);
     const clearDraft = useWorkoutStore((s) => (s as any).clearDraft) as () => void;
+    const isFinishingRef = useRef(false);
 
 
     // ---------- Header ----------
@@ -85,7 +87,7 @@ export default function AddWorkout() {
     const isDiscardingRef = useRef(false);
 
     useEffect(() => {
-        if (!draft && !isDiscardingRef.current) startDraft('');
+        if (!draft && !isDiscardingRef.current && !isFinishingRef.current) startDraft('');
     }, [draft, startDraft]);
 
     // ---------- Live tick ----------
@@ -403,13 +405,26 @@ export default function AddWorkout() {
 
             {/* --------- FINISH (paused preview) --------- */}
             <Modal visible={finishOpen} onRequestClose={() => setFinishOpen(false)} animationType="slide" presentationStyle="pageSheet">
-                <Sheet title="Finish Workout (Preview)" rightLabel="Close" onRightPress={() => setFinishOpen(false)}>
+                <Sheet title="Finish Workout" rightLabel="Close" onRightPress={() => setFinishOpen(false)}>
                     <Text style={styles.summary}>{items.length} item(s) • Time {mmss} • (timer paused)</Text>
                     <View style={styles.jsonBox}>
                         <ScrollView><Text style={styles.jsonText}>{JSON.stringify({ draft, history }, null, 2)}</Text></ScrollView>
                     </View>
-                    <TouchableOpacity style={[styles.finishConfirm, { opacity: 0.5 }]} activeOpacity={1} onPress={() => Alert.alert('Disabled', 'Saving is disabled for now. Close this sheet to resume the timer.')}>
-                        <Text style={styles.finishConfirmText}>Save Disabled</Text>
+                    <TouchableOpacity
+                        style={styles.finishConfirm}
+                        activeOpacity={0.9}
+                        onPress={() => {
+                            isFinishingRef.current = true;
+                            const saved = finishAndSave();
+                            if (saved.id) {
+                                setFinishOpen(false);
+                                navigation.goBack();
+                            } else {
+                                Alert.alert('Unable to save', 'No active workout to save.');
+                            }
+                        }}
+                    >
+                        <Text style={styles.finishConfirmText}>Save & Finish</Text>
                     </TouchableOpacity>
                 </Sheet>
             </Modal>

@@ -117,6 +117,7 @@ export interface WorkoutState {
   // finish & clear
   finishAndSave: () => { id: string };
   clearDraft: () => void;
+  clearHistory: () => void;
 
   // --- NEW: exercise set API ---
   addExerciseSet: (exerciseId: string, plannedWeight: number, plannedReps: number) => string;

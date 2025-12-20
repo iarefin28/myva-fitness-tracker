@@ -204,6 +204,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       },
 
       clearDraft: () => set({ draft: null }),
+      clearHistory: () => set({ history: [] }),
     }),
     {
       name: 'myva_workout_store_v5',

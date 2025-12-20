@@ -1,5 +1,4 @@
 import { AntDesign } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation, useTheme } from "@react-navigation/native";
 import { useFocusEffect, useRouter } from "expo-router";
 import React, { useCallback, useLayoutEffect, useState } from "react";
@@ -8,19 +7,8 @@ import { FlatList, Text, TouchableOpacity, useColorScheme, View } from "react-na
 // ✅ new shared card
 // If you don't use the "@/components" alias, change this import to a relative path like "../components/WorkoutSummaryCard"
 import { formatHM, WorkoutSummaryCard } from "../components/WorkoutSummaryCard";
-
-interface Workout {
-  id: number;
-  name: string;
-  exercises: any[];
-  notes?: string;
-  date: string;
-
-  // Optional extras if present in your data (we'll gracefully fall back if missing)
-  metrics?: { totalExercises?: number; totalSets?: number; totalWorkingSets?: number; approxDurationInSeconds?: number };
-  elapsedSeconds?: number;
-  approxDurationInSeconds?: number;
-}
+import { useWorkoutStore } from "@/store/workoutStore";
+import type { WorkoutSaved } from "@/types/workout";
 
 export default function CompletedWorkouts() {
   const router = useRouter();
@@ -28,7 +16,8 @@ export default function CompletedWorkouts() {
   const { colors } = useTheme();
   const scheme = useColorScheme();
 
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
+  const history = useWorkoutStore((s) => s.history);
+  const [workouts, setWorkouts] = useState<WorkoutSaved[]>([]);
 
   const backgroundColor = scheme === "dark" ? "#000000" : "#d1d1d1";
   const textColor = scheme === "dark" ? "#ffffff" : "#000000";
@@ -45,66 +34,24 @@ export default function CompletedWorkouts() {
   }, [navigation, colors]);
 
   const loadWorkouts = useCallback(async () => {
-    try {
-      const storedWorkouts = await AsyncStorage.getItem("savedWorkouts");
-      if (storedWorkouts) {
-        const parsedWorkouts: Workout[] = JSON.parse(storedWorkouts);
-        const sorted = parsedWorkouts.sort((a, b) => b.id - a.id);
-        setWorkouts(sorted);
-      } else {
-        setWorkouts([]);
-      }
-    } catch (error) {
-      console.error("Failed to load workouts:", error);
-    }
-  }, []);
+    const sorted = [...history].sort((a, b) => b.endedAt - a.endedAt);
+    setWorkouts(sorted);
+  }, [history]);
 
   useFocusEffect(useCallback(() => { loadWorkouts(); }, [loadWorkouts]));
 
-  const formatShortDate = (isoDate: string) => {
-    const d = new Date(isoDate);
+  const formatShortDate = (ts: number) => {
+    const d = new Date(ts);
     if (isNaN(d.getTime())) return "Unknown";
     return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   };
 
-  const notePreview = (notes?: string) => {
-    const s = (notes ?? "").trim();
-    if (!s) return undefined;
-    return s.length > 80 ? `“${s.slice(0, 77)}…”` : `“${s}”`;
-  };
-
-  const computeCompletedMetrics = (w: Workout) => {
-    // totals
-    const totalExercises =
-      w.metrics?.totalExercises ?? (Array.isArray(w.exercises) ? w.exercises.length : 0);
-
-    const totalSets =
-      w.metrics?.totalSets ??
-      (w.exercises?.reduce((acc, ex) => {
-        const sets = ex?.actions?.filter?.((a: any) => a?.type === "set")?.length || 0;
-        return acc + sets;
-      }, 0) ?? 0);
-
-    const totalWorkingSets =
-      w.metrics?.totalWorkingSets ??
-      (w.exercises?.reduce((acc, ex) => {
-        const working = ex?.actions?.filter?.((a: any) => a?.type === "set" && !a?.isWarmup)?.length || 0;
-        return acc + working;
-      }, 0) ?? 0);
-
-    // duration: prefer the real elapsed time, fall back to computed/approx if present
-    const sumComputed = w.exercises?.reduce((t, ex) => {
-      const v = Number(ex?.computedDurationInSeconds || 0);
-      return t + (isFinite(v) ? v : 0);
-    }, 0) ?? 0;
-
-    const duration =
-      (isFinite(Number(w.elapsedSeconds)) && Number(w.elapsedSeconds) > 0 && Number(w.elapsedSeconds)) ||
-      (isFinite(Number(w.metrics?.approxDurationInSeconds)) && Number(w.metrics?.approxDurationInSeconds)) ||
-      (isFinite(Number(w.approxDurationInSeconds)) && Number(w.approxDurationInSeconds)) ||
-      (sumComputed > 0 && sumComputed) ||
-      0;
-
+  const computeCompletedMetrics = (w: WorkoutSaved) => {
+    const exercises = w.items.filter((i) => i.type === "exercise") as any[];
+    const totalExercises = exercises.length;
+    const totalSets = exercises.reduce((acc, ex) => acc + (ex.sets?.length || 0), 0);
+    const totalWorkingSets = totalSets;
+    const duration = Math.max(0, Math.floor((w.endedAt - w.startedAt) / 1000));
     return { totalExercises, totalSets, totalWorkingSets, duration };
   };
 
@@ -117,13 +64,13 @@ export default function CompletedWorkouts() {
       ) : (
         <FlatList
           data={workouts}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => String(item.id)}
           renderItem={({ item }) => {
             const m = computeCompletedMetrics(item);
             return (
               <WorkoutSummaryCard
                 title={item.name}
-                rightText={formatShortDate(item.date)}
+                rightText={formatShortDate(item.endedAt)}
                 items={[
                   { label: "Total Exercises", value: m.totalExercises },
                   { label: "Total       Sets", value: m.totalSets },
@@ -132,7 +79,7 @@ export default function CompletedWorkouts() {
                 ]}
                 onPress={() => {
                   // Preserve your current behavior
-                  (globalThis as any).tempExercises = item.exercises;
+                  (globalThis as any).tempExercises = item.items;
                   //router.push("/exercise-log");
                   router.push(`/exercise-log?workoutId=${item.id}`)
                 }}

@@ -228,7 +228,7 @@ export default function IndexScreen() {
               {recent.map((w) => (
                 <TouchableOpacity
                   key={w.id}
-                  onPress={() => router.push({ pathname: "/completed-workout", params: { id: w.id } } as any)}
+                  onPress={() => router.push(`/exercise-log?workoutId=${w.id}`)}
                   style={{
                     backgroundColor: cardBg,
                     borderRadius: 12,

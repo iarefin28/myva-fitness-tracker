@@ -30,6 +30,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../auth/AuthProvider";
 import { auth, db } from "../FirebaseConfig";
 import { useExerciseLibrary } from "@/store/exerciseLibrary";
+import { useWorkoutStore } from "@/store/workoutStore";
 
 type FriendRequest = {
   id: string;
@@ -47,8 +48,10 @@ export default function UserScreen() {
   const navigation = useNavigation<any>();
   const exercisesById = useExerciseLibrary((s) => s.exercises);
   const ensureDefaults = useExerciseLibrary((s) => s.ensureDefaults);
+  const clearHistory = useWorkoutStore((s) => s.clearHistory);
 
   const [signingOut, setSigningOut] = useState(false);
+  const [activeTab, setActiveTab] = useState<"friends" | "exercises" | "utilities">("friends");
 
   // —— SOCIAL STATE ——
   const [searchText, setSearchText] = useState("");
@@ -94,7 +97,46 @@ export default function UserScreen() {
           onPress: async () => {
             await AsyncStorage.clear();
             useExerciseLibrary.setState({ exercises: {}, byName: {}, ready: false });
+            useWorkoutStore.setState({ draft: null, history: [] });
             Alert.alert("Cleared", "Local storage has been cleared.");
+          },
+        },
+      ]
+    );
+  };
+
+  const handleClearExerciseLibrary = () => {
+    Alert.alert(
+      "Clear exercise library?",
+      "This will remove all exercises from local storage on this device.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear",
+          style: "destructive",
+          onPress: async () => {
+            await AsyncStorage.removeItem("myva_exercise_library_v1");
+            useExerciseLibrary.setState({ exercises: {}, byName: {}, ready: false });
+            ensureDefaults();
+            Alert.alert("Cleared", "Exercise library reset to defaults.");
+          },
+        },
+      ]
+    );
+  };
+
+  const handleClearCompletedWorkouts = () => {
+    Alert.alert(
+      "Clear completed workouts?",
+      "This will remove all completed workouts saved on this device.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Clear",
+          style: "destructive",
+          onPress: () => {
+            clearHistory();
+            Alert.alert("Cleared", "Completed workouts cleared.");
           },
         },
       ]
@@ -380,9 +422,40 @@ export default function UserScreen() {
         </View>
 
         {/* ——————————————————————— */}
+        {/*         SUB TABS           */}
+        {/* ——————————————————————— */}
+        <View style={styles.tabRow}>
+          {[
+            { key: "friends", label: "Friends" },
+            { key: "exercises", label: "Exercises" },
+            { key: "utilities", label: "Utilities" },
+          ].map((t) => {
+            const isActive = activeTab === t.key;
+            return (
+              <TouchableOpacity
+                key={t.key}
+                onPress={() => setActiveTab(t.key as any)}
+                style={[
+                  styles.tabChip,
+                  {
+                    backgroundColor: isActive ? C.accent : C.bubble,
+                    borderColor: isActive ? C.accent : C.border,
+                  },
+                ]}
+              >
+                <Text style={[styles.tabText, { color: isActive ? "#fff" : C.text }]}>
+                  {t.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* ——————————————————————— */}
         {/*         FIND FRIENDS       */}
         {/* ——————————————————————— */}
-        <View style={styles.section}>
+        {activeTab === "friends" && (
+          <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: C.text }]}>
             Find Friends
           </Text>
@@ -449,12 +522,14 @@ export default function UserScreen() {
               })()
             ))
           )}
-        </View>
+          </View>
+        )}
 
         {/* ——————————————————————— */}
         {/*     INCOMING REQUESTS     */}
         {/* ——————————————————————— */}
-        <View style={styles.section}>
+        {activeTab === "friends" && (
+          <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: C.text }]}>
             Incoming Requests
           </Text>
@@ -501,12 +576,14 @@ export default function UserScreen() {
               </View>
             ))
           )}
-        </View>
+          </View>
+        )}
 
         {/* ——————————————————————— */}
         {/*     OUTGOING REQUESTS     */}
         {/* ——————————————————————— */}
-        <View style={styles.section}>
+        {activeTab === "friends" && (
+          <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: C.text }]}>
             Outgoing Requests
           </Text>
@@ -539,12 +616,14 @@ export default function UserScreen() {
               </View>
             ))
           )}
-        </View>
+          </View>
+        )}
 
         {/* ——————————————————————— */}
         {/*         FRIEND LIST        */}
         {/* ——————————————————————— */}
-        <View style={styles.section}>
+        {activeTab === "friends" && (
+          <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: C.text }]}>
             Your Friends
           </Text>
@@ -572,12 +651,14 @@ export default function UserScreen() {
               )}
             />
           )}
-        </View>
+          </View>
+        )}
 
         {/* ——————————————————————— */}
         {/*       EXERCISE LIBRARY     */}
         {/* ——————————————————————— */}
-        <View style={styles.section}>
+        {activeTab === "exercises" && (
+          <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: C.text }]}>
             Your Exercises ({exercisesList.length})
           </Text>
@@ -594,13 +675,13 @@ export default function UserScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
-              onPress={handleClearStorage}
+              onPress={handleClearExerciseLibrary}
               style={[
-                styles.clearBtn,
+                styles.secondaryBtn,
                 { backgroundColor: C.danger, borderColor: C.danger },
               ]}
             >
-              <Text style={styles.clearBtnText}>Clear Async Storage</Text>
+              <Text style={styles.clearBtnText}>Clear Exercise Library</Text>
             </TouchableOpacity>
           </View>
 
@@ -627,8 +708,43 @@ export default function UserScreen() {
               </Pressable>
             ))
           )}
+          </View>
+        )}
 
-        </View>
+        {/* ——————————————————————— */}
+        {/*          UTILITIES         */}
+        {/* ——————————————————————— */}
+        {activeTab === "utilities" && (
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: C.text }]}>
+              Utilities
+            </Text>
+
+            <View style={styles.resetActions}>
+              <TouchableOpacity
+                onPress={handleClearCompletedWorkouts}
+                style={[
+                  styles.secondaryBtn,
+                  { backgroundColor: C.btn, borderColor: C.border },
+                ]}
+              >
+                <Text style={[styles.clearBtnText, { color: C.text }]}>
+                  Clear Completed Workouts
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleClearStorage}
+                style={[
+                  styles.secondaryBtn,
+                  { backgroundColor: C.danger, borderColor: C.danger },
+                ]}
+              >
+                <Text style={styles.clearBtnText}>Clear Async Storage</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -663,6 +779,21 @@ const styles = StyleSheet.create({
   // —— SECTIONS ——
   section: { marginTop: 32 },
   sectionTitle: { fontSize: 18, fontWeight: "700", marginBottom: 12 },
+
+  // —— SUB TABS ——
+  tabRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 16,
+  },
+  tabChip: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  tabText: { fontWeight: "700", fontSize: 14 },
 
   input: {
     width: "100%",
@@ -709,7 +840,11 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 12,
   },
-  clearBtn: {
+  resetActions: {
+    marginTop: 12,
+    gap: 10,
+  },
+  secondaryBtn: {
     flex: 1,
     paddingVertical: 10,
     borderRadius: 10,
