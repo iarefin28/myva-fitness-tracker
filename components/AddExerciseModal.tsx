@@ -47,6 +47,7 @@ export default function AddExerciseModal({
   const libReady = useExerciseLibrary((s) => s.ready);
   const exercisesById = useExerciseLibrary((s) => s.exercises);
   const searchLocal = useExerciseLibrary((s) => s.searchLocal);
+  const ensureDefaults = useExerciseLibrary((s) => s.ensureDefaults);
 
   // Convert store map -> array
   const allFromLib: Exercise[] = useMemo(() => {
@@ -86,9 +87,10 @@ export default function AddExerciseModal({
   // Reset state each time the modal opens
   useEffect(() => {
     if (!open) return;
+    ensureDefaults();
     setSearchActive(false);
     setQuery(initialQuery);
-  }, [open, initialQuery]);
+  }, [open, initialQuery, ensureDefaults]);
 
   // --- Handlers ---
   const focusRealSearch = useCallback(() => {

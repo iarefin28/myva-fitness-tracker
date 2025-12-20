@@ -1,5 +1,23 @@
 // --- Types for the set flow (planned vs actual) ---
 
+export type ExerciseType = 'weighted' | 'bodyweight' | 'timed' | 'distance';
+
+export interface UserExercise {
+  id: string;
+  uid?: string;
+  name: string;
+  nameLower: string;
+  type: ExerciseType;
+  howTo?: string;
+  createdBy?: string;
+  createdByUid?: string;
+  tags: string[];
+  createdAt: number;
+  updatedAt: number;
+  usageCount: number;
+  lastUsedAt: number | null;
+}
+
 export type WorkoutItemType = 'exercise' | 'note' | 'custom';
 
 export interface WorkoutItemBase {

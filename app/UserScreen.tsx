@@ -13,7 +13,9 @@ import {
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -23,8 +25,11 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import { useNavigation } from "@react-navigation/native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../auth/AuthProvider";
 import { auth, db } from "../FirebaseConfig";
+import { useExerciseLibrary } from "@/store/exerciseLibrary";
 
 type FriendRequest = {
   id: string;
@@ -39,6 +44,9 @@ type FriendRequest = {
 
 export default function UserScreen() {
   const { user } = useAuth();
+  const navigation = useNavigation<any>();
+  const exercisesById = useExerciseLibrary((s) => s.exercises);
+  const ensureDefaults = useExerciseLibrary((s) => s.ensureDefaults);
 
   const [signingOut, setSigningOut] = useState(false);
 
@@ -64,6 +72,37 @@ export default function UserScreen() {
     btn: isDark ? "#2a2a2a" : "#e5e5e5",
     accent: isDark ? "#6ea8ff" : "#2f6fff",
     danger: "#ff4545",
+  };
+
+  useEffect(() => {
+    ensureDefaults();
+  }, [ensureDefaults]);
+
+  const exercisesList = Object.values(exercisesById).sort((a: any, b: any) =>
+    a.name.localeCompare(b.name)
+  );
+
+  const handleClearStorage = () => {
+    Alert.alert(
+      "Clear local storage?",
+      "This will delete all locally saved data on this device. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            await AsyncStorage.clear();
+            useExerciseLibrary.setState({ exercises: {}, byName: {}, ready: false });
+            Alert.alert("Cleared", "Local storage has been cleared.");
+          },
+        },
+      ]
+    );
+  };
+
+  const handleAddExercise = () => {
+    navigation.navigate("addNewExercise", { addToDraft: "0" });
   };
 
   // Fetch YOUR user doc live so friends update automatically
@@ -534,6 +573,62 @@ export default function UserScreen() {
             />
           )}
         </View>
+
+        {/* ——————————————————————— */}
+        {/*       EXERCISE LIBRARY     */}
+        {/* ——————————————————————— */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: C.text }]}>
+            Your Exercises ({exercisesList.length})
+          </Text>
+
+          <View style={styles.exerciseActions}>
+            <TouchableOpacity
+              onPress={handleAddExercise}
+              style={[
+                styles.addExerciseBtn,
+                { backgroundColor: C.accent, borderColor: C.accent },
+              ]}
+            >
+              <Text style={styles.addExerciseBtnText}>Add New Exercise</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={handleClearStorage}
+              style={[
+                styles.clearBtn,
+                { backgroundColor: C.danger, borderColor: C.danger },
+              ]}
+            >
+              <Text style={styles.clearBtnText}>Clear Async Storage</Text>
+            </TouchableOpacity>
+          </View>
+
+          {exercisesList.length === 0 ? (
+            <Text style={[styles.emptyText, { color: C.sub }]}>
+              No exercises found.
+            </Text>
+          ) : (
+            exercisesList.map((ex: any) => (
+              <Pressable
+                key={ex.id}
+                onLongPress={() =>
+                  navigation.navigate("exercise-detail", { exerciseId: ex.id })
+                }
+                style={[
+                  styles.resultRow,
+                  { backgroundColor: C.bubble, borderColor: C.border },
+                ]}
+              >
+                <Text style={[styles.resultName, { color: C.text }]}>
+                  {ex.name}
+                </Text>
+                <Text style={{ color: C.sub, fontSize: 12 }}>{ex.type}</Text>
+              </Pressable>
+            ))
+          )}
+
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -608,4 +703,27 @@ const styles = StyleSheet.create({
     marginTop: 6,
     fontStyle: "italic",
   },
+
+  exerciseActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginBottom: 12,
+  },
+  clearBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  clearBtnText: { color: "#fff", fontSize: 14, fontWeight: "700" },
+
+  addExerciseBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 10,
+    alignItems: "center",
+    borderWidth: 1,
+  },
+  addExerciseBtnText: { color: "#fff", fontSize: 14, fontWeight: "700" },
 });

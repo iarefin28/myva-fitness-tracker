@@ -36,9 +36,7 @@ export default function AddNewExercise() {
   const [howTo, setHowTo] = useState("");
   const [saving, setSaving] = useState(false);
 
-  const uid = auth?.currentUser?.uid ?? null;
-
-  const ensureExercise = useExerciseLibrary((s) => s.ensureExercise);
+  const ensureLocalExercise = useExerciseLibrary((s) => s.ensureLocalExercise);
   const byName = useExerciseLibrary((s) => s.byName);
   const addExerciseToDraft = useWorkoutStore((s) => (s as any).addExercise) as (
     exName: string,
@@ -50,14 +48,10 @@ export default function AddNewExercise() {
     return key ? byName[key] : undefined;
   }, [name, byName]);
 
-  const canSave = !!uid && name.trim().length >= 2 && !saving;
+  const canSave = name.trim().length >= 2 && !saving;
 
   const onSave = async () => {
     const n = name.trim();
-    if (!uid) {
-      Alert.alert("Sign in required", "You must be signed in to create an exercise.");
-      return;
-    }
     if (n.length < 2) {
       Alert.alert("Name too short", "Use at least 2 characters.");
       return;
@@ -70,7 +64,17 @@ export default function AddNewExercise() {
       let exerciseName = n;
 
       if (!exerciseId) {
-        const { exercise } = await ensureExercise(uid, n, { type, howTo });
+        const creatorName =
+          auth?.currentUser?.displayName ||
+          auth?.currentUser?.email ||
+          "Local User";
+        const creatorUid = auth?.currentUser?.uid || undefined;
+        const { exercise } = await ensureLocalExercise(n, {
+          type,
+          howTo,
+          createdBy: creatorName,
+          createdByUid: creatorUid,
+        });
         exerciseId = exercise.id;
         exerciseName = exercise.name;
       }
