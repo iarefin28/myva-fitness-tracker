@@ -5,17 +5,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-    Alert,
-    Keyboard,
-    Modal,
-    Platform,
-    Pressable,
-    SafeAreaView,
-    StyleSheet,
-    Text,
-    TextInput,
-    View,
-    useWindowDimensions,
+  Alert,
+  Keyboard,
+  Modal,
+  Platform,
+  Pressable,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
 } from 'react-native';
 
 type Props = {

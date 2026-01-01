@@ -51,7 +51,7 @@ export default function UserScreen() {
   const clearHistory = useWorkoutStore((s) => s.clearHistory);
 
   const [signingOut, setSigningOut] = useState(false);
-  const [activeTab, setActiveTab] = useState<"friends" | "exercises" | "utilities">("friends");
+  const [activeTab, setActiveTab] = useState<"friends" | "exercises" | "utilities">("exercises");
 
   // —— SOCIAL STATE ——
   const [searchText, setSearchText] = useState("");
@@ -107,18 +107,18 @@ export default function UserScreen() {
 
   const handleClearExerciseLibrary = () => {
     Alert.alert(
-      "Clear exercise library?",
-      "This will remove all exercises from local storage on this device.",
+      "Reset exercise library?",
+      "This will reset all exercises to defaults and remove all custom exercises.",
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Clear",
+          text: "Reset",
           style: "destructive",
           onPress: async () => {
             await AsyncStorage.removeItem("myva_exercise_library_v1");
             useExerciseLibrary.setState({ exercises: {}, byName: {}, ready: false });
             ensureDefaults();
-            Alert.alert("Cleared", "Exercise library reset to defaults.");
+            Alert.alert("Reset", "Exercise library reset to defaults.");
           },
         },
       ]
@@ -426,8 +426,8 @@ export default function UserScreen() {
         {/* ——————————————————————— */}
         <View style={styles.tabRow}>
           {[
-            { key: "friends", label: "Friends" },
             { key: "exercises", label: "Exercises" },
+            { key: "friends", label: "Friends" },
             { key: "utilities", label: "Utilities" },
           ].map((t) => {
             const isActive = activeTab === t.key;
@@ -673,16 +673,6 @@ export default function UserScreen() {
             >
               <Text style={styles.addExerciseBtnText}>Add New Exercise</Text>
             </TouchableOpacity>
-
-            <TouchableOpacity
-              onPress={handleClearExerciseLibrary}
-              style={[
-                styles.secondaryBtn,
-                { backgroundColor: C.danger, borderColor: C.danger },
-              ]}
-            >
-              <Text style={styles.clearBtnText}>Clear Exercise Library</Text>
-            </TouchableOpacity>
           </View>
 
           {exercisesList.length === 0 ? (
@@ -693,9 +683,7 @@ export default function UserScreen() {
             exercisesList.map((ex: any) => (
               <Pressable
                 key={ex.id}
-                onLongPress={() =>
-                  navigation.navigate("exercise-detail", { exerciseId: ex.id })
-                }
+                onPress={() => navigation.navigate("exercise-detail", { exerciseId: ex.id })}
                 style={[
                   styles.resultRow,
                   { backgroundColor: C.bubble, borderColor: C.border },
@@ -704,7 +692,9 @@ export default function UserScreen() {
                 <Text style={[styles.resultName, { color: C.text }]}>
                   {ex.name}
                 </Text>
-                <Text style={{ color: C.sub, fontSize: 12 }}>{ex.type}</Text>
+                <Text style={{ color: C.sub, fontSize: 12 }}>
+                  {(ex.type || "Free weight")} • Tap for more
+                </Text>
               </Pressable>
             ))
           )}
@@ -731,6 +721,16 @@ export default function UserScreen() {
                 <Text style={[styles.clearBtnText, { color: C.text }]}>
                   Clear Completed Workouts
                 </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                onPress={handleClearExerciseLibrary}
+                style={[
+                  styles.secondaryBtn,
+                  { backgroundColor: C.danger, borderColor: C.danger },
+                ]}
+              >
+                <Text style={styles.clearBtnText}>Reset Exercise Library</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

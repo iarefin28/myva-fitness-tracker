@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Dimensions, Keyboard, TouchableWithoutFeedback, useColorScheme, View } from 'react-native';
 import { LineChart } from 'react-native-gifted-charts';
-import ExerciseAutocomplete from '../components/ExerciseAutocomplete'; // adjust path as needed
+import ExerciseAutocomplete from './ExerciseAutocomplete'; // adjust path as needed
 
 
 export default function ChartsScreen() {

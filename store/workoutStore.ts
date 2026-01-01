@@ -25,7 +25,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       draft: null,
       history: [],
 
-      // --- basics (keep yours if already present) ---
+      // --- Draft Management --- 
       startDraft: (name) => {
         const d: WorkoutDraft = {
           id: uid(),
@@ -43,6 +43,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({ draft: { ...d, name } });
       },
 
+      // --- Top Level Workout Item APIs --- 
       addExercise: (name, libId) => {
         const d = get().draft; if (!d) return '';
         const item: WorkoutExercise = {
@@ -120,7 +121,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         return true;
       },
 
-      // --- NEW: Set APIs ---
+      // --- Exercise-specific APIs --- 
       addExerciseSet: (exerciseId, plannedWeight, plannedReps) => {
         const d = get().draft; if (!d) return '';
         const setId = uid();
@@ -172,7 +173,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         return it ?? null;
       },
 
-      // --- timer / finish (keep your originals if already there) ---
+      // --- Timer, Pause, and Finish APIs ---
       elapsedSeconds: () => {
         const d = get().draft; if (!d) return 0;
         const now = Date.now();
