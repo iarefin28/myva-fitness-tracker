@@ -7,11 +7,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
     Alert,
     FlatList,
-    Modal,
     Platform,
     Pressable,
     SafeAreaView,
-    ScrollView,
     StyleSheet,
     Text,
     TextInput,
@@ -20,7 +18,10 @@ import {
 } from 'react-native';
 
 import AddExerciseModal from "@/components/AddExerciseModal";
+import CustomModal from "@/components/CustomModal";
 import EditExerciseModal from "@/components/EditExerciseModal";
+import FinishWorkoutModal from "@/components/FinishWorkoutModal";
+import NoteModal from "@/components/NoteModal";
 import { InteractionManager } from "react-native";
 
 type SheetKind = 'exercise' | 'note' | 'custom';
@@ -121,12 +122,6 @@ export default function AddWorkout() {
     // Inputs
     const [noteText, setNoteText] = useState('');
     const [customText, setCustomText] = useState('');
-
-    // Refs (no autoFocus on ADD)
-    const noteInputRef = useRef<TextInput | null>(null);
-
-
-    const customInputRef = useRef<TextInput | null>(null);
 
     useEffect(() => { if (finishOpen) pause(); else resume(); }, [finishOpen, pause, resume]);
 
@@ -237,6 +232,20 @@ export default function AddWorkout() {
         );
     };
 
+    const handleFinishConfirm = () => {
+        isFinishingRef.current = true;
+        const saved = finishAndSave();
+        if (saved.id) {
+            setFinishOpen(false);
+            navigation.goBack();
+        } else {
+            Alert.alert('Unable to save', 'No active workout to save.');
+        }
+    };
+
+    const isEditingNote = !!(editingId && editingKind === 'note');
+    const isEditingCustom = !!(editingId && editingKind === 'custom');
+
     return (
         <SafeAreaView style={styles.root}>
             <View style={styles.container}>
@@ -341,149 +350,38 @@ export default function AddWorkout() {
             />
 
             {/* --------- NOTE MODAL --------- */}
-            <Modal
+            {/* Phase 1: Note/Custom modals are wired but inactive; enable in phase two. */}
+            <NoteModal
                 visible={noteOpen}
-                onRequestClose={() => setNoteOpen(false)}
-                animationType="slide"
-                presentationStyle="pageSheet"
-            >
-                <Sheet
-                    title={editingId && editingKind === 'note' ? 'Edit Note' : 'Add Note'}
-                    leftLabel={editingId && editingKind === 'note' ? 'Delete' : undefined}
-                    onLeftPress={editingId && editingKind === 'note' ? () => editingId && confirmDelete(editingId, 'note', setNoteOpen, () => setNoteText('')) : undefined}
-                    rightLabel={noteText.trim().length ? 'Save' : 'Close'}
-                    onRightPress={() => {
-                        if (noteText.trim().length) performSave('note', noteText, setNoteOpen, () => setNoteText(''));
-                        else setNoteOpen(false);
-                    }}
-                >
-                    <TextInput
-                        ref={noteInputRef}
-                        value={noteText}
-                        onChangeText={setNoteText}
-                        placeholder="Type your note…"
-                        placeholderTextColor="#777"
-                        multiline
-                        style={[styles.sheetInput, { minHeight: 120, textAlignVertical: 'top' }]}
-                        autoFocus
-                    />
-                    <TouchableOpacity
-                        style={[styles.sheetPrimary, { opacity: noteText.trim().length ? 1 : 0.65 }]}
-                        disabled={!noteText.trim().length}
-                        onPress={() => performSave('note', noteText, setNoteOpen, () => setNoteText(''))}
-                    >
-                        <Text style={styles.sheetPrimaryText}>{editingId && editingKind === 'note' ? 'Save Changes' : 'Save Note'}</Text>
-                    </TouchableOpacity>
-                </Sheet>
-            </Modal>
+                text={noteText}
+                onChangeText={setNoteText}
+                onClose={() => setNoteOpen(false)}
+                onSave={() => performSave('note', noteText, setNoteOpen, () => setNoteText(''))}
+                onDelete={isEditingNote ? () => confirmDelete(editingId as string, 'note', setNoteOpen, () => setNoteText('')) : undefined}
+                isEditing={isEditingNote}
+            />
 
             {/* --------- CUSTOM MODAL --------- */}
-            <Modal
+            <CustomModal
                 visible={customOpen}
-                onRequestClose={() => setCustomOpen(false)}
-                animationType="slide"
-                presentationStyle="pageSheet"
-            >
-                <Sheet
-                    title={editingId && editingKind === 'custom' ? 'Edit Custom' : 'Add Custom'}
-                    leftLabel={editingId && editingKind === 'custom' ? 'Delete' : undefined}
-                    onLeftPress={editingId && editingKind === 'custom' ? () => editingId && confirmDelete(editingId, 'custom', setCustomOpen, () => setCustomText('')) : undefined}
-                    rightLabel={customText.trim().length ? 'Save' : 'Close'}
-                    onRightPress={() => {
-                        if (customText.trim().length) performSave('custom', customText, setCustomOpen, () => setCustomText(''));
-                        else setCustomOpen(false);
-                    }}
-                >
-                    <TextInput
-                        ref={customInputRef}
-                        value={customText}
-                        onChangeText={setCustomText}
-                        placeholder="What do you want to log?"
-                        placeholderTextColor="#777"
-                        style={styles.sheetInput}
-                        autoFocus
-                    />
-                    <TouchableOpacity
-                        style={[styles.sheetPrimary, { opacity: customText.trim().length ? 1 : 0.65 }]}
-                        disabled={!customText.trim().length}
-                        onPress={() => performSave('custom', customText, setCustomOpen, () => setCustomText(''))}
-                    >
-                        <Text style={styles.sheetPrimaryText}>{editingId && editingKind === 'custom' ? 'Save Changes' : 'Add Custom'}</Text>
-                    </TouchableOpacity>
-                </Sheet>
-            </Modal>
+                text={customText}
+                onChangeText={setCustomText}
+                onClose={() => setCustomOpen(false)}
+                onSave={() => performSave('custom', customText, setCustomOpen, () => setCustomText(''))}
+                onDelete={isEditingCustom ? () => confirmDelete(editingId as string, 'custom', setCustomOpen, () => setCustomText('')) : undefined}
+                isEditing={isEditingCustom}
+            />
 
             {/* --------- FINISH (paused preview) --------- */}
-            <Modal visible={finishOpen} onRequestClose={() => setFinishOpen(false)} animationType="slide" presentationStyle="pageSheet">
-                <Sheet title="Finish Workout" rightLabel="Close" onRightPress={() => setFinishOpen(false)}>
-                    <Text style={styles.summary}>{items.length} item(s) • Time {mmss} • (timer paused)</Text>
-                    <View style={styles.jsonBox}>
-                        <ScrollView><Text style={styles.jsonText}>{JSON.stringify({ draft, history }, null, 2)}</Text></ScrollView>
-                    </View>
-                    <TouchableOpacity
-                        style={styles.finishConfirm}
-                        activeOpacity={0.9}
-                        onPress={() => {
-                            isFinishingRef.current = true;
-                            const saved = finishAndSave();
-                            if (saved.id) {
-                                setFinishOpen(false);
-                                navigation.goBack();
-                            } else {
-                                Alert.alert('Unable to save', 'No active workout to save.');
-                            }
-                        }}
-                    >
-                        <Text style={styles.finishConfirmText}>Save & Finish</Text>
-                    </TouchableOpacity>
-                </Sheet>
-            </Modal>
-        </SafeAreaView>
-    );
-}
-
-// ---------- Reusable Sheet ----------
-function Sheet({
-    title,
-    leftLabel,
-    onLeftPress,
-    rightLabel = 'Close',
-    onRightPress,
-    children,
-}: {
-    title: string;
-    leftLabel?: string;
-    onLeftPress?: () => void;
-    rightLabel?: string;
-    onRightPress?: () => void;
-    children: React.ReactNode;
-}) {
-    const isSave = rightLabel.toLowerCase() === 'save';
-    const showLeft = !!leftLabel;
-
-    return (
-        <SafeAreaView style={styles.sheetRoot}>
-            <View style={styles.grabber} />
-            <View style={styles.sheetHeaderRow}>
-                {/* Left */}
-                <View style={styles.sheetSide}>
-                    {showLeft && (
-                        <Pressable onPress={onLeftPress} style={styles.deleteBtn}>
-                            <Text style={styles.deleteText}>{leftLabel}</Text>
-                        </Pressable>
-                    )}
-                </View>
-                {/* Center title */}
-                <Text style={styles.sheetTitle} numberOfLines={1}>{title}</Text>
-                {/* Right */}
-                <View style={styles.sheetSide}>
-                    <Pressable onPress={onRightPress} style={[styles.closeBtn, isSave && styles.saveBtn]}>
-                        <Text style={[styles.closeText, isSave && styles.saveText]}>{rightLabel}</Text>
-                    </Pressable>
-                </View>
-            </View>
-
-            <View style={styles.sheetBody}>{children}</View>
+            <FinishWorkoutModal
+                visible={finishOpen}
+                itemsCount={items.length}
+                mmss={mmss}
+                draft={draft}
+                history={history}
+                onClose={() => setFinishOpen(false)}
+                onConfirm={handleFinishConfirm}
+            />
         </SafeAreaView>
     );
 }
@@ -523,47 +421,6 @@ const styles = StyleSheet.create({
 
     finishBtn: { backgroundColor: '#22C55E', paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
     finishText: { color: 'white', fontSize: 16, fontWeight: '800' },
-
-    // Sheet
-    sheetRoot: { flex: 1, backgroundColor: '#0b0b0b' },
-    grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: '#333', marginTop: 8, marginBottom: 4 },
-
-    sheetHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 },
-    sheetSide: { width: 88, alignItems: 'flex-start', justifyContent: 'center' },
-    sheetTitle: { flex: 1, textAlign: 'center', color: 'white', fontSize: 18, fontWeight: '800' },
-
-    closeBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#151515', alignSelf: 'flex-end' },
-    closeText: { color: '#0A84FF', fontWeight: '800' },
-    saveBtn: { backgroundColor: '#0A84FF' },
-    saveText: { color: 'white' },
-
-    deleteBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#3b0b0b' },
-    deleteText: { color: '#ef4444', fontWeight: '800' },
-
-    sheetBody: { flex: 1, padding: 16, gap: 12 },
-
-    sheetInput: {
-        borderWidth: 1, borderColor: '#333', backgroundColor: '#141414', color: 'white',
-        paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10
-    },
-
-    sheetPrimary: { backgroundColor: '#0A84FF', paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
-    sheetPrimaryText: { color: 'white', fontSize: 16, fontWeight: '800' },
-
-    sheetDanger: { backgroundColor: '#ef4444', paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-    sheetDangerText: { color: 'white', fontSize: 15, fontWeight: '800' },
-
-    badgeLocked: { borderWidth: 1, borderColor: '#3f3f46', backgroundColor: '#18181b', paddingVertical: 6, paddingHorizontal: 10, borderRadius: 8, alignSelf: 'flex-start' },
-    badgeLockedText: { color: '#e5e7eb', fontSize: 12, fontWeight: '700', letterSpacing: 0.3 },
-
-    summary: { color: '#d1d5db', marginBottom: 12, fontSize: 15 },
-
-    jsonBox: { flex: 1, borderWidth: 1, borderColor: '#262626', backgroundColor: '#0f0f0f', borderRadius: 10, padding: 10, marginBottom: 12 },
-    jsonText: { color: '#cbd5e1', fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }) as any, fontSize: 12 },
-
-    finishConfirm: { backgroundColor: '#22C55E', paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
-    finishConfirmText: { color: 'white', fontSize: 16, fontWeight: '800' },
-
 
     segment: {
         flexDirection: 'row', backgroundColor: '#111', borderRadius: 10, padding: 4, gap: 6,
