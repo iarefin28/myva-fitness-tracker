@@ -10,11 +10,11 @@ import {
     useColorScheme,
 } from "react-native";
 
-import ExerciseCard from "@/components/ExerciseCard";
+import ExerciseCard from "@/deprecated/ExerciseCard";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import SectionCard from "@/components/SectionCard";
+import SectionCard from "@/deprecated/SectionCard";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useNavigation } from "expo-router";

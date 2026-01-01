@@ -27,11 +27,10 @@ const defaultIdForName = (name: string) => {
 
 const normalizeType = (name: string): ExerciseType => {
   const raw = EXERCISE_TYPE_MAP[name];
-  if (!raw) return 'weighted';
+  if (!raw) return 'free weight';
   if (raw === 'bodyweight') return 'bodyweight';
-  if (raw === 'weighted') return 'weighted';
-  if (raw === 'weighted distance') return 'distance';
-  return 'timed';
+  if (raw === 'machine') return 'machine';
+  return 'free weight';
 };
 
 interface ExerciseLibraryState {

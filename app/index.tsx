@@ -15,8 +15,8 @@ import {
 
 const ADD_WORKOUT_ROUTE = "/add-workout";
 const COMPLETED_WORKOUTS_ROUTE = "/completed-workouts";
-const UPCOMING_WORKOUTS_ROUTE = "/upcomingworkouts";
-const TEMPLATES_ROUTE = "/savedworkouts";
+// const UPCOMING_WORKOUTS_ROUTE = "/upcomingworkouts";
+// const TEMPLATES_ROUTE = "/savedworkouts";
 
 export default function IndexScreen() {
   const router = useRouter();
@@ -81,9 +81,9 @@ export default function IndexScreen() {
 
   // -------- Quick actions --------
   const buttons = [
-    { title: "View Completed Workouts", path: COMPLETED_WORKOUTS_ROUTE, icon: (c: string) => <MaterialIcons name="check-circle-outline" size={22} color={c} />, disabled: false },
-    { title: "View Upcoming Workouts", path: UPCOMING_WORKOUTS_ROUTE, icon: (c: string) => <Ionicons name="calendar-outline" size={22} color={c} />, disabled: true },
-    { title: "Saved Workout Templates", path: TEMPLATES_ROUTE, icon: (c: string) => <Ionicons name="bookmark-outline" size={22} color={c} />, disabled: true },
+    { title: "View Completed Workouts", path: COMPLETED_WORKOUTS_ROUTE, icon: (c: string) => <MaterialIcons name="check-circle-outline" size={22} color={c} />, disabled: true },
+    //{ title: "View Upcoming Workouts", path: UPCOMING_WORKOUTS_ROUTE, icon: (c: string) => <Ionicons name="calendar-outline" size={22} color={c} />, disabled: true },
+    //{ title: "Saved Workout Templates", path: TEMPLATES_ROUTE, icon: (c: string) => <Ionicons name="bookmark-outline" size={22} color={c} />, disabled: true },
   ] as const;
 
   const onStartOrOpen = () => {

@@ -32,7 +32,7 @@ export default function AddNewExercise() {
   const shouldAddToDraft = addToDraft !== "0";
 
   const [name, setName] = useState(initialName.trim());
-  const [type, setType] = useState<ExerciseType>("weighted");
+  const [type, setType] = useState<ExerciseType>("free weight");
   const [howTo, setHowTo] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -133,7 +133,7 @@ export default function AddNewExercise() {
           <View style={styles.block}>
             <Text style={styles.label}>Type</Text>
             <View style={styles.segment}>
-              {(["weighted", "bodyweight", "timed", "distance"] as ExerciseType[]).map((t) => {
+              {(["free weight", "machine", "bodyweight"] as ExerciseType[]).map((t) => {
                 const active = type === t;
                 return (
                   <Pressable

@@ -11,8 +11,8 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import type { Exercise } from "../types/workout-old";
 import ExerciseCard from './ExerciseCard';
+import type { Exercise } from "./workout-old";
 
 type Props = {
   exercises: Exercise[];

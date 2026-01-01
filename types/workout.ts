@@ -1,6 +1,6 @@
 // --- Types for the set flow (planned vs actual) ---
 
-export type ExerciseType = 'weighted' | 'bodyweight' | 'timed' | 'distance';
+export type ExerciseType = 'free weight' | 'machine' | 'bodyweight';
 
 export interface UserExercise {
   id: string;

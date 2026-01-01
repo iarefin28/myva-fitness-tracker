@@ -1,4 +1,4 @@
-import type { TagGroup } from "./tags";
+import type { TagGroup } from "../types/tags";
 
 export type UnitWeight = "lb" | "kg";
 export type UnitTime = "sec" | "min";

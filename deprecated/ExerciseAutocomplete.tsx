@@ -18,11 +18,9 @@ interface ExerciseAutocompleteProps {
     exercise: string,
     type:
       | "bodyweight"
-      | "weighted"
-      | "duration"
+      | "free weight"
+      | "machine"
       | "unknown"
-      | "weighted distance"
-      | "weighted duration"
   ) => void;
 }
 

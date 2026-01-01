@@ -1,5 +1,5 @@
 import { app } from '@/FirebaseConfig';
-import type { Workout } from '@/types/workout-old';
+import type { Workout } from '@/deprecated/workout-old';
 import {
   addDoc,
   collection,

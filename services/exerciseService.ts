@@ -13,7 +13,7 @@ import {
 
 const db = /* if you export db from FirebaseConfig use it, else: */ getFirestore(app);
 
-export type ExerciseType = 'weighted' | 'bodyweight' | 'timed' | 'distance';
+export type ExerciseType = 'free weight' | 'machine' | 'bodyweight';
 
 export interface CreateExercisePayload {
   name: string;

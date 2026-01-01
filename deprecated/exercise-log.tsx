@@ -1,6 +1,6 @@
 // /screens/exercise-log.tsx
-import SectionCard from "@/components/SectionCard";
-import WorkoutNotesCard from "@/components/WorkoutNotesCard";
+import SectionCard from "@/deprecated/SectionCard";
+import WorkoutNotesCard from "@/deprecated/WorkoutNotesCard";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRoute } from "@react-navigation/native";
@@ -17,7 +17,7 @@ import {
     useColorScheme,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import ExerciseCard from "../components/ExerciseCard";
+import ExerciseCard from "./ExerciseCard";
 
 
 const BRANDING_LINE = "This workout was created and completed by the MYVA Fitness App.";

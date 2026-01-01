@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { StyleSheet, Text, TouchableOpacity, useColorScheme, View } from "react-native";
-import type { Exercise } from "../types/workout-old";
+import type { Exercise } from "./workout-old";
 
 interface Props {
     exercise: Exercise;

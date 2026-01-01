@@ -257,11 +257,21 @@ export default function AddWorkout() {
                     <TouchableOpacity style={[styles.actionBtn, styles.btnBlue]} onPress={() => openNew('exercise')} activeOpacity={0.9}>
                         <Text style={styles.actionTextWhite}>+ Exercise</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionBtn, styles.btnYellow]} onPress={() => openNew('note')} activeOpacity={0.9}>
-                        <Text style={styles.actionTextDark}>+ Note</Text>
+                    <TouchableOpacity
+                        style={[styles.actionBtn, styles.btnYellow, styles.btnDisabled]}
+                        onPress={() => openNew('note')}
+                        activeOpacity={0.9}
+                        disabled
+                    >
+                        <Text style={styles.actionTextMuted}>+ Note</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionBtn, styles.btnGray]} onPress={() => openNew('custom')} activeOpacity={0.9}>
-                        <Text style={styles.actionTextWhite}>+ Custom</Text>
+                    <TouchableOpacity
+                        style={[styles.actionBtn, styles.btnGray, styles.btnDisabled]}
+                        onPress={() => openNew('custom')}
+                        activeOpacity={0.9}
+                        disabled
+                    >
+                        <Text style={styles.actionTextMuted}>+ Custom</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -501,6 +511,7 @@ const styles = StyleSheet.create({
     btnGray: { backgroundColor: '#2b2b2b', borderColor: '#3a3a3a' },
     actionTextWhite: { color: 'white', fontSize: 15, fontWeight: '800' },
     actionTextDark: { color: '#111', fontSize: 15, fontWeight: '800' },
+    actionTextMuted: { color: '#9ca3af', fontSize: 15, fontWeight: '800' },
 
     card: { backgroundColor: '#111', borderWidth: 1, borderColor: '#222', borderRadius: 12, padding: 12, gap: 6 },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between' },

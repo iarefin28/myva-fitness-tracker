@@ -36,6 +36,14 @@ export default function ExerciseDetailScreen() {
     );
   }
 
+  const createdOn = exercise.createdAt
+    ? new Date(exercise.createdAt).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Unknown";
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: C.bg }]}>
       <View style={[styles.card, { backgroundColor: C.card, borderColor: C.border }]}>
@@ -53,9 +61,17 @@ export default function ExerciseDetailScreen() {
         <Text style={[styles.value, { color: C.text }]}>
           {exercise.createdBy || "MYVA"}
         </Text>
+        <Text style={[styles.meta, { color: C.sub }]}>Created on {createdOn}</Text>
+      </View>
 
-        <View style={styles.divider} />
+      <View style={[styles.panel, { backgroundColor: C.card, borderColor: C.border }]}>
+        <Text style={[styles.label, { color: C.sub }]}>Description</Text>
+        <Text style={[styles.value, { color: C.text }]}>
+          {exercise.howTo?.trim() || "No description added yet."}
+        </Text>
+      </View>
 
+      <View style={[styles.panel, { backgroundColor: C.card, borderColor: C.border }]}>
         <Text style={[styles.label, { color: C.sub }]}>Exercise ID</Text>
         <Text style={[styles.mono, { color: C.sub }]}>{exercise.id}</Text>
       </View>
@@ -75,5 +91,12 @@ const styles = StyleSheet.create({
   label: { fontSize: 12, fontWeight: "700", letterSpacing: 0.4 },
   value: { fontSize: 16, fontWeight: "700", marginTop: 4 },
   divider: { height: 1, marginVertical: 12, backgroundColor: "#2a2a2a" },
+  meta: { marginTop: 6, fontSize: 12 },
   mono: { fontSize: 12 },
+  panel: {
+    marginTop: 16,
+    borderWidth: 1,
+    borderRadius: 14,
+    padding: 16,
+  },
 });

@@ -1,10 +1,10 @@
 import type {
-    WorkoutActionLogEntry,
-    WorkoutDraft,
-    WorkoutExercise,
-    WorkoutItem,
-    WorkoutSaved,
-    WorkoutState,
+  WorkoutActionLogEntry,
+  WorkoutDraft,
+  WorkoutExercise,
+  WorkoutItem,
+  WorkoutSaved,
+  WorkoutState,
 } from '@/types/workout';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';

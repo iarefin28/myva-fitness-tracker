@@ -10,7 +10,7 @@ import {
     useColorScheme,
     View
 } from "react-native";
-import { WorkoutSummaryCard } from "../components/WorkoutSummaryCard";
+import { WorkoutSummaryCard } from "./WorkoutSummaryCard";
 
 interface Template {
     id: number;

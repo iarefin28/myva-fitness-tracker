@@ -19,7 +19,7 @@ export default function ChartsScreen() {
     const [exerciseInput, setExerciseInput] = useState('');
     const [selectedExercise, setSelectedExercise] = useState<string | null>(null);
     const [exerciseType, setExerciseType] = useState<
-        'bodyweight' | 'weighted' | 'duration' | 'unknown' | 'weighted distance' | 'weighted duration'
+        'bodyweight' | 'free weight' | 'machine' | 'unknown'
     >('unknown');
     const [inputFocused, setInputFocused] = useState(false);
 

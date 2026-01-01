@@ -87,7 +87,7 @@ service cloud.firestore {
 
       // enforce constraints on new exercise creation
       allow create: if request.resource.data.nameLower == lower(request.resource.data.name)
-                    && request.resource.data.type in ['weighted','bodyweight','timed','distance'];
+                    && request.resource.data.type in ['free weight','machine','bodyweight'];
     }
   }
 }

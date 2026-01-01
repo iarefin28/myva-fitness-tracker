@@ -6,9 +6,9 @@ import { FlatList, Text, TouchableOpacity, useColorScheme, View } from "react-na
 
 // ✅ new shared card
 // If you don't use the "@/components" alias, change this import to a relative path like "../components/WorkoutSummaryCard"
-import { formatHM, WorkoutSummaryCard } from "../components/WorkoutSummaryCard";
 import { useWorkoutStore } from "@/store/workoutStore";
 import type { WorkoutSaved } from "@/types/workout";
+import { formatHM, WorkoutSummaryCard } from "./WorkoutSummaryCard";
 
 export default function CompletedWorkouts() {
   const router = useRouter();

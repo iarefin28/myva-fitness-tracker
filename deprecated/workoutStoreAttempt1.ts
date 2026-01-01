@@ -1,5 +1,5 @@
 
-import type { Exercise, SetAction, Workout } from '@/types/workout-old';
+import type { Exercise, SetAction, Workout } from '@/deprecated/workout-old';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { nanoid } from 'nanoid/non-secure';
 import { create } from 'zustand';

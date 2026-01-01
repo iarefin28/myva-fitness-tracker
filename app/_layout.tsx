@@ -158,17 +158,17 @@ function AppStack() {
         component={AddWorkoutScreen}
         options={{ title: "Add Workout" }}
       />
-      <Stack.Screen
+      {/* <Stack.Screen
         name="exercise-log"
         getComponent={() => require('./exercise-log').default}
         options={{ title: "Workout", headerBackTitle: 'Back', headerTintColor: iconColor }}
-      />
-      <Stack.Screen
+      /> */}
+      {/* <Stack.Screen
         name="completed-workouts"
         getComponent={() => require('./completed-workouts').default}
         options={{ title: "Completed Workouts", headerBackTitle: 'Back', headerTintColor: iconColor }}
-      />
-      <Stack.Screen
+      /> */}
+      {/* <Stack.Screen
         name="workout-templates"
         getComponent={() => require('./workout-templates').default}
         options={{ title: "Workout Templates", headerBackTitle: 'Back', headerTintColor: iconColor }}
@@ -182,17 +182,17 @@ function AppStack() {
         name="upcomingworkouts"
         getComponent={() => require('./upcomingworkouts').default}
         options={{ title: "Upcoming Workouts", headerBackTitle: 'Back', headerTintColor: iconColor }}
-      />
+      /> */}
       <Stack.Screen
         name="addNewExercise"
         getComponent={() => require('./addNewExercise').default}
         options={{ title: "Add New Exercise", headerBackTitle: 'Back', headerTintColor: iconColor }}
       />
-      <Stack.Screen
+      {/* <Stack.Screen
         name="exercise-detail"
         getComponent={() => require('./exercise-detail').default}
         options={{ title: "Exercise Details", headerBackTitle: 'Back', headerTintColor: iconColor }}
-      />
+      /> */}
     </Stack.Navigator>
   );
 }
