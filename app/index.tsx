@@ -12,11 +12,12 @@ import {
   useWindowDimensions,
   View,
 } from "react-native";
+import { typography } from "@/theme/typography";
 
 const ADD_WORKOUT_ROUTE = "/add-workout";
 const COMPLETED_WORKOUTS_ROUTE = "/completed-workouts";
-// const UPCOMING_WORKOUTS_ROUTE = "/upcomingworkouts";
-// const TEMPLATES_ROUTE = "/savedworkouts";
+const UPCOMING_WORKOUTS_ROUTE = "/upcomingworkouts";
+const TEMPLATES_ROUTE = "/savedworkouts";
 
 export default function IndexScreen() {
   const router = useRouter();
@@ -81,9 +82,9 @@ export default function IndexScreen() {
 
   // -------- Quick actions --------
   const buttons = [
-    { title: "View Completed Workouts", path: COMPLETED_WORKOUTS_ROUTE, icon: (c: string) => <MaterialIcons name="check-circle-outline" size={22} color={c} />, disabled: true },
-    //{ title: "View Upcoming Workouts", path: UPCOMING_WORKOUTS_ROUTE, icon: (c: string) => <Ionicons name="calendar-outline" size={22} color={c} />, disabled: true },
-    //{ title: "Saved Workout Templates", path: TEMPLATES_ROUTE, icon: (c: string) => <Ionicons name="bookmark-outline" size={22} color={c} />, disabled: true },
+    { title: "View Completed Workouts", path: COMPLETED_WORKOUTS_ROUTE, icon: (c: string) => <MaterialIcons name="check-circle-outline" size={22} color={c} />, disabled: false },
+    { title: "View Upcoming Workouts", path: UPCOMING_WORKOUTS_ROUTE, icon: (c: string) => <Ionicons name="calendar-outline" size={22} color={c} />, disabled: true },
+    { title: "Saved Workout Templates", path: TEMPLATES_ROUTE, icon: (c: string) => <Ionicons name="bookmark-outline" size={22} color={c} />, disabled: true },
   ] as const;
 
   const onStartOrOpen = () => {
@@ -117,11 +118,11 @@ export default function IndexScreen() {
 
               <View style={{ marginTop: 6, minHeight: SUBTITLE_MIN_HEIGHT, justifyContent: "center" }}>
                 {isLive ? (
-                  <Text style={{ color: "#F8FAFC", fontSize: 14 }} numberOfLines={1} ellipsizeMode="tail">
+                  <Text style={{ color: "#F8FAFC", fontSize: 14, ...typography.body }} numberOfLines={1} ellipsizeMode="tail">
                     {(draft?.name?.trim() || "Untitled workout")} • {pluralize(draft?.items?.length || 0, "item")}
                   </Text>
                 ) : (
-                  <Text style={{ color: "#F8FAFC", fontSize: 14 }} numberOfLines={2}>
+                  <Text style={{ color: "#F8FAFC", fontSize: 14, ...typography.body }} numberOfLines={2}>
                     Track your sets, rest, notes — and keep the timer rolling.
                   </Text>
                 )}
@@ -174,10 +175,11 @@ export default function IndexScreen() {
               marginTop: 12,
             }}
           >
-            <Text style={{ color: "#111", fontWeight: "700" }}>
+            <Text style={{ color: "#111", fontWeight: "700", ...typography.button }}>
               {isLive ? "Open Live Workout" : "Start Live Workout"}
             </Text>
           </TouchableOpacity>
+
         </LinearGradient>
 
         {/* ---------- QUICK ACTIONS ---------- */}
@@ -204,7 +206,7 @@ export default function IndexScreen() {
                   <View style={{ flexDirection: "row", alignItems: "center", flex: 1, minWidth: 0 }}>
                     <View style={{ marginRight: 10 }}>{icon(rowIconColor)}</View>
                     <Text
-                      style={{ fontSize: 16, color: rowTextColor, flexShrink: 1 }}
+                      style={{ fontSize: 16, color: rowTextColor, flexShrink: 1, ...typography.body }}
                       numberOfLines={1}                  // <-- prevent wrapping (which would bump height)
                       ellipsizeMode="tail"
                     >
@@ -228,7 +230,7 @@ export default function IndexScreen() {
               {recent.map((w) => (
                 <TouchableOpacity
                   key={w.id}
-                  onPress={() => router.push(`/exercise-log?workoutId=${w.id}`)}
+                  onPress={() => router.push(`/completed-workout-detail?workoutId=${w.id}`)}
                   style={{
                     backgroundColor: cardBg,
                     borderRadius: 12,
@@ -246,10 +248,10 @@ export default function IndexScreen() {
                       style={{ marginRight: 10 }}
                     />
                     <View>
-                      <Text style={{ color: textColor, fontWeight: "600" }}>
+                      <Text style={{ color: textColor, fontWeight: "600", ...typography.body }}>
                         {w.name?.trim() || "Workout"}
                       </Text>
-                      <Text style={{ color: subText, marginTop: 2, fontSize: 12 }}>
+                      <Text style={{ color: subText, marginTop: 2, fontSize: 12, ...typography.body }}>
                         {formatWhen(w.createdAt)} • {pluralize((w.items || []).length, "item")}
                         {typeof w.durationSec === "number" ? ` • ${formatMMSS(w.durationSec)}` : ""}
                       </Text>

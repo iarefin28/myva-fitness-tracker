@@ -1,4 +1,4 @@
-// --- Types for the set flow (planned vs actual) ---
+// --- Types for the set flow (actual-only) ---
 
 export type ExerciseType = 'free weight' | 'machine' | 'bodyweight';
 
@@ -30,13 +30,9 @@ export type ExerciseStatus = 'inProgress' | 'completed';
 
 export interface WorkoutExerciseSet {
   id: string;
-  plannedWeight: number;
-  plannedReps: number;
+  actualWeight: number;
+  actualReps: number;
   createdAt: number;
-
-  completedWeight?: number;
-  completedReps?: number;
-  completedAt?: number; // ms when completed
 }
 
 export interface WorkoutExercise extends WorkoutItemBase {
@@ -65,7 +61,6 @@ export interface WorkoutDraft {
   startedAt: number;           // timer anchor
   pausedAt?: number | null;
   items: WorkoutItem[];
-  actionLog?: WorkoutActionLogEntry[];
 }
 
 export interface WorkoutSaved {
@@ -74,23 +69,6 @@ export interface WorkoutSaved {
   startedAt: number;
   endedAt: number;
   items: WorkoutItem[];
-}
-
-export interface WorkoutActionLogEntry {
-  id: string;
-  at: number; // ms
-  kind:
-    | 'start'
-    | 'pause'
-    | 'resume'
-    | 'add'
-    | 'update'
-    | 'delete'
-    | 'complete_item'
-    | 'exercise_add_set'
-    | 'exercise_complete_set';
-  itemId?: string;
-  payload?: any;
 }
 
 export interface WorkoutState {
@@ -120,8 +98,8 @@ export interface WorkoutState {
   clearHistory: () => void;
 
   // --- NEW: exercise set API ---
-  addExerciseSet: (exerciseId: string, plannedWeight: number, plannedReps: number) => string;
-  completeExerciseSet: (exerciseId: string, setId: string, completedWeight: number, completedReps: number) => boolean;
+  addExerciseSet: (exerciseId: string, actualWeight: number, actualReps: number) => string;
+  undoLastAction: () => boolean;
 
   // convenient selector (optional)
   getExercise: (exerciseId: string) => WorkoutExercise | null;

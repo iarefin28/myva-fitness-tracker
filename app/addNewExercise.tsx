@@ -12,6 +12,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useColorScheme,
   View,
 } from "react-native";
 
@@ -26,6 +27,8 @@ type RouteParams = { name?: string; addToDraft?: string };
 export default function AddNewExercise() {
   const navigation = useNavigation();
   const route = useRoute();
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
   const { name: initialName = "", addToDraft } = (route.params ?? {}) as RouteParams;
 
   // Default: add to draft unless explicitly disabled (?addToDraft=0)
@@ -49,6 +52,22 @@ export default function AddNewExercise() {
   }, [name, byName]);
 
   const canSave = name.trim().length >= 2 && !saving;
+
+  const C = useMemo(
+    () => ({
+      bg: isDark ? "#0b0b0b" : "#F8FAFC",
+      surface: isDark ? "#141414" : "#FFFFFF",
+      border: isDark ? "#333" : "#E2E8F0",
+      text: isDark ? "#FFFFFF" : "#0F172A",
+      subText: isDark ? "#9ca3af" : "#64748B",
+      placeholder: isDark ? "#777" : "#94A3B8",
+      info: isDark ? "#93c5fd" : "#2563EB",
+      tipBg: isDark ? "#0f1428" : "#EFF6FF",
+      tipBorder: isDark ? "#1a2038" : "#BFDBFE",
+      primary: isDark ? "#0A84FF" : "#2563EB",
+    }),
+    [isDark]
+  );
 
   const onSave = async () => {
     const n = name.trim();
@@ -93,12 +112,12 @@ export default function AddNewExercise() {
   };
 
   return (
-    <SafeAreaView style={styles.root}>
+    <SafeAreaView style={[styles.root, { backgroundColor: C.bg }]}>
       {/* Optional tip only when explicitly requested */}
       {addToDraft === "1" && (
-        <View style={styles.tip}>
-          <Ionicons name="add-circle" size={18} color="#0A84FF" />
-          <Text style={styles.tipText}>
+        <View style={[styles.tip, { backgroundColor: C.tipBg, borderColor: C.tipBorder }]}>
+          <Ionicons name="add-circle" size={18} color={C.primary} />
+          <Text style={[styles.tipText, { color: C.text }]}>
             After saving, this exercise will be added to your current workout.
           </Text>
         </View>
@@ -111,37 +130,46 @@ export default function AddNewExercise() {
         <ScrollView contentContainerStyle={styles.body}>
           {/* Name */}
           <View style={styles.block}>
-            <Text style={styles.label}>Exercise name</Text>
+            <Text style={[styles.label, { color: C.text }]}>Exercise name</Text>
             <TextInput
               value={name}
               onChangeText={setName}
               placeholder="e.g., Barbell Back Squat"
-              placeholderTextColor="#777"
-              style={styles.input}
+              placeholderTextColor={C.placeholder}
+              style={[styles.input, { backgroundColor: C.surface, borderColor: C.border, color: C.text }]}
               autoCapitalize="words"
               returnKeyType="done"
             />
             {!!existsId && (
               <View style={styles.infoRow}>
-                <Ionicons name="information-circle" size={16} color="#60a5fa" />
-                <Text style={styles.infoText}>This exercise already exists in your library.</Text>
+                <Ionicons name="information-circle" size={16} color={C.info} />
+                <Text style={[styles.infoText, { color: C.info }]}>
+                  This exercise already exists in your library.
+                </Text>
               </View>
             )}
           </View>
 
           {/* Type */}
           <View style={styles.block}>
-            <Text style={styles.label}>Type</Text>
-            <View style={styles.segment}>
+            <Text style={[styles.label, { color: C.text }]}>Type</Text>
+            <View style={[styles.segment, { backgroundColor: C.surface, borderColor: C.border }]}>
               {(["free weight", "machine", "bodyweight"] as ExerciseType[]).map((t) => {
                 const active = type === t;
                 return (
                   <Pressable
                     key={t}
                     onPress={() => setType(t)}
-                    style={[styles.segmentChip, active && styles.segmentChipActive]}
+                    style={[styles.segmentChip, active && [styles.segmentChipActive, { backgroundColor: C.primary }]]}
                   >
-                    <Text style={[styles.segmentText, active && styles.segmentTextActive]}>{t}</Text>
+                    <Text
+                      style={[
+                        styles.segmentText,
+                        { color: active ? "#fff" : C.subText },
+                      ]}
+                    >
+                      {t}
+                    </Text>
                   </Pressable>
                 );
               })}
@@ -150,20 +178,29 @@ export default function AddNewExercise() {
 
           {/* How-To */}
           <View style={styles.block}>
-            <Text style={styles.label}>How do you perform it? (optional)</Text>
+            <Text style={[styles.label, { color: C.text }]}>
+              How do you perform it? (optional)
+            </Text>
             <TextInput
               value={howTo}
               onChangeText={setHowTo}
               placeholder="Cues, setup, tempo, range of motion, etc."
-              placeholderTextColor="#777"
-              style={[styles.input, { minHeight: 110, textAlignVertical: "top" }]}
+              placeholderTextColor={C.placeholder}
+              style={[
+                styles.input,
+                { minHeight: 110, textAlignVertical: "top", backgroundColor: C.surface, borderColor: C.border, color: C.text },
+              ]}
               multiline
             />
           </View>
 
           <Pressable
             onPress={onSave}
-            style={[styles.primary, (!canSave || saving) && { opacity: 0.6 }]}
+            style={[
+              styles.primary,
+              { backgroundColor: C.primary },
+              (!canSave || saving) && { opacity: 0.6 },
+            ]}
             disabled={!canSave || saving}
           >
             <Text style={styles.primaryText}>{saving ? "Saving…" : "Save Exercise"}</Text>

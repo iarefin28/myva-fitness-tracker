@@ -1,7 +1,7 @@
 import type {
-  WorkoutActionLogEntry,
   WorkoutDraft,
   WorkoutExercise,
+  WorkoutExerciseSet,
   WorkoutItem,
   WorkoutSaved,
   WorkoutState,
@@ -12,12 +12,6 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 
 // helper
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-
-// small log helper (optional)
-const pushLog = (d: WorkoutDraft, entry: Omit<WorkoutActionLogEntry, 'id' | 'at'>) => {
-  const next: WorkoutActionLogEntry = { id: uid(), at: Date.now(), ...entry };
-  return [...(d.actionLog ?? []), next];
-};
 
 export const useWorkoutStore = create<WorkoutState>()(
   persist(
@@ -33,7 +27,6 @@ export const useWorkoutStore = create<WorkoutState>()(
           startedAt: Date.now(),
           pausedAt: null,
           items: [],
-          actionLog: [],
         };
         set({ draft: d });
       },
@@ -59,7 +52,6 @@ export const useWorkoutStore = create<WorkoutState>()(
           draft: {
             ...d,
             items: [...d.items, item],
-            actionLog: pushLog(d, { kind: 'add', itemId: item.id, payload: { type: 'exercise' } }),
           },
         });
         return item.id;
@@ -72,7 +64,6 @@ export const useWorkoutStore = create<WorkoutState>()(
           draft: {
             ...d,
             items: [...d.items, item],
-            actionLog: pushLog(d, { kind: 'add', itemId: item.id, payload: { type: 'note' } }),
           },
         });
         return item.id;
@@ -85,7 +76,6 @@ export const useWorkoutStore = create<WorkoutState>()(
           draft: {
             ...d,
             items: [...d.items, item],
-            actionLog: pushLog(d, { kind: 'add', itemId: item.id, payload: { type: 'custom' } }),
           },
         });
         return item.id;
@@ -99,7 +89,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           if ((it.type === 'note' || it.type === 'custom') && next.text !== undefined) return { ...it, text: next.text } as any;
           return it;
         });
-        set({ draft: { ...d, items, actionLog: pushLog(d, { kind: 'update', itemId: id, payload: next }) } });
+        set({ draft: { ...d, items } });
         return true;
       },
 
@@ -110,59 +100,54 @@ export const useWorkoutStore = create<WorkoutState>()(
           if (it.type === 'exercise') return { ...it, status: 'completed' } as WorkoutExercise;
           return it;
         });
-        set({ draft: { ...d, items, actionLog: pushLog(d, { kind: 'complete_item', itemId: id }) } });
+        set({ draft: { ...d, items } });
         return true;
       },
 
       deleteItem: (id) => {
         const d = get().draft; if (!d) return false;
         const items = d.items.filter((it) => it.id !== id);
-        set({ draft: { ...d, items, actionLog: pushLog(d, { kind: 'delete', itemId: id }) } });
+        set({ draft: { ...d, items } });
         return true;
       },
 
       // --- Exercise-specific APIs --- 
-      addExerciseSet: (exerciseId, plannedWeight, plannedReps) => {
+      addExerciseSet: (exerciseId, actualWeight, actualReps) => {
         const d = get().draft; if (!d) return '';
         const setId = uid();
         const nextSet: WorkoutExerciseSet = {
           id: setId,
-          plannedWeight,
-          plannedReps,
+          actualWeight,
+          actualReps,
           createdAt: Date.now(),
         };
         const items = d.items.map((it) => {
           if (it.id !== exerciseId || it.type !== 'exercise') return it;
           return { ...it, sets: [...it.sets, nextSet] } as WorkoutExercise;
         });
-        set({
-          draft: {
-            ...d,
-            items,
-            actionLog: pushLog(d, { kind: 'exercise_add_set', itemId: exerciseId, payload: { setId } }),
-          },
-        });
+        set({ draft: { ...d, items } });
         return setId;
       },
 
-      completeExerciseSet: (exerciseId, setId, completedWeight, completedReps) => {
+      undoLastAction: () => {
         const d = get().draft; if (!d) return false;
+        let latestSet: { exerciseId: string; setId: string; createdAt: number } | null = null;
+
+        d.items.forEach((it) => {
+          if (it.type !== 'exercise') return;
+          it.sets.forEach((s) => {
+            if (!latestSet || s.createdAt > latestSet.createdAt) {
+              latestSet = { exerciseId: it.id, setId: s.id, createdAt: s.createdAt };
+            }
+          });
+        });
+
+        if (!latestSet) return false;
         const items = d.items.map((it) => {
-          if (it.id !== exerciseId || it.type !== 'exercise') return it;
-          const sets = it.sets.map((s) =>
-            s.id === setId
-              ? { ...s, completedWeight, completedReps, completedAt: Date.now() }
-              : s
-          );
-          return { ...it, sets } as WorkoutExercise;
+          if (it.id !== latestSet!.exerciseId || it.type !== 'exercise') return it;
+          return { ...it, sets: it.sets.filter((s) => s.id !== latestSet!.setId) } as WorkoutExercise;
         });
-        set({
-          draft: {
-            ...d,
-            items,
-            actionLog: pushLog(d, { kind: 'exercise_complete_set', itemId: exerciseId, payload: { setId } }),
-          },
-        });
+        set({ draft: { ...d, items } });
         return true;
       },
 
@@ -183,12 +168,12 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       pause: () => {
         const d = get().draft; if (!d || d.pausedAt) return;
-        set({ draft: { ...d, pausedAt: Date.now(), actionLog: pushLog(d, { kind: 'pause' }) } });
+        set({ draft: { ...d, pausedAt: Date.now() } });
       },
 
       resume: () => {
         const d = get().draft; if (!d || !d.pausedAt) return;
-        set({ draft: { ...d, pausedAt: null, actionLog: pushLog(d, { kind: 'resume' }) } });
+        set({ draft: { ...d, pausedAt: null } });
       },
 
       finishAndSave: () => {
@@ -211,7 +196,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       name: 'myva_workout_store_v5',
       storage: createJSONStorage(() => AsyncStorage),
       partialize: (s) => ({ draft: s.draft, history: s.history }),
-      version: 5,
+      version: 6,
     }
   )
 );

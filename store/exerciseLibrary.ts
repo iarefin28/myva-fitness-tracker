@@ -41,6 +41,7 @@ interface ExerciseLibraryState {
   ensureDefaults: () => void;
   hydrateLibrary: (uid: string) => Promise<void>;
   searchLocal: (prefix: string, limit?: number) => UserExercise[];
+  bumpUsage: (exerciseIds: string[]) => void;
   ensureLocalExercise: (
     name: string,
     dataIfNew: { type: ExerciseType; howTo?: string; createdBy?: string; createdByUid?: string }
@@ -118,6 +119,28 @@ export const useExerciseLibrary = create<ExerciseLibraryState>()(
           .filter(e => e.nameLower.startsWith(key))
           .sort((a, b) => a.name.localeCompare(b.name))
           .slice(0, limit);
+      },
+
+      bumpUsage(exerciseIds) {
+        if (!exerciseIds.length) return;
+        const now = Date.now();
+        set((s) => {
+          const next: Dict<UserExercise> = { ...s.exercises };
+          let changed = false;
+          exerciseIds.forEach((id) => {
+            const ex = next[id];
+            if (!ex) return;
+            next[id] = {
+              ...ex,
+              usageCount: (ex.usageCount ?? 0) + 1,
+              lastUsedAt: now,
+              updatedAt: now,
+            };
+            changed = true;
+          });
+          if (!changed) return s;
+          return { exercises: next };
+        });
       },
 
       async ensureLocalExercise(name, dataIfNew) {

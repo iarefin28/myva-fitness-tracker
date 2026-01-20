@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { default as React, useEffect, useRef, useState } from 'react';
-import { Animated, useColorScheme, View } from 'react-native';
+import { Animated, Text, TextInput, useColorScheme, View } from 'react-native';
 import { Host } from 'react-native-portalize';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -18,8 +18,18 @@ import AddWorkoutScreen from './add-workout';
 // import ChartsScreen from './charts';
 import IndexScreen from './index';
 import UserScreen from './UserScreen';
+import HeaderLogo from '@/components/HeaderLogo';
 
 import { useWorkoutStore } from '../store/workoutStore';
+import { fontFamilies } from '@/theme/typography';
+
+const baseTextStyle = { fontFamily: fontFamilies.base };
+const appendBaseText = (style: any) => (style ? [style, baseTextStyle] : baseTextStyle);
+
+Text.defaultProps = Text.defaultProps ?? {};
+Text.defaultProps.style = appendBaseText(Text.defaultProps.style);
+TextInput.defaultProps = TextInput.defaultProps ?? {};
+TextInput.defaultProps.style = appendBaseText(TextInput.defaultProps.style);
 
 
 const Tab = createBottomTabNavigator();
@@ -89,6 +99,7 @@ function TabLayout() {
             name="MYVA Fitness"
             component={IndexScreen}
             options={{
+              headerTitle: () => <HeaderLogo />,
               tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
             }}
           />
@@ -163,11 +174,16 @@ function AppStack() {
         getComponent={() => require('./exercise-log').default}
         options={{ title: "Workout", headerBackTitle: 'Back', headerTintColor: iconColor }}
       /> */}
-      {/* <Stack.Screen
+      <Stack.Screen
         name="completed-workouts"
         getComponent={() => require('./completed-workouts').default}
         options={{ title: "Completed Workouts", headerBackTitle: 'Back', headerTintColor: iconColor }}
-      /> */}
+      />
+      <Stack.Screen
+        name="completed-workout-detail"
+        getComponent={() => require('./completed-workout-detail').default}
+        options={{ title: "Workout JSON", headerBackTitle: 'Back', headerTintColor: iconColor }}
+      />
       {/* <Stack.Screen
         name="workout-templates"
         getComponent={() => require('./workout-templates').default}

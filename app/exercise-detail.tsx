@@ -43,6 +43,13 @@ export default function ExerciseDetailScreen() {
         year: "numeric",
       })
     : "Unknown";
+  const lastUsed = exercise.lastUsedAt
+    ? new Date(exercise.lastUsedAt).toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "Not yet";
 
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: C.bg }]}>
@@ -54,6 +61,14 @@ export default function ExerciseDetailScreen() {
 
         <Text style={[styles.label, { color: C.sub }]}>Type</Text>
         <Text style={[styles.value, { color: C.text }]}>{exercise.type}</Text>
+
+        <View style={styles.divider} />
+
+        <Text style={[styles.label, { color: C.sub }]}>Usage</Text>
+        <Text style={[styles.value, { color: C.text }]}>
+          {exercise.usageCount ?? 0} logged
+        </Text>
+        <Text style={[styles.meta, { color: C.sub }]}>Last used {lastUsed}</Text>
 
         <View style={styles.divider} />
 

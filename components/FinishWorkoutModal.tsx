@@ -1,8 +1,9 @@
 import type { WorkoutDraft, WorkoutSaved } from '@/types/workout';
 import React, { useMemo } from 'react';
-import { Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from 'react-native';
 
 import WorkoutSheet from './WorkoutSheet';
+import { typography } from '@/theme/typography';
 
 type FinishWorkoutModalProps = {
   visible: boolean;
@@ -24,18 +25,31 @@ export default function FinishWorkoutModal({
   onConfirm,
 }: FinishWorkoutModalProps) {
   const jsonPreview = useMemo(() => JSON.stringify({ draft, history }, null, 2), [draft, history]);
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
+  const C = useMemo(
+    () => ({
+      text: isDark ? '#d1d5db' : '#1f2937',
+      jsonBorder: isDark ? '#262626' : '#e2e8f0',
+      jsonBg: isDark ? '#0f0f0f' : '#ffffff',
+      jsonText: isDark ? '#cbd5e1' : '#0f172a',
+      finishBg: isDark ? '#22C55E' : '#16A34A',
+      finishText: '#ffffff',
+    }),
+    [isDark]
+  );
 
   return (
     <Modal visible={visible} onRequestClose={onClose} animationType="slide" presentationStyle="pageSheet">
       <WorkoutSheet title="Finish Workout" rightLabel="Close" onRightPress={onClose}>
-        <Text style={styles.summary}>{itemsCount} item(s) • Time {mmss} • (timer paused)</Text>
-        <View style={styles.jsonBox}>
+        <Text style={[styles.summary, { color: C.text }]}>{itemsCount} item(s) • Time {mmss} • (timer paused)</Text>
+        <View style={[styles.jsonBox, { borderColor: C.jsonBorder, backgroundColor: C.jsonBg }]}>
           <ScrollView>
-            <Text style={styles.jsonText}>{jsonPreview}</Text>
+            <Text style={[styles.jsonText, { color: C.jsonText }]}>{jsonPreview}</Text>
           </ScrollView>
         </View>
-        <TouchableOpacity style={styles.finishConfirm} activeOpacity={0.9} onPress={onConfirm}>
-          <Text style={styles.finishConfirmText}>Save & Finish</Text>
+        <TouchableOpacity style={[styles.finishConfirm, { backgroundColor: C.finishBg }]} activeOpacity={0.9} onPress={onConfirm}>
+          <Text style={[styles.finishConfirmText, { color: C.finishText }]}>Save & Finish</Text>
         </TouchableOpacity>
       </WorkoutSheet>
     </Modal>
@@ -43,17 +57,15 @@ export default function FinishWorkoutModal({
 }
 
 const styles = StyleSheet.create({
-  summary: { color: '#d1d5db', marginBottom: 12, fontSize: 15 },
+  summary: { marginBottom: 12, fontSize: 15 },
   jsonBox: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#262626',
-    backgroundColor: '#0f0f0f',
     borderRadius: 10,
     padding: 10,
     marginBottom: 12,
   },
-  jsonText: { color: '#cbd5e1', fontFamily: Platform.select({ ios: 'Menlo', android: 'monospace' }) as any, fontSize: 12 },
-  finishConfirm: { backgroundColor: '#22C55E', paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
-  finishConfirmText: { color: 'white', fontSize: 16, fontWeight: '800' },
+  jsonText: { fontSize: 12, ...typography.mono },
+  finishConfirm: { paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
+  finishConfirmText: { fontSize: 16, ...typography.button },
 });

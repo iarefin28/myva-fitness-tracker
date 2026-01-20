@@ -1,9 +1,9 @@
 import { useWorkoutStore } from '@/store/workoutStore';
 import type { WorkoutExercise, WorkoutItem } from '@/types/workout';
 import { Ionicons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
     Alert,
     FlatList,
@@ -14,6 +14,7 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
+    useColorScheme,
     View,
 } from 'react-native';
 
@@ -23,12 +24,38 @@ import EditExerciseModal from "@/components/EditExerciseModal";
 import FinishWorkoutModal from "@/components/FinishWorkoutModal";
 import NoteModal from "@/components/NoteModal";
 import { InteractionManager } from "react-native";
+import { typography } from "@/theme/typography";
+import { useExerciseLibrary } from "@/store/exerciseLibrary";
 
 type SheetKind = 'exercise' | 'note' | 'custom';
 
 export default function AddWorkout() {
     const navigation = useNavigation();
     const router = useRouter();
+    const scheme = useColorScheme();
+    const isDark = scheme === "dark";
+
+    const C = useMemo(
+        () => ({
+            bg: isDark ? "#0b0b0b" : "#F8FAFC",
+            surface: isDark ? "#111" : "#FFFFFF",
+            surfaceAlt: isDark ? "#121212" : "#FFFFFF",
+            border: isDark ? "#222" : "#E2E8F0",
+            borderStrong: isDark ? "#262626" : "#CBD5E1",
+            text: isDark ? "#FFFFFF" : "#0F172A",
+            subText: isDark ? "#9ca3af" : "#64748B",
+            placeholder: isDark ? "#71717a" : "#94A3B8",
+            cardType: isDark ? "#a3a3a3" : "#475569",
+            cardTime: isDark ? "#6b7280" : "#94A3B8",
+            empty: isDark ? "#6b7280" : "#94A3B8",
+            blue: isDark ? "#0A84FF" : "#2563EB",
+            yellow: isDark ? "#FFD60A" : "#FBBF24",
+            grayBtn: isDark ? "#2b2b2b" : "#E2E8F0",
+            grayBorder: isDark ? "#3a3a3a" : "#CBD5E1",
+            success: isDark ? "#22C55E" : "#16A34A",
+        }),
+        [isDark]
+    );
 
     // ---------- Store ----------
     const draft = useWorkoutStore((s) => s.draft);
@@ -41,13 +68,13 @@ export default function AddWorkout() {
     const addCustom = useWorkoutStore((s) => s.addCustom);
     const updateItem = useWorkoutStore((s) => (s as any).updateItem) as (id: string, next: { name?: string; text?: string }) => boolean;
     const deleteItem = useWorkoutStore((s) => (s as any).deleteItem) as (id: string) => boolean;
-    const completeItem = useWorkoutStore((s) => (s as any).completeItem) as (id: string) => boolean;
 
     const elapsedSeconds = useWorkoutStore((s) => s.elapsedSeconds);
     const pause = useWorkoutStore((s) => (s as any).pause);
     const resume = useWorkoutStore((s) => (s as any).resume);
     const clearDraft = useWorkoutStore((s) => (s as any).clearDraft) as () => void;
     const isFinishingRef = useRef(false);
+    const bumpUsage = useExerciseLibrary((s) => s.bumpUsage);
 
 
     // ---------- Header ----------
@@ -108,6 +135,7 @@ export default function AddWorkout() {
     // Edit modal (tap an existing exercise to edit sets/rest/name)
     const [editExerciseOpen, setEditExerciseOpen] = useState(false);
     const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
+    const [reopenEditOnFocus, setReopenEditOnFocus] = useState(false);
 
     // Other modals unchanged
     const [noteOpen, setNoteOpen] = useState(false);
@@ -124,6 +152,14 @@ export default function AddWorkout() {
     const [customText, setCustomText] = useState('');
 
     useEffect(() => { if (finishOpen) pause(); else resume(); }, [finishOpen, pause, resume]);
+    useFocusEffect(
+        useCallback(() => {
+            if (reopenEditOnFocus && selectedExerciseId) {
+                setEditExerciseOpen(true);
+                setReopenEditOnFocus(false);
+            }
+        }, [reopenEditOnFocus, selectedExerciseId])
+    );
 
     // ---------- Items & list ----------
     const items = useMemo<WorkoutItem[]>(
@@ -234,6 +270,11 @@ export default function AddWorkout() {
 
     const handleFinishConfirm = () => {
         isFinishingRef.current = true;
+        const exerciseIds = (draft?.items ?? [])
+            .filter((it) => it.type === 'exercise')
+            .map((it: any) => it.libId)
+            .filter((id): id is string => !!id);
+        if (exerciseIds.length) bumpUsage(exerciseIds);
         const saved = finishAndSave();
         if (saved.id) {
             setFinishOpen(false);
@@ -247,40 +288,49 @@ export default function AddWorkout() {
     const isEditingCustom = !!(editingId && editingKind === 'custom');
 
     return (
-        <SafeAreaView style={styles.root}>
+        <SafeAreaView style={[styles.root, { backgroundColor: C.bg }]}>
             <View style={styles.container}>
                 {/* Workout name */}
                 <TextInput
                     value={draft?.name ?? ''}
                     onChangeText={setDraftName}
                     placeholder="Write the name of your workout here"
-                    placeholderTextColor="#71717a"
-                    style={styles.nameInput}
+                    placeholderTextColor={C.placeholder}
+                    style={[
+                        styles.nameInput,
+                        { borderColor: C.borderStrong, backgroundColor: C.surfaceAlt, color: C.text },
+                    ]}
                 />
 
                 {/* Timer */}
-                <View style={styles.timerCard}><Text style={styles.timerText}>{mmss}</Text></View>
+                <View style={[styles.timerCard, { backgroundColor: C.surface, borderColor: C.border }]}>
+                    <Text style={[styles.timerText, { color: C.text }]}>{mmss}</Text>
+                </View>
 
                 {/* Actions */}
                 <View style={styles.actionsRow}>
-                    <TouchableOpacity style={[styles.actionBtn, styles.btnBlue]} onPress={() => openNew('exercise')} activeOpacity={0.9}>
+                    <TouchableOpacity
+                        style={[styles.actionBtn, { backgroundColor: C.blue, borderColor: C.blue }]}
+                        onPress={() => openNew('exercise')}
+                        activeOpacity={0.9}
+                    >
                         <Text style={styles.actionTextWhite}>+ Exercise</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={[styles.actionBtn, styles.btnYellow, styles.btnDisabled]}
+                        style={[styles.actionBtn, { backgroundColor: C.yellow, borderColor: C.yellow }, styles.btnDisabled]}
                         onPress={() => openNew('note')}
                         activeOpacity={0.9}
                         disabled
                     >
-                        <Text style={styles.actionTextMuted}>+ Note</Text>
+                        <Text style={[styles.actionTextMuted, { color: C.subText }]}>+ Note</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
-                        style={[styles.actionBtn, styles.btnGray, styles.btnDisabled]}
+                        style={[styles.actionBtn, { backgroundColor: C.grayBtn, borderColor: C.grayBorder }, styles.btnDisabled]}
                         onPress={() => openNew('custom')}
                         activeOpacity={0.9}
                         disabled
                     >
-                        <Text style={styles.actionTextMuted}>+ Custom</Text>
+                        <Text style={[styles.actionTextMuted, { color: C.subText }]}>+ Custom</Text>
                     </TouchableOpacity>
                 </View>
 
@@ -307,23 +357,31 @@ export default function AddWorkout() {
                                     item.type === 'note' ? setNoteOpen(true) : setCustomOpen(true);
                                 }}
                             >
-                                <View style={[styles.card /* no active border */]}>
+                                <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
                                     <View style={styles.cardHeader}>
-                                        <Text style={styles.cardType}>
+                                        <Text style={[styles.cardType, { color: C.cardType }]}>
                                             {item.type.toUpperCase()} {isCompleted ? '· COMPLETED' : ''}
                                         </Text>
-                                        <Text style={styles.cardTime}>{new Date(item.createdAt).toLocaleTimeString()}</Text>
+                                        <Text style={[styles.cardTime, { color: C.cardTime }]}>
+                                            {new Date(item.createdAt).toLocaleTimeString()}
+                                        </Text>
                                     </View>
-                                    <Text style={[styles.cardText, isCompleted && { opacity: 0.7 }]}>{primaryText}</Text>
+                                    <Text style={[styles.cardText, { color: C.text }, isCompleted && { opacity: 0.7 }]}>
+                                        {primaryText}
+                                    </Text>
                                 </View>
                             </TouchableOpacity>
                         );
                     }}
-                    ListEmptyComponent={<Text style={styles.empty}>Add something to get started.</Text>}
+                    ListEmptyComponent={<Text style={[styles.empty, { color: C.empty }]}>Add something to get started.</Text>}
                 />
 
                 {/* Save (disabled, opens preview & pauses) */}
-                <TouchableOpacity style={styles.finishBtn} onPress={() => setFinishOpen(true)} activeOpacity={0.95}>
+                <TouchableOpacity
+                    style={[styles.finishBtn, { backgroundColor: C.success }]}
+                    onPress={() => setFinishOpen(true)}
+                    activeOpacity={0.95}
+                >
                     <Text style={styles.finishText}>Save & Finish</Text>
                 </TouchableOpacity>
             </View>
@@ -346,7 +404,11 @@ export default function AddWorkout() {
                 exerciseId={selectedExerciseId}
                 onClose={() => setEditExerciseOpen(false)}
                 onDiscard={() => { if (selectedExerciseId) deleteItem(selectedExerciseId); }}
-                onCompleteExercise={() => { if (selectedExerciseId) completeItem(selectedExerciseId); }}
+                onShowExerciseDetail={(exerciseId) => {
+                    setEditExerciseOpen(false);
+                    setReopenEditOnFocus(true);
+                    (navigation as any).navigate("exercise-detail", { exerciseId });
+                }}
             />
 
             {/* --------- NOTE MODAL --------- */}
@@ -388,59 +450,65 @@ export default function AddWorkout() {
 
 // ---------- Styles ----------
 const styles = StyleSheet.create({
-    root: { flex: 1, backgroundColor: '#0b0b0b' },
+    root: { flex: 1 },
     container: { flex: 1, padding: 16, gap: 12 },
 
     nameInput: {
-        borderWidth: 1, borderColor: '#262626', backgroundColor: '#121212', color: 'white',
-        paddingHorizontal: 12, paddingVertical: 12, borderRadius: 12, fontSize: 16, fontWeight: '600'
+        borderWidth: 1,
+        paddingHorizontal: 12,
+        paddingVertical: 12,
+        borderRadius: 12,
+        fontSize: 16,
+        fontWeight: '600',
     },
 
     timerCard: {
-        backgroundColor: '#111', borderWidth: 1, borderColor: '#222', borderRadius: 12,
-        paddingVertical: 14, alignItems: 'center'
+        borderWidth: 1,
+        borderRadius: 12,
+        paddingVertical: 14,
+        alignItems: 'center',
     },
-    timerText: { color: 'white', fontSize: 36, fontWeight: '800', letterSpacing: 1 },
+    timerText: { fontSize: 36, fontWeight: '800', letterSpacing: 1 },
 
     actionsRow: { flexDirection: 'row', gap: 10 },
     actionBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-    btnBlue: { backgroundColor: '#0A84FF', borderColor: '#0A84FF' },
-    btnYellow: { backgroundColor: '#FFD60A', borderColor: '#FFD60A' },
-    btnGray: { backgroundColor: '#2b2b2b', borderColor: '#3a3a3a' },
-    actionTextWhite: { color: 'white', fontSize: 15, fontWeight: '800' },
-    actionTextDark: { color: '#111', fontSize: 15, fontWeight: '800' },
-    actionTextMuted: { color: '#9ca3af', fontSize: 15, fontWeight: '800' },
+    actionTextWhite: { color: 'white', fontSize: 15, ...typography.button },
+    actionTextDark: { color: '#111', fontSize: 15, ...typography.button },
+    actionTextMuted: { color: '#9ca3af', fontSize: 15, ...typography.button },
 
-    card: { backgroundColor: '#111', borderWidth: 1, borderColor: '#222', borderRadius: 12, padding: 12, gap: 6 },
+    card: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 6 },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between' },
-    cardType: { color: '#a3a3a3', fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-    cardTime: { color: '#6b7280', fontSize: 12 },
-    cardText: { color: 'white', fontSize: 15 },
+    cardType: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
+    cardTime: { fontSize: 12 },
+    cardText: { fontSize: 15 },
 
-    empty: { color: '#6b7280', textAlign: 'center', marginTop: 8 },
+    empty: { textAlign: 'center', marginTop: 8 },
 
-    finishBtn: { backgroundColor: '#22C55E', paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
-    finishText: { color: 'white', fontSize: 16, fontWeight: '800' },
+    finishBtn: { paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
+    finishText: { color: 'white', fontSize: 16, ...typography.button },
 
     segment: {
-        flexDirection: 'row', backgroundColor: '#111', borderRadius: 10, padding: 4, gap: 6,
-        borderWidth: 1, borderColor: '#2a2a2a',
+        flexDirection: 'row',
+        borderRadius: 10,
+        padding: 4,
+        gap: 6,
+        borderWidth: 1,
     },
     segmentChip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 8 },
     segmentChipActive: { backgroundColor: '#0A84FF' },
-    segmentText: { color: '#9ca3af', fontWeight: '700', textTransform: 'capitalize' },
+    segmentText: { fontWeight: '700', textTransform: 'capitalize' },
     segmentTextActive: { color: 'white' },
 
 
-    entryRow: { backgroundColor: '#111', borderWidth: 1, borderColor: '#242424', borderRadius: 10, padding: 10, flexDirection: 'row', justifyContent: 'space-between' },
-    entryText: { color: 'white', fontWeight: '700' },
-    entryTime: { color: '#9ca3af', fontSize: 12 },
+    entryRow: { borderWidth: 1, borderRadius: 10, padding: 10, flexDirection: 'row', justifyContent: 'space-between' },
+    entryText: { fontWeight: '700' },
+    entryTime: { fontSize: 12 },
 
-    nextBtn: { backgroundColor: '#22C55E', paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 6 },
-    nextBtnText: { color: 'white', fontSize: 15, fontWeight: '800' },
+    nextBtn: { paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 6 },
+    nextBtnText: { color: 'white', fontSize: 15, ...typography.button },
     duoRow: { flexDirection: 'row', gap: 8 },
     duoBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-    duoBtnText: { color: 'white', fontSize: 15, fontWeight: '800' },
+    duoBtnText: { color: 'white', fontSize: 15, ...typography.button },
     btnPrimary: { backgroundColor: '#0A84FF' },
     btnSuccess: { backgroundColor: '#22C55E' },
     btnDisabled: { opacity: 0.5 },

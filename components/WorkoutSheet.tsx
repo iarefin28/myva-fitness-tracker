@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, StyleSheet, Text, useColorScheme, View } from 'react-native';
 
 type WorkoutSheetProps = {
   title: string;
@@ -18,12 +18,21 @@ export default function WorkoutSheet({
   onRightPress,
   children,
 }: WorkoutSheetProps) {
+  const scheme = useColorScheme();
+  const isDark = scheme === 'dark';
+  const C = {
+    bg: isDark ? '#0b0b0b' : '#ffffff',
+    grabber: isDark ? '#333' : '#cbd5e1',
+    title: isDark ? '#ffffff' : '#0f172a',
+    closeBg: isDark ? '#151515' : '#f1f5f9',
+    closeText: isDark ? '#0A84FF' : '#2563EB',
+  };
   const isSave = rightLabel.toLowerCase() === 'save';
   const showLeft = !!leftLabel;
 
   return (
-    <SafeAreaView style={styles.sheetRoot}>
-      <View style={styles.grabber} />
+    <SafeAreaView style={[styles.sheetRoot, { backgroundColor: C.bg }]}>
+      <View style={[styles.grabber, { backgroundColor: C.grabber }]} />
       <View style={styles.sheetHeaderRow}>
         <View style={styles.sheetSide}>
           {showLeft && (
@@ -32,12 +41,15 @@ export default function WorkoutSheet({
             </Pressable>
           )}
         </View>
-        <Text style={styles.sheetTitle} numberOfLines={1}>
+        <Text style={[styles.sheetTitle, { color: C.title }]} numberOfLines={1}>
           {title}
         </Text>
         <View style={styles.sheetSide}>
-          <Pressable onPress={onRightPress} style={[styles.closeBtn, isSave && styles.saveBtn]}>
-            <Text style={[styles.closeText, isSave && styles.saveText]}>{rightLabel}</Text>
+          <Pressable
+            onPress={onRightPress}
+            style={[styles.closeBtn, { backgroundColor: C.closeBg }, isSave && styles.saveBtn]}
+          >
+            <Text style={[styles.closeText, { color: C.closeText }, isSave && styles.saveText]}>{rightLabel}</Text>
           </Pressable>
         </View>
       </View>
