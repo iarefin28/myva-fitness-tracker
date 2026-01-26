@@ -173,7 +173,8 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       resume: () => {
         const d = get().draft; if (!d || !d.pausedAt) return;
-        set({ draft: { ...d, pausedAt: null } });
+        const pausedForMs = Date.now() - d.pausedAt;
+        set({ draft: { ...d, pausedAt: null, startedAt: d.startedAt + pausedForMs } });
       },
 
       finishAndSave: () => {

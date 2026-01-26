@@ -3,6 +3,7 @@ import type { WorkoutExercise, WorkoutItem } from '@/types/workout';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import {
     Alert,
@@ -53,6 +54,7 @@ export default function AddWorkout() {
             grayBtn: isDark ? "#2b2b2b" : "#E2E8F0",
             grayBorder: isDark ? "#3a3a3a" : "#CBD5E1",
             success: isDark ? "#22C55E" : "#16A34A",
+            danger: isDark ? "#F87171" : "#DC2626",
         }),
         [isDark]
     );
@@ -113,6 +115,7 @@ export default function AddWorkout() {
     }, [navigation]);
 
     const isDiscardingRef = useRef(false);
+    const isPaused = !!draft?.pausedAt;
 
     useEffect(() => {
         if (!draft && !isDiscardingRef.current && !isFinishingRef.current) startDraft('');
@@ -151,7 +154,18 @@ export default function AddWorkout() {
     const [noteText, setNoteText] = useState('');
     const [customText, setCustomText] = useState('');
 
-    useEffect(() => { if (finishOpen) pause(); else resume(); }, [finishOpen, pause, resume]);
+    const pausedForFinishRef = useRef(false);
+    useEffect(() => {
+        if (finishOpen) {
+            pausedForFinishRef.current = true;
+            pause();
+            return;
+        }
+        if (pausedForFinishRef.current) {
+            pausedForFinishRef.current = false;
+            resume();
+        }
+    }, [finishOpen, pause, resume]);
     useFocusEffect(
         useCallback(() => {
             if (reopenEditOnFocus && selectedExerciseId) {
@@ -303,9 +317,28 @@ export default function AddWorkout() {
                 />
 
                 {/* Timer */}
-                <View style={[styles.timerCard, { backgroundColor: C.surface, borderColor: C.border }]}>
-                    <Text style={[styles.timerText, { color: C.text }]}>{mmss}</Text>
-                </View>
+                <Pressable
+                    onPress={() => {
+                        if (isPaused) {
+                            resume();
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        } else {
+                            pause();
+                            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+                        }
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel={isPaused ? "Resume workout timer" : "Pause workout timer"}
+                    style={[
+                        styles.timerCard,
+                        { backgroundColor: isPaused ? C.danger : C.success, borderColor: isPaused ? C.danger : C.success },
+                    ]}
+                >
+                    <Text style={[styles.timerSubtext, { color: "white" }]}>
+                        {isPaused ? "Paused - tap to resume" : "Running - tap to pause"}
+                    </Text>
+                    <Text style={[styles.timerText, { color: "white" }]}>{mmss}</Text>
+                </Pressable>
 
                 {/* Actions */}
                 <View style={styles.actionsRow}>
@@ -469,6 +502,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     timerText: { fontSize: 36, fontWeight: '800', letterSpacing: 1 },
+    timerSubtext: { marginBottom: 4, fontSize: 12, fontWeight: '600' },
 
     actionsRow: { flexDirection: 'row', gap: 10 },
     actionBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
