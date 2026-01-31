@@ -26,6 +26,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           name,
           startedAt: Date.now(),
           pausedAt: null,
+          lastActionAt: Date.now(),
           items: [],
         };
         set({ draft: d });
@@ -33,7 +34,7 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       setDraftName: (name) => {
         const d = get().draft; if (!d) return;
-        set({ draft: { ...d, name } });
+        set({ draft: { ...d, name, lastActionAt: Date.now() } });
       },
 
       // --- Top Level Workout Item APIs --- 
@@ -51,6 +52,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({
           draft: {
             ...d,
+            lastActionAt: Date.now(),
             items: [...d.items, item],
           },
         });
@@ -63,6 +65,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({
           draft: {
             ...d,
+            lastActionAt: Date.now(),
             items: [...d.items, item],
           },
         });
@@ -75,6 +78,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         set({
           draft: {
             ...d,
+            lastActionAt: Date.now(),
             items: [...d.items, item],
           },
         });
@@ -89,7 +93,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           if ((it.type === 'note' || it.type === 'custom') && next.text !== undefined) return { ...it, text: next.text } as any;
           return it;
         });
-        set({ draft: { ...d, items } });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
         return true;
       },
 
@@ -100,14 +104,14 @@ export const useWorkoutStore = create<WorkoutState>()(
           if (it.type === 'exercise') return { ...it, status: 'completed' } as WorkoutExercise;
           return it;
         });
-        set({ draft: { ...d, items } });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
         return true;
       },
 
       deleteItem: (id) => {
         const d = get().draft; if (!d) return false;
         const items = d.items.filter((it) => it.id !== id);
-        set({ draft: { ...d, items } });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
         return true;
       },
 
@@ -125,7 +129,7 @@ export const useWorkoutStore = create<WorkoutState>()(
           if (it.id !== exerciseId || it.type !== 'exercise') return it;
           return { ...it, sets: [...it.sets, nextSet] } as WorkoutExercise;
         });
-        set({ draft: { ...d, items } });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
         return setId;
       },
 
@@ -147,7 +151,25 @@ export const useWorkoutStore = create<WorkoutState>()(
           if (it.id !== latestSet!.exerciseId || it.type !== 'exercise') return it;
           return { ...it, sets: it.sets.filter((s) => s.id !== latestSet!.setId) } as WorkoutExercise;
         });
-        set({ draft: { ...d, items } });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
+        return true;
+      },
+
+      updateExerciseSet: (exerciseId, setId, next) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.map((it) => {
+          if (it.id !== exerciseId || it.type !== 'exercise') return it;
+          const sets = it.sets.map((s) => {
+            if (s.id !== setId) return s;
+            return {
+              ...s,
+              ...(next.actualWeight !== undefined ? { actualWeight: next.actualWeight } : {}),
+              ...(next.actualReps !== undefined ? { actualReps: next.actualReps } : {}),
+            };
+          });
+          return { ...it, sets } as WorkoutExercise;
+        });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
         return true;
       },
 
@@ -168,20 +190,33 @@ export const useWorkoutStore = create<WorkoutState>()(
 
       pause: () => {
         const d = get().draft; if (!d || d.pausedAt) return;
-        set({ draft: { ...d, pausedAt: Date.now() } });
+        set({ draft: { ...d, pausedAt: Date.now(), lastActionAt: Date.now() } });
       },
 
       resume: () => {
         const d = get().draft; if (!d || !d.pausedAt) return;
         const pausedForMs = Date.now() - d.pausedAt;
-        set({ draft: { ...d, pausedAt: null, startedAt: d.startedAt + pausedForMs } });
+        set({
+          draft: {
+            ...d,
+            pausedAt: null,
+            startedAt: d.startedAt + pausedForMs,
+            lastActionAt: Date.now(),
+          },
+        });
       },
 
       finishAndSave: () => {
         const d = get().draft; if (!d) return { id: '' };
+        const trimmedName = d.name.trim();
+        const defaultName = `Workout on ${new Date(d.startedAt).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        })}`;
         const saved: WorkoutSaved = {
           id: uid(),
-          name: d.name,
+          name: trimmedName.length ? trimmedName : defaultName,
           startedAt: d.startedAt,
           endedAt: Date.now(),
           items: d.items,

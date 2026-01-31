@@ -60,6 +60,7 @@ export interface WorkoutDraft {
   name: string;
   startedAt: number;           // timer anchor
   pausedAt?: number | null;
+  lastActionAt?: number;
   items: WorkoutItem[];
 }
 
@@ -100,6 +101,7 @@ export interface WorkoutState {
   // --- NEW: exercise set API ---
   addExerciseSet: (exerciseId: string, actualWeight: number, actualReps: number) => string;
   undoLastAction: () => boolean;
+  updateExerciseSet: (exerciseId: string, setId: string, next: { actualWeight?: number; actualReps?: number }) => boolean;
 
   // convenient selector (optional)
   getExercise: (exerciseId: string) => WorkoutExercise | null;

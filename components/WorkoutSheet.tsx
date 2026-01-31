@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   },
   sheetHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 },
   sheetSide: { width: 88, alignItems: 'flex-start', justifyContent: 'center' },
-  sheetTitle: { flex: 1, textAlign: 'center', color: 'white', fontSize: 18, fontWeight: '800' },
+  sheetTitle: { flex: 1, textAlign: 'center', color: 'white', fontSize: 16, fontWeight: '700' },
   closeBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#151515', alignSelf: 'flex-end' },
   closeText: { color: '#0A84FF', fontWeight: '800' },
   saveBtn: { backgroundColor: '#0A84FF' },

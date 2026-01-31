@@ -1,5 +1,6 @@
 import { useExerciseLibrary } from "@/store/exerciseLibrary";
 import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   FlatList,
@@ -187,6 +188,7 @@ export default function AddExerciseModal({
   const keyExtractor = useCallback((item: Exercise) => String(item.id ?? item.name), []);
 
   const handlePick = (ex: Exercise) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     onSelectExercise?.(ex);
     onClose();
   };

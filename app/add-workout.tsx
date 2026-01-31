@@ -2,6 +2,7 @@ import { useWorkoutStore } from '@/store/workoutStore';
 import type { WorkoutExercise, WorkoutItem } from '@/types/workout';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -10,7 +11,6 @@ import {
     FlatList,
     Platform,
     Pressable,
-    SafeAreaView,
     StyleSheet,
     Text,
     TextInput,
@@ -18,6 +18,7 @@ import {
     useColorScheme,
     View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import AddExerciseModal from "@/components/AddExerciseModal";
 import CustomModal from "@/components/CustomModal";
@@ -33,6 +34,7 @@ type SheetKind = 'exercise' | 'note' | 'custom';
 export default function AddWorkout() {
     const navigation = useNavigation();
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const scheme = useColorScheme();
     const isDark = scheme === "dark";
 
@@ -56,6 +58,10 @@ export default function AddWorkout() {
             success: isDark ? "#22C55E" : "#16A34A",
             danger: isDark ? "#F87171" : "#DC2626",
         }),
+        [isDark]
+    );
+    const exerciseCardGradient = useMemo(
+        () => (isDark ? ["#1E3A8A", "#2563EB"] : ["#60A5FA", "#3B82F6"]),
         [isDark]
     );
 
@@ -302,20 +308,8 @@ export default function AddWorkout() {
     const isEditingCustom = !!(editingId && editingKind === 'custom');
 
     return (
-        <SafeAreaView style={[styles.root, { backgroundColor: C.bg }]}>
+        <View style={[styles.root, { backgroundColor: C.bg }]}>
             <View style={styles.container}>
-                {/* Workout name */}
-                <TextInput
-                    value={draft?.name ?? ''}
-                    onChangeText={setDraftName}
-                    placeholder="Write the name of your workout here"
-                    placeholderTextColor={C.placeholder}
-                    style={[
-                        styles.nameInput,
-                        { borderColor: C.borderStrong, backgroundColor: C.surfaceAlt, color: C.text },
-                    ]}
-                />
-
                 {/* Timer */}
                 <Pressable
                     onPress={() => {
@@ -340,46 +334,39 @@ export default function AddWorkout() {
                     <Text style={[styles.timerText, { color: "white" }]}>{mmss}</Text>
                 </Pressable>
 
-                {/* Actions */}
-                <View style={styles.actionsRow}>
-                    <TouchableOpacity
-                        style={[styles.actionBtn, { backgroundColor: C.blue, borderColor: C.blue }]}
-                        onPress={() => openNew('exercise')}
-                        activeOpacity={0.9}
-                    >
-                        <Text style={styles.actionTextWhite}>+ Exercise</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.actionBtn, { backgroundColor: C.yellow, borderColor: C.yellow }, styles.btnDisabled]}
-                        onPress={() => openNew('note')}
-                        activeOpacity={0.9}
-                        disabled
-                    >
-                        <Text style={[styles.actionTextMuted, { color: C.subText }]}>+ Note</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={[styles.actionBtn, { backgroundColor: C.grayBtn, borderColor: C.grayBorder }, styles.btnDisabled]}
-                        onPress={() => openNew('custom')}
-                        activeOpacity={0.9}
-                        disabled
-                    >
-                        <Text style={[styles.actionTextMuted, { color: C.subText }]}>+ Custom</Text>
-                    </TouchableOpacity>
-                </View>
+                {/* Workout name */}
+                <TextInput
+                    value={draft?.name ?? ''}
+                    onChangeText={setDraftName}
+                    placeholder="Write the name of your workout here"
+                    placeholderTextColor={C.placeholder}
+                    style={[
+                        styles.nameInput,
+                        { borderColor: C.borderStrong, backgroundColor: C.surfaceAlt, color: C.text },
+                    ]}
+                />
 
                 {/* Feed */}
                 <FlatList
                     ref={flatListRef}
                     data={items}
                     keyExtractor={(it) => it.id}
-                    contentContainerStyle={{ paddingVertical: 12, gap: 10 }}
+                    contentContainerStyle={{ paddingTop: 12, paddingBottom: 12, gap: 10 }}
                     renderItem={({ item }) => {
                         const primaryText = item.type === 'exercise' ? (item as WorkoutExercise).name : (item as any).text;
                         const isCompleted = item.type === 'exercise' && (item as WorkoutExercise).status === 'completed';
+                        const setCount = item.type === 'exercise' ? (item as WorkoutExercise).sets?.length ?? 0 : 0;
+                        const setLabel =
+                            item.type === 'exercise'
+                                ? setCount === 0
+                                    ? 'Press to start'
+                                    : `${setCount} set${setCount === 1 ? '' : 's'}`
+                                : '';
                         return (
                             <TouchableOpacity
                                 activeOpacity={0.8}
                                 onPress={() => {
+                                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                                     if (item.type === 'exercise') {
                                         openEditExercise(item);
                                         return;
@@ -390,33 +377,95 @@ export default function AddWorkout() {
                                     item.type === 'note' ? setNoteOpen(true) : setCustomOpen(true);
                                 }}
                             >
-                                <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
-                                    <View style={styles.cardHeader}>
-                                        <Text style={[styles.cardType, { color: C.cardType }]}>
-                                            {item.type.toUpperCase()} {isCompleted ? '· COMPLETED' : ''}
+                                {item.type === 'exercise' ? (
+                                    <LinearGradient
+                                        colors={exerciseCardGradient}
+                                        start={{ x: 0, y: 0 }}
+                                        end={{ x: 1, y: 1 }}
+                                        style={[styles.exerciseCard, { borderColor: C.border }]}
+                                    >
+                                        <Text style={[styles.exerciseTitle, { color: "#fff" }, isCompleted && { opacity: 0.7 }]}>
+                                            {primaryText}
                                         </Text>
-                                        <Text style={[styles.cardTime, { color: C.cardTime }]}>
-                                            {new Date(item.createdAt).toLocaleTimeString()}
+                                        <Text style={[styles.exerciseSub, { color: "#E5E7EB" }]}>
+                                            {setLabel}
+                                        </Text>
+                                    </LinearGradient>
+                                ) : (
+                                    <View style={[styles.card, { backgroundColor: C.surface, borderColor: C.border }]}>
+                                        <View style={styles.cardHeader}>
+                                            <Text style={[styles.cardType, { color: C.cardType }]}>
+                                                {item.type.toUpperCase()} {isCompleted ? '· COMPLETED' : ''}
+                                            </Text>
+                                            <Text style={[styles.cardTime, { color: C.cardTime }]}>
+                                                {new Date(item.createdAt).toLocaleTimeString()}
+                                            </Text>
+                                        </View>
+                                        <Text style={[styles.cardText, { color: C.text }, isCompleted && { opacity: 0.7 }]}>
+                                            {primaryText}
                                         </Text>
                                     </View>
-                                    <Text style={[styles.cardText, { color: C.text }, isCompleted && { opacity: 0.7 }]}>
-                                        {primaryText}
-                                    </Text>
-                                </View>
+                                )}
                             </TouchableOpacity>
                         );
                     }}
                     ListEmptyComponent={<Text style={[styles.empty, { color: C.empty }]}>Add something to get started.</Text>}
                 />
 
-                {/* Save (disabled, opens preview & pauses) */}
-                <TouchableOpacity
-                    style={[styles.finishBtn, { backgroundColor: C.success }]}
-                    onPress={() => setFinishOpen(true)}
-                    activeOpacity={0.95}
+                {/* Actions + Save container */}
+                <View
+                    style={[
+                        styles.actionsFooter,
+                        {
+                            paddingBottom: 12 + insets.bottom,
+                            backgroundColor: isDark ? "#111" : "#F1F5F9",
+                            borderTopColor: isDark ? "#222" : "#E2E8F0",
+                            shadowColor: "#000",
+                            shadowOpacity: isDark ? 0 : 0.12,
+                            shadowRadius: 8,
+                            shadowOffset: { width: 0, height: -2 },
+                            elevation: isDark ? 0 : 3,
+                        },
+                    ]}
                 >
-                    <Text style={styles.finishText}>Save & Finish</Text>
-                </TouchableOpacity>
+                    <View style={styles.actionsRow}>
+                        <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: C.blue, borderColor: C.blue }]}
+                            onPress={() => {
+                                void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                                openNew('exercise');
+                            }}
+                            activeOpacity={0.9}
+                        >
+                            <Text style={styles.actionTextWhite}>+ Exercise</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: C.yellow, borderColor: C.yellow }, styles.btnDisabled]}
+                            onPress={() => openNew('note')}
+                            activeOpacity={0.9}
+                            disabled
+                        >
+                            <Text style={[styles.actionTextMuted, { color: C.subText }]}>+ Note</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[styles.actionBtn, { backgroundColor: C.grayBtn, borderColor: C.grayBorder }, styles.btnDisabled]}
+                            onPress={() => openNew('custom')}
+                            activeOpacity={0.9}
+                            disabled
+                        >
+                            <Text style={[styles.actionTextMuted, { color: C.subText }]}>+ Custom</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    {/* Save (disabled, opens preview & pauses) */}
+                    <TouchableOpacity
+                        style={[styles.finishBtn, { backgroundColor: C.success }]}
+                        onPress={() => setFinishOpen(true)}
+                        activeOpacity={0.95}
+                    >
+                        <Text style={styles.finishText}>Save & Finish</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
             {/* --------- ADD EXERCISE MODAL (no autofocus, no set/rest) --------- */}
@@ -477,14 +526,14 @@ export default function AddWorkout() {
                 onClose={() => setFinishOpen(false)}
                 onConfirm={handleFinishConfirm}
             />
-        </SafeAreaView>
+        </View>
     );
 }
 
 // ---------- Styles ----------
 const styles = StyleSheet.create({
     root: { flex: 1 },
-    container: { flex: 1, padding: 16, gap: 12 },
+    container: { flex: 1, paddingTop: 8, paddingHorizontal: 16, gap: 12 },
 
     nameInput: {
         borderWidth: 1,
@@ -517,6 +566,30 @@ const styles = StyleSheet.create({
     cardText: { fontSize: 15 },
 
     empty: { textAlign: 'center', marginTop: 8 },
+
+    actionsFooter: {
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        borderTopWidth: 1,
+        padding: 12,
+        gap: 10,
+        alignSelf: "stretch",
+        marginHorizontal: -16,
+        paddingHorizontal: 16,
+        marginTop: -12,
+    },
+
+    exerciseCard: {
+        borderWidth: 1,
+        borderRadius: 12,
+        paddingVertical: 16,
+        paddingHorizontal: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 6,
+    },
+    exerciseTitle: { fontSize: 18, fontWeight: '800', textAlign: 'center' },
+    exerciseSub: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
 
     finishBtn: { paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
     finishText: { color: 'white', fontSize: 16, ...typography.button },
