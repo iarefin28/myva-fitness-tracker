@@ -44,6 +44,10 @@ export default function EditExerciseModal({
     // store selectors
     const getExercise = useWorkoutStore((s) => s.getExercise);
     const addExerciseSet = useWorkoutStore((s) => s.addExerciseSet);
+    const addExerciseGeneralNote = useWorkoutStore((s) => (s as any).addExerciseGeneralNote) as (
+        exerciseId: string,
+        note: { id: string; text: string; createdAt: number }
+    ) => boolean;
     const updateExerciseSet = useWorkoutStore((s) => (s as any).updateExerciseSet) as (
         exerciseId: string,
         setId: string,
@@ -122,6 +126,12 @@ export default function EditExerciseModal({
         if (!ex?.sets?.length) return [];
         return isCompleted ? ex.sets : [...ex.sets].slice().reverse();
     }, [ex?.sets, isCompleted]);
+    const listItems = useMemo(() => {
+        const sets = (ex?.sets ?? []).map((s) => ({ kind: "set" as const, createdAt: s.createdAt, set: s }));
+        const notes = (ex?.generalNotes ?? []).map((n) => ({ kind: "note" as const, createdAt: n.createdAt, note: n }));
+        const all = [...sets, ...notes];
+        return all.sort((a, b) => (isCompleted ? a.createdAt - b.createdAt : b.createdAt - a.createdAt));
+    }, [ex?.sets, ex?.generalNotes, isCompleted]);
     const selectedOrdinal = useMemo(() => {
         if (!activeSetId) return null;
         const idx = orderedSets.findIndex((s) => s.id === activeSetId);
@@ -157,6 +167,13 @@ export default function EditExerciseModal({
     const handleAddSet = () => {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
         addSet(isBodyweight ? 0 : -1, -1);
+        listRef.current?.scrollToOffset({ offset: 0, animated: true });
+    };
+    const handleAddGeneralNote = () => {
+        if (!exerciseId) return;
+        const now = Date.now();
+        const id = `${now.toString(36)}-${Math.random().toString(36).slice(2)}`;
+        addExerciseGeneralNote(exerciseId, { id, text: "", createdAt: now });
         listRef.current?.scrollToOffset({ offset: 0, animated: true });
     };
     const confirmUndoLastSet = () => {
@@ -253,8 +270,8 @@ export default function EditExerciseModal({
                             <View style={styles.listWrap}>
                                 <FlatList
                                     ref={listRef}
-                                    data={orderedSets}
-                                    keyExtractor={(s) => s.id}
+                                    data={listItems}
+                                    keyExtractor={(item) => (item.kind === "set" ? item.set.id : item.note.id)}
                                     keyboardShouldPersistTaps="always"
                                     onScrollToIndexFailed={({ averageItemLength, index }) => {
                                         listRef.current?.scrollToOffset({
@@ -265,15 +282,28 @@ export default function EditExerciseModal({
                                     ItemSeparatorComponent={() => <View style={{ height: 6 }} />}
                                     contentContainerStyle={{ paddingBottom: 140 }}
                                     renderItem={({ item, index }) => {
+                                        if (item.kind === "note") {
+                                            return (
+                                                <View style={[styles.setCard, { backgroundColor: C.surface, borderColor: C.border }]}>
+                                                    <Text style={[styles.setCardTitle, { color: C.text }]}>General Note</Text>
+                                                    <View style={[styles.setCardDivider, { backgroundColor: C.border }]} />
+                                                    <Text style={[styles.notePlaceholder, { color: C.subText }]}>
+                                                        (empty)
+                                                    </Text>
+                                                </View>
+                                            );
+                                        }
+                                        const setItem = item.set;
+                                        const setIndex = orderedSets.findIndex((s) => s.id === setItem.id);
                                         const total = orderedSets.length;
-                                        const ordinal = isCompleted ? index + 1 : total - index;
-                                        const isDone = !!item.completedAt;
-                                        const isActive = item.id === activeSetId;
+                                        const ordinal = isCompleted ? setIndex + 1 : total - setIndex;
+                                        const isDone = !!setItem.completedAt;
+                                        const isActive = setItem.id === activeSetId;
                                         return (
                                             <Pressable
                                                 onPress={() => {
                                                     if (keyboardVisible) return;
-                                                    setActiveSetId(item.id);
+                                                    setActiveSetId(setItem.id);
                                                     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                                                 }}
                                                 style={[
@@ -290,13 +320,13 @@ export default function EditExerciseModal({
                                                     {!isBodyweight && (
                                                         <Pressable
                                                             onPress={() => {
-                                                                setActiveSetId(item.id);
-                                                                weightInputRefs.current[item.id]?.focus();
+                                                                setActiveSetId(setItem.id);
+                                                                weightInputRefs.current[setItem.id]?.focus();
                                                             }}
                                                             style={[
                                                                 styles.metricBlockCentered,
                                                                 { backgroundColor: C.surfaceAlt },
-                                                                focusedField?.setId === item.id &&
+                                                                focusedField?.setId === setItem.id &&
                                                                     focusedField.field === "weight" &&
                                                                     styles.metricBlockFocused,
                                                             ]}
@@ -304,48 +334,48 @@ export default function EditExerciseModal({
                                                             <Text style={[styles.metricLabel, { color: C.subText }]}>Weight</Text>
                                                             <TextInput
                                                                 ref={(ref) => {
-                                                                    weightInputRefs.current[item.id] = ref;
+                                                                    weightInputRefs.current[setItem.id] = ref;
                                                                 }}
                                                                 value={
-                                                                    weightDrafts[item.id] ??
-                                                                    (item.actualWeight < 0 ? "" : String(item.actualWeight))
+                                                                    weightDrafts[setItem.id] ??
+                                                                    (setItem.actualWeight < 0 ? "" : String(setItem.actualWeight))
                                                                 }
                                                                 returnKeyType="done"
                                                                 onFocus={() => {
-                                                                    setActiveSetId(item.id);
-                                                                    setFocusedField({ setId: item.id, field: "weight" });
-                                                                    scrollToSet(item.id);
+                                                                    setActiveSetId(setItem.id);
+                                                                    setFocusedField({ setId: setItem.id, field: "weight" });
+                                                                    scrollToSet(setItem.id);
                                                                     setWeightDrafts((prev) => {
-                                                                        if (prev[item.id] !== undefined) return prev;
+                                                                        if (prev[setItem.id] !== undefined) return prev;
                                                                         return {
                                                                             ...prev,
-                                                                            [item.id]:
-                                                                                item.actualWeight < 0 ? "" : String(item.actualWeight),
+                                                                            [setItem.id]:
+                                                                                setItem.actualWeight < 0 ? "" : String(setItem.actualWeight),
                                                                         };
                                                                     });
                                                                 }}
                                                                 onBlur={() =>
                                                                     setFocusedField((prev) =>
-                                                                        prev?.setId === item.id && prev.field === "weight" ? null : prev
+                                                                        prev?.setId === setItem.id && prev.field === "weight" ? null : prev
                                                                     )
                                                                 }
                                                                 onChangeText={(val) =>
-                                                                    setWeightDrafts((prev) => ({ ...prev, [item.id]: val }))
+                                                                    setWeightDrafts((prev) => ({ ...prev, [setItem.id]: val }))
                                                                 }
                                                                 onEndEditing={(e) => {
                                                                     if (!exerciseId) return;
                                                                     const t = (e.nativeEvent.text ?? "").trim();
                                                                     if (t === "") {
-                                                                        updateExerciseSet(exerciseId, item.id, { actualWeight: -1 });
+                                                                        updateExerciseSet(exerciseId, setItem.id, { actualWeight: -1 });
                                                                     } else {
                                                                         const n = Number(t);
                                                                         if (Number.isFinite(n)) {
-                                                                            updateExerciseSet(exerciseId, item.id, { actualWeight: n });
+                                                                            updateExerciseSet(exerciseId, setItem.id, { actualWeight: n });
                                                                         }
                                                                     }
                                                                     setWeightDrafts((prev) => {
                                                                         const next = { ...prev };
-                                                                        delete next[item.id];
+                                                                        delete next[setItem.id];
                                                                         return next;
                                                                     });
                                                                 }}
@@ -366,14 +396,14 @@ export default function EditExerciseModal({
                                                     )}
                                                     <Pressable
                                                         onPress={() => {
-                                                            setActiveSetId(item.id);
-                                                            repsInputRefs.current[item.id]?.focus();
+                                                            setActiveSetId(setItem.id);
+                                                            repsInputRefs.current[setItem.id]?.focus();
                                                         }}
                                                         style={[
                                                             styles.metricBlockCentered,
                                                             { backgroundColor: C.surfaceAlt },
                                                             isBodyweight && styles.metricBlockSingle,
-                                                            focusedField?.setId === item.id &&
+                                                            focusedField?.setId === setItem.id &&
                                                                 focusedField.field === "reps" &&
                                                                 styles.metricBlockFocused,
                                                         ]}
@@ -381,48 +411,48 @@ export default function EditExerciseModal({
                                                         <Text style={[styles.metricLabel, { color: C.subText }]}>Reps</Text>
                                                         <TextInput
                                                             ref={(ref) => {
-                                                                repsInputRefs.current[item.id] = ref;
+                                                                repsInputRefs.current[setItem.id] = ref;
                                                             }}
                                                             value={
-                                                                repsDrafts[item.id] ??
-                                                                (item.actualReps < 0 ? "" : String(item.actualReps))
+                                                                repsDrafts[setItem.id] ??
+                                                                (setItem.actualReps < 0 ? "" : String(setItem.actualReps))
                                                             }
                                                             returnKeyType="done"
                                                             onFocus={() => {
-                                                                setActiveSetId(item.id);
-                                                                setFocusedField({ setId: item.id, field: "reps" });
-                                                                scrollToSet(item.id);
+                                                                setActiveSetId(setItem.id);
+                                                                setFocusedField({ setId: setItem.id, field: "reps" });
+                                                                scrollToSet(setItem.id);
                                                                 setRepsDrafts((prev) => {
-                                                                    if (prev[item.id] !== undefined) return prev;
+                                                                    if (prev[setItem.id] !== undefined) return prev;
                                                                     return {
                                                                         ...prev,
-                                                                        [item.id]:
-                                                                            item.actualReps < 0 ? "" : String(item.actualReps),
+                                                                        [setItem.id]:
+                                                                            setItem.actualReps < 0 ? "" : String(setItem.actualReps),
                                                                     };
                                                                 });
                                                             }}
                                                             onBlur={() =>
                                                                 setFocusedField((prev) =>
-                                                                    prev?.setId === item.id && prev.field === "reps" ? null : prev
+                                                                    prev?.setId === setItem.id && prev.field === "reps" ? null : prev
                                                                 )
                                                             }
                                                             onChangeText={(val) =>
-                                                                setRepsDrafts((prev) => ({ ...prev, [item.id]: val }))
+                                                                setRepsDrafts((prev) => ({ ...prev, [setItem.id]: val }))
                                                             }
                                                             onEndEditing={(e) => {
                                                                 if (!exerciseId) return;
                                                                 const t = (e.nativeEvent.text ?? "").trim();
                                                                 if (t === "") {
-                                                                    updateExerciseSet(exerciseId, item.id, { actualReps: -1 });
+                                                                    updateExerciseSet(exerciseId, setItem.id, { actualReps: -1 });
                                                                 } else {
                                                                     const n = Number(t);
                                                                     if (Number.isFinite(n)) {
-                                                                        updateExerciseSet(exerciseId, item.id, { actualReps: n });
+                                                                        updateExerciseSet(exerciseId, setItem.id, { actualReps: n });
                                                                     }
                                                                 }
                                                                 setRepsDrafts((prev) => {
                                                                     const next = { ...prev };
-                                                                    delete next[item.id];
+                                                                    delete next[setItem.id];
                                                                     return next;
                                                                 });
                                                             }}
@@ -470,9 +500,16 @@ export default function EditExerciseModal({
                                 <Pressable
                                     style={[styles.finishBtn, { backgroundColor: "#FBBF24" }]}
                                     hitSlop={10}
-                                    disabled
+                                    onPress={() => {
+                                        if (selectedOrdinal === null) {
+                                            void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+                                            handleAddGeneralNote();
+                                        }
+                                    }}
                                 >
-                                    <Text style={[styles.finishText, { color: "#111827" }, typography.button]}>+ Note</Text>
+                                    <Text style={[styles.finishText, { color: "#111827" }, typography.button]}>
+                                        {selectedOrdinal !== null ? "+ Set Specific Note" : "+ General Note"}
+                                    </Text>
                                 </Pressable>
                                 <Pressable
                                     onPress={handleAddSet}
@@ -557,4 +594,5 @@ const styles = StyleSheet.create({
     finishText: { color: "white", fontSize: 16, ...typography.body },
     exerciseNameText: { fontSize: 16, fontWeight: "700" },
     exerciseHintText: { fontSize: 12 },
+    notePlaceholder: { fontSize: 13, fontWeight: "600", textAlign: "center" },
 });
