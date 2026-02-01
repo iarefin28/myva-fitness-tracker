@@ -456,6 +456,17 @@ export default function EditExerciseModal({
                                 <Text style={[styles.exerciseNameText, { color: "#fff", textAlign: "center" }, typography.body]}>
                                     {selectedOrdinal !== null ? `Set ${selectedOrdinal} selected` : "No sets selected"}
                                 </Text>
+                                {selectedOrdinal !== null && (
+                                    <Pressable
+                                        style={[styles.finishBtn, { backgroundColor: "#ef4444" }]}
+                                        hitSlop={10}
+                                        onPress={() => setActiveSetId(null)}
+                                    >
+                                        <Text style={[styles.finishText, { color: "#ffffff" }, typography.button]}>
+                                            {`Unselect Set ${selectedOrdinal}`}
+                                        </Text>
+                                    </Pressable>
+                                )}
                                 <Pressable
                                     style={[styles.finishBtn, { backgroundColor: "#FBBF24" }]}
                                     hitSlop={10}

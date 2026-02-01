@@ -32,6 +32,7 @@ export interface WorkoutExerciseSet {
   id: string;
   actualWeight: number;
   actualReps: number;
+  note?: string;
   createdAt: number;
 }
 
@@ -40,6 +41,7 @@ export interface WorkoutExercise extends WorkoutItemBase {
   name: string;
   libId?: string;          // optional reference to library exercise
   exerciseType?: ExerciseType;
+  generalNotes?: { id: string; text: string; createdAt: number }[];
   status: ExerciseStatus;  // inProgress | completed
   sets: WorkoutExerciseSet[];
 }
@@ -102,7 +104,15 @@ export interface WorkoutState {
   // --- NEW: exercise set API ---
   addExerciseSet: (exerciseId: string, actualWeight: number, actualReps: number) => string;
   undoLastAction: () => boolean;
-  updateExerciseSet: (exerciseId: string, setId: string, next: { actualWeight?: number; actualReps?: number }) => boolean;
+  updateExerciseSet: (
+    exerciseId: string,
+    setId: string,
+    next: { actualWeight?: number; actualReps?: number; note?: string }
+  ) => boolean;
+  updateExerciseNote: (exerciseId: string, note: string) => boolean;
+  addExerciseGeneralNote: (exerciseId: string, note: { id: string; text: string; createdAt: number }) => boolean;
+  updateExerciseGeneralNote: (exerciseId: string, noteId: string, text: string) => boolean;
+  removeExerciseGeneralNote: (exerciseId: string, noteId: string) => boolean;
 
   // convenient selector (optional)
   getExercise: (exerciseId: string) => WorkoutExercise | null;

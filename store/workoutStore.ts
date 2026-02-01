@@ -137,6 +137,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       undoLastAction: () => {
         const d = get().draft; if (!d) return false;
         let latestSet: { exerciseId: string; setId: string; createdAt: number } | null = null;
+        let latestNote: { exerciseId: string; noteId: string; createdAt: number } | null = null;
 
         d.items.forEach((it) => {
           if (it.type !== 'exercise') return;
@@ -145,11 +146,27 @@ export const useWorkoutStore = create<WorkoutState>()(
               latestSet = { exerciseId: it.id, setId: s.id, createdAt: s.createdAt };
             }
           });
+          (it.generalNotes ?? []).forEach((n) => {
+            if (!latestNote || n.createdAt > latestNote.createdAt) {
+              latestNote = { exerciseId: it.id, noteId: n.id, createdAt: n.createdAt };
+            }
+          });
         });
 
-        if (!latestSet) return false;
+        if (!latestSet && !latestNote) return false;
+        const shouldRemoveNote =
+          latestNote &&
+          (!latestSet || latestNote.createdAt >= latestSet.createdAt);
         const items = d.items.map((it) => {
-          if (it.id !== latestSet!.exerciseId || it.type !== 'exercise') return it;
+          if (it.type !== 'exercise') return it;
+          if (shouldRemoveNote) {
+            if (it.id !== latestNote!.exerciseId) return it;
+            return {
+              ...it,
+              generalNotes: (it.generalNotes ?? []).filter((n) => n.id !== latestNote!.noteId),
+            } as WorkoutExercise;
+          }
+          if (it.id !== latestSet!.exerciseId) return it;
           return { ...it, sets: it.sets.filter((s) => s.id !== latestSet!.setId) } as WorkoutExercise;
         });
         set({ draft: { ...d, items, lastActionAt: Date.now() } });
@@ -166,9 +183,55 @@ export const useWorkoutStore = create<WorkoutState>()(
               ...s,
               ...(next.actualWeight !== undefined ? { actualWeight: next.actualWeight } : {}),
               ...(next.actualReps !== undefined ? { actualReps: next.actualReps } : {}),
+              ...(next.note !== undefined ? { note: next.note } : {}),
             };
           });
           return { ...it, sets } as WorkoutExercise;
+        });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
+        return true;
+      },
+
+      updateExerciseNote: (exerciseId, note) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.map((it) => {
+          if (it.id !== exerciseId || it.type !== 'exercise') return it;
+          return { ...it, note } as WorkoutExercise;
+        });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
+        return true;
+      },
+
+      addExerciseGeneralNote: (exerciseId, note) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.map((it) => {
+          if (it.id !== exerciseId || it.type !== 'exercise') return it;
+          const nextNotes = [...(it.generalNotes ?? []), note];
+          return { ...it, generalNotes: nextNotes } as WorkoutExercise;
+        });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
+        return true;
+      },
+
+      updateExerciseGeneralNote: (exerciseId, noteId, text) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.map((it) => {
+          if (it.id !== exerciseId || it.type !== 'exercise') return it;
+          const nextNotes = (it.generalNotes ?? []).map((n) =>
+            n.id === noteId ? { ...n, text } : n
+          );
+          return { ...it, generalNotes: nextNotes } as WorkoutExercise;
+        });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
+        return true;
+      },
+
+      removeExerciseGeneralNote: (exerciseId, noteId) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.map((it) => {
+          if (it.id !== exerciseId || it.type !== 'exercise') return it;
+          const nextNotes = (it.generalNotes ?? []).filter((n) => n.id !== noteId);
+          return { ...it, generalNotes: nextNotes } as WorkoutExercise;
         });
         set({ draft: { ...d, items, lastActionAt: Date.now() } });
         return true;
