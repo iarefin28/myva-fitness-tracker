@@ -48,6 +48,15 @@ export default function EditExerciseModal({
         exerciseId: string,
         note: { id: string; text: string; createdAt: number }
     ) => boolean;
+    const updateExerciseGeneralNote = useWorkoutStore((s) => (s as any).updateExerciseGeneralNote) as (
+        exerciseId: string,
+        noteId: string,
+        text: string
+    ) => boolean;
+    const removeExerciseGeneralNote = useWorkoutStore((s) => (s as any).removeExerciseGeneralNote) as (
+        exerciseId: string,
+        noteId: string
+    ) => boolean;
     const updateExerciseSet = useWorkoutStore((s) => (s as any).updateExerciseSet) as (
         exerciseId: string,
         setId: string,
@@ -68,11 +77,14 @@ export default function EditExerciseModal({
     const nextSetNumber = (ex?.sets?.length ?? 0) + 1;
     // ----- Local UI state (unchanged look) -----
     const [activeSetId, setActiveSetId] = useState<string | null>(null);
+    const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
+    const [noteEditId, setNoteEditId] = useState<string | null>(null);
     const [keyboardVisible, setKeyboardVisible] = useState(false);
     const listRef = React.useRef<FlatList<any>>(null);
     const [focusedField, setFocusedField] = useState<{ setId: string; field: "weight" | "reps" } | null>(null);
     const [weightDrafts, setWeightDrafts] = useState<Record<string, string>>({});
     const [repsDrafts, setRepsDrafts] = useState<Record<string, string>>({});
+    const noteInputRefs = React.useRef<Record<string, TextInput | null>>({});
     const weightInputRefs = React.useRef<Record<string, TextInput | null>>({});
     const repsInputRefs = React.useRef<Record<string, TextInput | null>>({});
     const scheme = useColorScheme();
@@ -118,6 +130,7 @@ export default function EditExerciseModal({
     // ----- Panel flows: Add / Complete Set (now writing to store) -----
     const addSet = (w: number, r: number) => {
         if (!exerciseId) return null;
+        setActiveNoteId(null);
         const newSetId = addExerciseSet(exerciseId, w, r);
         setActiveSetId(newSetId);
         return newSetId;
@@ -129,11 +142,25 @@ export default function EditExerciseModal({
         return isCompleted ? ex.sets : [...ex.sets].slice().reverse();
     }, [ex?.sets, isCompleted]);
     const listItems = useMemo(() => {
-        const sets = (ex?.sets ?? []).map((s) => ({ kind: "set" as const, createdAt: s.createdAt, set: s }));
+        const sets = orderedSets.map((s) => ({ kind: "set" as const, createdAt: s.createdAt, set: s }));
         const notes = (ex?.generalNotes ?? []).map((n) => ({ kind: "note" as const, createdAt: n.createdAt, note: n }));
         const all = [...sets, ...notes];
         return all.sort((a, b) => (isCompleted ? a.createdAt - b.createdAt : b.createdAt - a.createdAt));
-    }, [ex?.sets, ex?.generalNotes, isCompleted]);
+    }, [orderedSets, ex?.generalNotes, isCompleted]);
+    const visibleItems = useMemo(() => {
+        if (noteEditId) {
+            return listItems.filter((it) => it.kind === "note" && it.note.id === noteEditId);
+        }
+        if (keyboardVisible && activeNoteId) {
+            return listItems.filter((it) => it.kind === "note" && it.note.id === activeNoteId);
+        }
+        if (!activeNoteId) return listItems;
+        const activeNote = (ex?.generalNotes ?? []).find((n) => n.id === activeNoteId);
+        if (!activeNote) return listItems;
+        const isEmpty = !activeNote.text || activeNote.text.trim().length === 0;
+        if (!isEmpty) return listItems;
+        return listItems.filter((it) => it.kind === "note" && it.note.id === activeNoteId);
+    }, [listItems, activeNoteId, noteEditId, ex?.generalNotes, keyboardVisible]);
     const selectedOrdinal = useMemo(() => {
         if (!activeSetId) return null;
         const idx = orderedSets.findIndex((s) => s.id === activeSetId);
@@ -205,6 +232,9 @@ export default function EditExerciseModal({
         const now = Date.now();
         const id = `${now.toString(36)}-${Math.random().toString(36).slice(2)}`;
         addExerciseGeneralNote(exerciseId, { id, text: "", createdAt: now });
+        setActiveSetId(null);
+        setActiveNoteId(id);
+        setNoteEditId(null);
         listRef.current?.scrollToOffset({ offset: 0, animated: true });
     };
     const confirmUndoLastSet = () => {
@@ -216,6 +246,10 @@ export default function EditExerciseModal({
                 style: "destructive",
                 onPress: () => {
                     const ok = undoLastAction();
+                    if (activeNoteId) {
+                        setActiveNoteId(null);
+                        setNoteEditId(null);
+                    }
                     if (ok) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                 },
             },
@@ -301,7 +335,7 @@ export default function EditExerciseModal({
                             <View style={styles.listWrap}>
                                 <FlatList
                                     ref={listRef}
-                                    data={listItems}
+                                    data={visibleItems}
                                     keyExtractor={(item) => (item.kind === "set" ? item.set.id : item.note.id)}
                                     keyboardShouldPersistTaps="always"
                                     onScrollToIndexFailed={({ averageItemLength, index }) => {
@@ -315,16 +349,60 @@ export default function EditExerciseModal({
                                     renderItem={({ item, index }) => {
                                         if (item.kind === "note") {
                                             const noteNumber = noteNumberMap[item.note.id] ?? "?";
+                                            const isActiveNote = activeNoteId === item.note.id;
                                             return (
-                                                <View style={[styles.setCard, { backgroundColor: C.surface, borderColor: C.border }]}>
+                                                <Pressable
+                                                    onPress={() => {
+                                                        if (keyboardVisible) return;
+                                                        setActiveSetId(null);
+                                                        setActiveNoteId(item.note.id);
+                                                        setNoteEditId(null);
+                                                    }}
+                                                    style={[
+                                                        styles.setCard,
+                                                        { backgroundColor: C.surface, borderColor: C.border },
+                                                        isActiveNote && styles.setCardActive,
+                                                    ]}
+                                                >
                                                     <Text style={[styles.setCardTitle, { color: C.text }]}>
                                                         {`General Note ${noteNumber}`}
                                                     </Text>
                                                     <View style={[styles.setCardDivider, { backgroundColor: C.border }]} />
-                                                    <Text style={[styles.notePlaceholder, { color: C.subText }]}>
-                                                        (empty)
-                                                    </Text>
-                                                </View>
+                                                    <TextInput
+                                                        ref={(ref) => {
+                                                            noteInputRefs.current[item.note.id] = ref;
+                                                        }}
+                                                        value={item.note.text}
+                                                        onChangeText={(val) => {
+                                                            if (!exerciseId) return;
+                                                            updateExerciseGeneralNote(exerciseId, item.note.id, val);
+                                                        }}
+                                                        onSubmitEditing={() => {
+                                                            if (!exerciseId) return;
+                                                            const trimmed = (item.note.text ?? "").trim();
+                                                            if (!trimmed) {
+                                                                removeExerciseGeneralNote(exerciseId, item.note.id);
+                                                            }
+                                                            setNoteEditId(null);
+                                                            setActiveNoteId(null);
+                                                        }}
+                                                        onEndEditing={() => {
+                                                            if (!exerciseId) return;
+                                                            const trimmed = (item.note.text ?? "").trim();
+                                                            if (!trimmed) {
+                                                                removeExerciseGeneralNote(exerciseId, item.note.id);
+                                                            }
+                                                            setNoteEditId(null);
+                                                            setActiveNoteId(null);
+                                                        }}
+                                                        placeholder="Type your note..."
+                                                        placeholderTextColor={C.subText}
+                                                        autoFocus={isActiveNote}
+                                                        keyboardType="default"
+                                                        pointerEvents="none"
+                                                        style={[styles.noteInput, { color: C.text }]}
+                                                    />
+                                                </Pressable>
                                             );
                                         }
                                         const setItem = item.set;
@@ -337,6 +415,7 @@ export default function EditExerciseModal({
                                             <Pressable
                                                 onPress={() => {
                                                     if (keyboardVisible) return;
+                                                    setActiveNoteId(null);
                                                     setActiveSetId(setItem.id);
                                                     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                                                 }}
@@ -354,6 +433,7 @@ export default function EditExerciseModal({
                                                     {!isBodyweight && (
                                                         <Pressable
                                                             onPress={() => {
+                                                                setActiveNoteId(null);
                                                                 setActiveSetId(setItem.id);
                                                                 weightInputRefs.current[setItem.id]?.focus();
                                                             }}
@@ -375,11 +455,12 @@ export default function EditExerciseModal({
                                                                     (setItem.actualWeight < 0 ? "" : String(setItem.actualWeight))
                                                                 }
                                                                 returnKeyType="done"
-                                                                onFocus={() => {
-                                                                    setActiveSetId(setItem.id);
-                                                                    setFocusedField({ setId: setItem.id, field: "weight" });
-                                                                    scrollToSet(setItem.id);
-                                                                    setWeightDrafts((prev) => {
+                                                            onFocus={() => {
+                                                                setActiveNoteId(null);
+                                                                setActiveSetId(setItem.id);
+                                                                setFocusedField({ setId: setItem.id, field: "weight" });
+                                                                scrollToSet(setItem.id);
+                                                                setWeightDrafts((prev) => {
                                                                         if (prev[setItem.id] !== undefined) return prev;
                                                                         return {
                                                                             ...prev,
@@ -430,6 +511,7 @@ export default function EditExerciseModal({
                                                     )}
                                                     <Pressable
                                                         onPress={() => {
+                                                            setActiveNoteId(null);
                                                             setActiveSetId(setItem.id);
                                                             repsInputRefs.current[setItem.id]?.focus();
                                                         }}
@@ -453,6 +535,7 @@ export default function EditExerciseModal({
                                                             }
                                                             returnKeyType="done"
                                                             onFocus={() => {
+                                                                setActiveNoteId(null);
                                                                 setActiveSetId(setItem.id);
                                                                 setFocusedField({ setId: setItem.id, field: "reps" });
                                                                 scrollToSet(setItem.id);
@@ -518,9 +601,23 @@ export default function EditExerciseModal({
                                 ]}
                             >
                                 <Text style={[styles.exerciseNameText, { color: "#fff", textAlign: "center" }, typography.body]}>
-                                    {selectedOrdinal !== null ? `Set ${selectedOrdinal} selected` : "No sets selected"}
+                                    {activeNoteId
+                                        ? `General Note ${noteNumberMap[activeNoteId] ?? "?"} selected`
+                                        : selectedOrdinal !== null
+                                            ? `Set ${selectedOrdinal} selected`
+                                            : "No sets selected"}
                                 </Text>
-                                {selectedOrdinal !== null && (
+                                {activeNoteId ? (
+                                    <Pressable
+                                        style={[styles.finishBtn, { backgroundColor: "#ef4444" }]}
+                                        hitSlop={10}
+                                        onPress={() => setActiveNoteId(null)}
+                                    >
+                                        <Text style={[styles.finishText, { color: "#ffffff" }, typography.button]}>
+                                            Unselect
+                                        </Text>
+                                    </Pressable>
+                                ) : selectedOrdinal !== null ? (
                                     <Pressable
                                         style={[styles.finishBtn, { backgroundColor: "#ef4444" }]}
                                         hitSlop={10}
@@ -530,11 +627,17 @@ export default function EditExerciseModal({
                                             {`Unselect Set ${selectedOrdinal}`}
                                         </Text>
                                     </Pressable>
-                                )}
+                                ) : null}
                                 <Pressable
                                     style={[styles.finishBtn, { backgroundColor: "#FBBF24" }]}
                                     hitSlop={10}
                                     onPress={() => {
+                                        if (activeNoteId) {
+                                            if (keyboardVisible) return;
+                                            setNoteEditId(activeNoteId);
+                                            requestAnimationFrame(() => noteInputRefs.current[activeNoteId]?.focus());
+                                            return;
+                                        }
                                         if (selectedOrdinal === null) {
                                             void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
                                             handleAddGeneralNote();
@@ -542,7 +645,11 @@ export default function EditExerciseModal({
                                     }}
                                 >
                                     <Text style={[styles.finishText, { color: "#111827" }, typography.button]}>
-                                        {selectedOrdinal !== null ? "+ Set Specific Note" : "+ General Note"}
+                                        {activeNoteId
+                                            ? "Edit"
+                                            : selectedOrdinal !== null
+                                                ? "+ Set Specific Note"
+                                                : "+ General Note"}
                                     </Text>
                                 </Pressable>
                                 <Pressable
@@ -628,5 +735,5 @@ const styles = StyleSheet.create({
     finishText: { color: "white", fontSize: 16, ...typography.body },
     exerciseNameText: { fontSize: 16, fontWeight: "700" },
     exerciseHintText: { fontSize: 12 },
-    notePlaceholder: { fontSize: 13, fontWeight: "600", textAlign: "center" },
+    noteInput: { fontSize: 14, fontWeight: "600", paddingVertical: 4, textAlign: "center" },
 });
