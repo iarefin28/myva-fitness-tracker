@@ -38,13 +38,14 @@ export const useWorkoutStore = create<WorkoutState>()(
       },
 
       // --- Top Level Workout Item APIs --- 
-      addExercise: (name, libId) => {
+      addExercise: (name, libId, exerciseType) => {
         const d = get().draft; if (!d) return '';
         const item: WorkoutExercise = {
           id: uid(),
           type: 'exercise',
           name,
           libId,
+          exerciseType: exerciseType ?? 'free weight',
           status: 'inProgress',
           createdAt: Date.now(),
           sets: [],

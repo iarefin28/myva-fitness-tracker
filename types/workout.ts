@@ -39,6 +39,7 @@ export interface WorkoutExercise extends WorkoutItemBase {
   type: 'exercise';
   name: string;
   libId?: string;          // optional reference to library exercise
+  exerciseType?: ExerciseType;
   status: ExerciseStatus;  // inProgress | completed
   sets: WorkoutExerciseSet[];
 }
@@ -80,7 +81,7 @@ export interface WorkoutState {
   startDraft: (name: string) => void;
   setDraftName: (name: string) => void;
 
-  addExercise: (name: string, libId?: string) => string;
+  addExercise: (name: string, libId?: string, exerciseType?: ExerciseType) => string;
   addNote: (text: string) => string;
   addCustom: (text: string) => string;
 

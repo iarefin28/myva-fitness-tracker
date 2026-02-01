@@ -83,6 +83,7 @@ export default function AddWorkout() {
     const clearDraft = useWorkoutStore((s) => (s as any).clearDraft) as () => void;
     const isFinishingRef = useRef(false);
     const bumpUsage = useExerciseLibrary((s) => s.bumpUsage);
+    const exercisesById = useExerciseLibrary((s) => s.exercises);
 
 
     // ---------- Header ----------
@@ -254,7 +255,7 @@ export default function AddWorkout() {
 
         // ADD flows
         let newId = '';
-        if (kind === 'exercise') newId = addExercise(v);
+        if (kind === 'exercise') newId = addExercise(v, undefined, 'free weight');
         else if (kind === 'note') newId = addNote(v);
         else newId = addCustom(v);
 
@@ -475,7 +476,8 @@ export default function AddWorkout() {
                 onClose={() => setAddExerciseOpen(false)}
                 onSelectExercise={({ name, id }) => {
                     // Reuse your existing store action
-                    addExercise(name, id);
+                    const exerciseType = exercisesById[id]?.type ?? 'free weight';
+                    addExercise(name, id, exerciseType);
                     // any post-add cleanup if you want
                 }}
                 onAddNew={handleAddNewFromModal}

@@ -21,6 +21,7 @@ import {
     View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useExerciseLibrary } from "@/store/exerciseLibrary";
 
 
 type Props = {
@@ -50,8 +51,11 @@ export default function EditExerciseModal({
     ) => boolean;
     const undoLastAction = useWorkoutStore((s) => s.undoLastAction);
     const lastActionAt = useWorkoutStore((s) => s.draft?.lastActionAt);
+    const exercisesById = useExerciseLibrary((s) => s.exercises);
 
     const ex = exerciseId ? getExercise(exerciseId) : null;
+    const exerciseType = ex?.exerciseType ?? (ex?.libId ? exercisesById[ex.libId]?.type : undefined);
+    const isBodyweight = exerciseType === 'bodyweight';
 
     const isCompleted = ex?.status === 'completed';
     const hasSets = (ex?.sets?.length ?? 0) > 0;
@@ -152,7 +156,7 @@ export default function EditExerciseModal({
     };
     const handleAddSet = () => {
         void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-        addSet(-1, -1);
+        addSet(isBodyweight ? 0 : -1, -1);
         listRef.current?.scrollToOffset({ offset: 0, animated: true });
     };
     const confirmUndoLastSet = () => {
@@ -283,79 +287,83 @@ export default function EditExerciseModal({
                                                 </Text>
                                                 <View style={[styles.setCardDivider, { backgroundColor: C.border }]} />
                                                 <View style={styles.setCardMetricsCentered}>
-                                                    <Pressable
-                                                        onPress={() => {
-                                                            setActiveSetId(item.id);
-                                                            weightInputRefs.current[item.id]?.focus();
-                                                        }}
-                                                        style={[
-                                                            styles.metricBlockCentered,
-                                                            { backgroundColor: C.surfaceAlt },
-                                                            focusedField?.setId === item.id &&
-                                                                focusedField.field === "weight" &&
-                                                                styles.metricBlockFocused,
-                                                        ]}
-                                                    >
-                                                        <Text style={[styles.metricLabel, { color: C.subText }]}>Weight</Text>
-                                                        <TextInput
-                                                            ref={(ref) => {
-                                                                weightInputRefs.current[item.id] = ref;
-                                                            }}
-                                                            value={
-                                                                weightDrafts[item.id] ??
-                                                                (item.actualWeight < 0 ? "" : String(item.actualWeight))
-                                                            }
-                                                            returnKeyType="done"
-                                                            onFocus={() => {
+                                                    {!isBodyweight && (
+                                                        <Pressable
+                                                            onPress={() => {
                                                                 setActiveSetId(item.id);
-                                                                setFocusedField({ setId: item.id, field: "weight" });
-                                                                scrollToSet(item.id);
-                                                                setWeightDrafts((prev) => {
-                                                                    if (prev[item.id] !== undefined) return prev;
-                                                                    return {
-                                                                        ...prev,
-                                                                        [item.id]:
-                                                                            item.actualWeight < 0 ? "" : String(item.actualWeight),
-                                                                    };
-                                                                });
+                                                                weightInputRefs.current[item.id]?.focus();
                                                             }}
-                                                            onBlur={() =>
-                                                                setFocusedField((prev) =>
-                                                                    prev?.setId === item.id && prev.field === "weight" ? null : prev
-                                                                )
-                                                            }
-                                                            onChangeText={(val) =>
-                                                                setWeightDrafts((prev) => ({ ...prev, [item.id]: val }))
-                                                            }
-                                                            onEndEditing={(e) => {
-                                                                if (!exerciseId) return;
-                                                                const t = (e.nativeEvent.text ?? "").trim();
-                                                                if (t === "") {
-                                                                    updateExerciseSet(exerciseId, item.id, { actualWeight: -1 });
-                                                                } else {
-                                                                    const n = Number(t);
-                                                                    if (Number.isFinite(n)) {
-                                                                        updateExerciseSet(exerciseId, item.id, { actualWeight: n });
-                                                                    }
+                                                            style={[
+                                                                styles.metricBlockCentered,
+                                                                { backgroundColor: C.surfaceAlt },
+                                                                focusedField?.setId === item.id &&
+                                                                    focusedField.field === "weight" &&
+                                                                    styles.metricBlockFocused,
+                                                            ]}
+                                                        >
+                                                            <Text style={[styles.metricLabel, { color: C.subText }]}>Weight</Text>
+                                                            <TextInput
+                                                                ref={(ref) => {
+                                                                    weightInputRefs.current[item.id] = ref;
+                                                                }}
+                                                                value={
+                                                                    weightDrafts[item.id] ??
+                                                                    (item.actualWeight < 0 ? "" : String(item.actualWeight))
                                                                 }
-                                                                setWeightDrafts((prev) => {
-                                                                    const next = { ...prev };
-                                                                    delete next[item.id];
-                                                                    return next;
-                                                                });
-                                                            }}
-                                                            placeholder="Not Set"
-                                                            placeholderTextColor={C.subText}
-                                                            keyboardType="number-pad"
-                                                            style={[styles.metricValue, { color: C.text }]}
+                                                                returnKeyType="done"
+                                                                onFocus={() => {
+                                                                    setActiveSetId(item.id);
+                                                                    setFocusedField({ setId: item.id, field: "weight" });
+                                                                    scrollToSet(item.id);
+                                                                    setWeightDrafts((prev) => {
+                                                                        if (prev[item.id] !== undefined) return prev;
+                                                                        return {
+                                                                            ...prev,
+                                                                            [item.id]:
+                                                                                item.actualWeight < 0 ? "" : String(item.actualWeight),
+                                                                        };
+                                                                    });
+                                                                }}
+                                                                onBlur={() =>
+                                                                    setFocusedField((prev) =>
+                                                                        prev?.setId === item.id && prev.field === "weight" ? null : prev
+                                                                    )
+                                                                }
+                                                                onChangeText={(val) =>
+                                                                    setWeightDrafts((prev) => ({ ...prev, [item.id]: val }))
+                                                                }
+                                                                onEndEditing={(e) => {
+                                                                    if (!exerciseId) return;
+                                                                    const t = (e.nativeEvent.text ?? "").trim();
+                                                                    if (t === "") {
+                                                                        updateExerciseSet(exerciseId, item.id, { actualWeight: -1 });
+                                                                    } else {
+                                                                        const n = Number(t);
+                                                                        if (Number.isFinite(n)) {
+                                                                            updateExerciseSet(exerciseId, item.id, { actualWeight: n });
+                                                                        }
+                                                                    }
+                                                                    setWeightDrafts((prev) => {
+                                                                        const next = { ...prev };
+                                                                        delete next[item.id];
+                                                                        return next;
+                                                                    });
+                                                                }}
+                                                                placeholder="Not Set"
+                                                                placeholderTextColor={C.subText}
+                                                                keyboardType="number-pad"
+                                                                style={[styles.metricValue, { color: C.text }]}
+                                                            />
+                                                        </Pressable>
+                                                    )}
+                                                    {!isBodyweight && (
+                                                        <View
+                                                            style={[
+                                                                styles.metricDivider,
+                                                                { backgroundColor: isDark ? "#e5e7eb" : "#94A3B8", opacity: isDark ? 0.25 : 0.6 },
+                                                            ]}
                                                         />
-                                                    </Pressable>
-                                                    <View
-                                                        style={[
-                                                            styles.metricDivider,
-                                                            { backgroundColor: isDark ? "#e5e7eb" : "#94A3B8", opacity: isDark ? 0.25 : 0.6 },
-                                                        ]}
-                                                    />
+                                                    )}
                                                     <Pressable
                                                         onPress={() => {
                                                             setActiveSetId(item.id);
@@ -364,6 +372,7 @@ export default function EditExerciseModal({
                                                         style={[
                                                             styles.metricBlockCentered,
                                                             { backgroundColor: C.surfaceAlt },
+                                                            isBodyweight && styles.metricBlockSingle,
                                                             focusedField?.setId === item.id &&
                                                                 focusedField.field === "reps" &&
                                                                 styles.metricBlockFocused,
@@ -525,6 +534,7 @@ const styles = StyleSheet.create({
     setCardDivider: { height: 1.5, alignSelf: "stretch", opacity: 0.6, marginBottom: 8 },
     setCardMetricsCentered: { flexDirection: "row", alignItems: "stretch", justifyContent: "center", gap: 8 },
     metricBlockCentered: { alignItems: "center", width: 88, paddingVertical: 8, borderRadius: 10 },
+    metricBlockSingle: { width: 140 },
     metricDivider: { width: 1, height: "100%", backgroundColor: "#e5e7eb", opacity: 0.25 },
     metricBlockFocused: { borderWidth: 1, borderColor: "#22C55E", backgroundColor: "rgba(34,197,94,0.15)" },
     metricLabel: { fontSize: 12, fontWeight: "700", marginBottom: 2, ...typography.body },
