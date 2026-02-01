@@ -96,7 +96,6 @@ export default function FinishWorkoutModal({
                           <Text style={[styles.prettySub, { color: C.subText }]}>{subtitle}</Text>
                         </View>
                       </View>
-                      <Ionicons name="chevron-forward" size={18} color={C.subText} />
                     </View>
                   );
                 })
