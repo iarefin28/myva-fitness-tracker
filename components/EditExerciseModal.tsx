@@ -63,6 +63,8 @@ export default function EditExerciseModal({
 
     const isCompleted = ex?.status === 'completed';
     const hasSets = (ex?.sets?.length ?? 0) > 0;
+    const hasNotes = (ex?.generalNotes?.length ?? 0) > 0;
+    const hasUndoableAction = hasSets || hasNotes;
     const nextSetNumber = (ex?.sets?.length ?? 0) + 1;
     // ----- Local UI state (unchanged look) -----
     const [activeSetId, setActiveSetId] = useState<string | null>(null);
@@ -138,6 +140,35 @@ export default function EditExerciseModal({
         if (idx < 0) return null;
         return isCompleted ? idx + 1 : orderedSets.length - idx;
     }, [activeSetId, orderedSets, isCompleted]);
+    const noteNumberMap = useMemo(() => {
+        const notes = [...(ex?.generalNotes ?? [])].sort((a, b) => a.createdAt - b.createdAt);
+        const map: Record<string, number> = {};
+        notes.forEach((n, i) => { map[n.id] = i + 1; });
+        return map;
+    }, [ex?.generalNotes]);
+    const lastActionLabel = useMemo(() => {
+        if (!ex) return "last action";
+        let latestSet: { id: string; createdAt: number } | null = null;
+        let latestNote: { id: string; createdAt: number } | null = null;
+        ex.sets.forEach((s) => {
+            if (!latestSet || s.createdAt > latestSet.createdAt) latestSet = { id: s.id, createdAt: s.createdAt };
+        });
+        (ex.generalNotes ?? []).forEach((n) => {
+            if (!latestNote || n.createdAt > latestNote.createdAt) latestNote = { id: n.id, createdAt: n.createdAt };
+        });
+        if (!latestSet && !latestNote) return "last action";
+        const removeNote = latestNote && (!latestSet || latestNote.createdAt >= latestSet.createdAt);
+        if (removeNote && latestNote) {
+            const num = noteNumberMap[latestNote.id] ?? "?";
+            return `General Note ${num}`;
+        }
+        if (latestSet) {
+            const idx = orderedSets.findIndex((s) => s.id === latestSet.id);
+            const ordinal = idx >= 0 ? (isCompleted ? idx + 1 : orderedSets.length - idx) : "?";
+            return `Set ${ordinal}`;
+        }
+        return "last action";
+    }, [ex, orderedSets, isCompleted, noteNumberMap]);
     const scrollToSet = (setId: string) => {
         const idx = orderedSets.findIndex((s) => s.id === setId);
         if (idx < 0 || !listRef.current) return;
@@ -177,8 +208,8 @@ export default function EditExerciseModal({
         listRef.current?.scrollToOffset({ offset: 0, animated: true });
     };
     const confirmUndoLastSet = () => {
-        if (!undoLastAction || !hasSets) return;
-        Alert.alert("Undo last action? This cannot be undone.", "", [
+        if (!undoLastAction || !hasUndoableAction) return;
+        Alert.alert(`Undo ${lastActionLabel}?`, "This cannot be undone.", [
             { text: "Cancel", style: "cancel" },
             {
                 text: "Undo",
@@ -215,9 +246,9 @@ export default function EditExerciseModal({
                                 hitSlop={10}
                                 style={styles.undoTextBtn}
                                 accessibilityLabel="Undo last set"
-                                disabled={!hasSets}
+                                disabled={!hasUndoableAction}
                             >
-                                <Text style={[styles.undoText, !hasSets && styles.undoTextDisabled]}>Undo</Text>
+                                <Text style={[styles.undoText, !hasUndoableAction && styles.undoTextDisabled]}>Undo</Text>
                             </Pressable>
                         )}
                     </View>
@@ -283,9 +314,12 @@ export default function EditExerciseModal({
                                     contentContainerStyle={{ paddingBottom: 140 }}
                                     renderItem={({ item, index }) => {
                                         if (item.kind === "note") {
+                                            const noteNumber = noteNumberMap[item.note.id] ?? "?";
                                             return (
                                                 <View style={[styles.setCard, { backgroundColor: C.surface, borderColor: C.border }]}>
-                                                    <Text style={[styles.setCardTitle, { color: C.text }]}>General Note</Text>
+                                                    <Text style={[styles.setCardTitle, { color: C.text }]}>
+                                                        {`General Note ${noteNumber}`}
+                                                    </Text>
                                                     <View style={[styles.setCardDivider, { backgroundColor: C.border }]} />
                                                     <Text style={[styles.notePlaceholder, { color: C.subText }]}>
                                                         (empty)
