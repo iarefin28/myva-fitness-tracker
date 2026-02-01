@@ -444,11 +444,9 @@ export default function EditExerciseModal({
                                     },
                                 ]}
                             >
-                                <View style={styles.selectedSetPill}>
-                                    <Text style={[styles.selectedSetText, { color: C.text }, typography.body]}>
-                                        {selectedOrdinal !== null ? `Set ${selectedOrdinal} selected` : "No sets selected"}
-                                    </Text>
-                                </View>
+                                <Text style={[styles.exerciseNameText, { color: "#fff", textAlign: "center" }, typography.body]}>
+                                    {selectedOrdinal !== null ? `Set ${selectedOrdinal} selected` : "No sets selected"}
+                                </Text>
                                 <Pressable
                                     style={[styles.finishBtn, { backgroundColor: "#FBBF24" }]}
                                     hitSlop={10}
@@ -538,6 +536,4 @@ const styles = StyleSheet.create({
     finishText: { color: "white", fontSize: 16, ...typography.body },
     exerciseNameText: { fontSize: 16, fontWeight: "700" },
     exerciseHintText: { fontSize: 12 },
-    selectedSetPill: { alignSelf: "center", paddingVertical: 4 },
-    selectedSetText: { fontSize: 14, textAlign: "center", fontWeight: "600" },
 });

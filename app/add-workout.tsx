@@ -112,6 +112,7 @@ export default function AddWorkout() {
     useLayoutEffect(() => {
         navigation.setOptions({
             headerTitle: 'Add Workout',
+            contentStyle: { backgroundColor: C.bg },
             headerRight: () => (
                 <Pressable onPress={onDiscard} hitSlop={10} accessibilityLabel="Discard workout">
                     <Ionicons name="trash-outline" size={22} color="#ef4444" />
