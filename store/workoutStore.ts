@@ -138,6 +138,7 @@ export const useWorkoutStore = create<WorkoutState>()(
         const d = get().draft; if (!d) return false;
         let latestSet: { exerciseId: string; setId: string; createdAt: number } | null = null;
         let latestNote: { exerciseId: string; noteId: string; createdAt: number } | null = null;
+        let latestSetNote: { exerciseId: string; setId: string; noteId: string; createdAt: number } | null = null;
 
         d.items.forEach((it) => {
           if (it.type !== 'exercise') return;
@@ -145,6 +146,11 @@ export const useWorkoutStore = create<WorkoutState>()(
             if (!latestSet || s.createdAt > latestSet.createdAt) {
               latestSet = { exerciseId: it.id, setId: s.id, createdAt: s.createdAt };
             }
+            (s.setNotes ?? []).forEach((n) => {
+              if (!latestSetNote || n.createdAt > latestSetNote.createdAt) {
+                latestSetNote = { exerciseId: it.id, setId: s.id, noteId: n.id, createdAt: n.createdAt };
+              }
+            });
           });
           (it.generalNotes ?? []).forEach((n) => {
             if (!latestNote || n.createdAt > latestNote.createdAt) {
@@ -153,12 +159,26 @@ export const useWorkoutStore = create<WorkoutState>()(
           });
         });
 
-        if (!latestSet && !latestNote) return false;
+        if (!latestSet && !latestNote && !latestSetNote) return false;
+        const latestSetCreated = latestSet?.createdAt ?? -1;
+        const latestGeneralCreated = latestNote?.createdAt ?? -1;
+        const latestSetNoteCreated = latestSetNote?.createdAt ?? -1;
+        const latest = Math.max(latestSetCreated, latestGeneralCreated, latestSetNoteCreated);
+        const shouldRemoveSetNote = latestSetNote && latestSetNote.createdAt === latest;
         const shouldRemoveNote =
+          !shouldRemoveSetNote &&
           latestNote &&
-          (!latestSet || latestNote.createdAt >= latestSet.createdAt);
+          latestNote.createdAt === latest;
         const items = d.items.map((it) => {
           if (it.type !== 'exercise') return it;
+          if (shouldRemoveSetNote) {
+            if (it.id !== latestSetNote!.exerciseId) return it;
+            const sets = it.sets.map((s) => {
+              if (s.id !== latestSetNote!.setId) return s;
+              return { ...s, setNotes: (s.setNotes ?? []).filter((n) => n.id !== latestSetNote!.noteId) };
+            });
+            return { ...it, sets } as WorkoutExercise;
+          }
           if (shouldRemoveNote) {
             if (it.id !== latestNote!.exerciseId) return it;
             return {
@@ -232,6 +252,53 @@ export const useWorkoutStore = create<WorkoutState>()(
           if (it.id !== exerciseId || it.type !== 'exercise') return it;
           const nextNotes = (it.generalNotes ?? []).filter((n) => n.id !== noteId);
           return { ...it, generalNotes: nextNotes } as WorkoutExercise;
+        });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
+        return true;
+      },
+
+      addExerciseSetNote: (exerciseId, setId, note) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.map((it) => {
+          if (it.id !== exerciseId || it.type !== 'exercise') return it;
+          const sets = it.sets.map((s) => {
+            if (s.id !== setId) return s;
+            const nextNotes = [...(s.setNotes ?? []), note];
+            return { ...s, setNotes: nextNotes };
+          });
+          return { ...it, sets } as WorkoutExercise;
+        });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
+        return true;
+      },
+
+      updateExerciseSetNote: (exerciseId, setId, noteId, text) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.map((it) => {
+          if (it.id !== exerciseId || it.type !== 'exercise') return it;
+          const sets = it.sets.map((s) => {
+            if (s.id !== setId) return s;
+            const nextNotes = (s.setNotes ?? []).map((n) =>
+              n.id === noteId ? { ...n, text } : n
+            );
+            return { ...s, setNotes: nextNotes };
+          });
+          return { ...it, sets } as WorkoutExercise;
+        });
+        set({ draft: { ...d, items, lastActionAt: Date.now() } });
+        return true;
+      },
+
+      removeExerciseSetNote: (exerciseId, setId, noteId) => {
+        const d = get().draft; if (!d) return false;
+        const items = d.items.map((it) => {
+          if (it.id !== exerciseId || it.type !== 'exercise') return it;
+          const sets = it.sets.map((s) => {
+            if (s.id !== setId) return s;
+            const nextNotes = (s.setNotes ?? []).filter((n) => n.id !== noteId);
+            return { ...s, setNotes: nextNotes };
+          });
+          return { ...it, sets } as WorkoutExercise;
         });
         set({ draft: { ...d, items, lastActionAt: Date.now() } });
         return true;

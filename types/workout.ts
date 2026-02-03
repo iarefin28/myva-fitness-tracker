@@ -33,6 +33,7 @@ export interface WorkoutExerciseSet {
   actualWeight: number;
   actualReps: number;
   note?: string;
+  setNotes?: { id: string; text: string; createdAt: number }[];
   createdAt: number;
 }
 
@@ -113,6 +114,13 @@ export interface WorkoutState {
   addExerciseGeneralNote: (exerciseId: string, note: { id: string; text: string; createdAt: number }) => boolean;
   updateExerciseGeneralNote: (exerciseId: string, noteId: string, text: string) => boolean;
   removeExerciseGeneralNote: (exerciseId: string, noteId: string) => boolean;
+  addExerciseSetNote: (
+    exerciseId: string,
+    setId: string,
+    note: { id: string; text: string; createdAt: number }
+  ) => boolean;
+  updateExerciseSetNote: (exerciseId: string, setId: string, noteId: string, text: string) => boolean;
+  removeExerciseSetNote: (exerciseId: string, setId: string, noteId: string) => boolean;
 
   // convenient selector (optional)
   getExercise: (exerciseId: string) => WorkoutExercise | null;
