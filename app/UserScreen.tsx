@@ -158,60 +158,77 @@ export default function UserScreen() {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     navigation.navigate("exercise-detail", { exerciseId });
   };
+  const handleAddExercise = () => {
+    navigation.navigate("addNewExercise", { addToDraft: "0" });
+  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: C.bg }]}>
-      <LinearGradient
-        colors={headerGradient}
-        style={[styles.top, { borderBottomColor: C.border }]}
-      >
-        <Text style={[styles.name, { color: C.headerText }]}>
-          {user?.displayName || "No name"}
-        </Text>
-        <Text style={[styles.email, { color: C.headerText }]}>
-          {user?.email || "No email"}
-        </Text>
-        <Text style={[styles.uid, { color: C.headerText }]}>
-          uid: {user?.uid || "Unknown"}
-        </Text>
+      <LinearGradient colors={headerGradient} style={styles.headerBlock}>
+        <View style={styles.headerContent}>
+          <Text style={[styles.name, { color: C.headerText }]}>
+            {user?.displayName || "No name"}
+          </Text>
+          <Text style={[styles.email, { color: C.headerText }]}>
+            {user?.email || "No email"}
+          </Text>
+          <Text style={[styles.uid, { color: C.headerText }]}>
+            uid: {user?.uid || "Unknown"}
+          </Text>
+        </View>
+        <View style={styles.headerControls}>
+          <View style={styles.tabRow}>
+            {sectionButtons.map((tab) => {
+              const isActive = activeTab === tab.key;
+              const isDisabled = tab.key !== "exercises";
+              return (
+                <Pressable
+                  key={tab.key}
+                  disabled={isDisabled}
+                  onPress={() => setActiveTab(tab.key)}
+                  style={[
+                    styles.tabBtn,
+                    { backgroundColor: "rgba(17, 17, 17, 0.18)", borderColor: "rgba(255, 255, 255, 0.35)" },
+                    isActive && [styles.tabBtnActive, { backgroundColor: C.accent, borderColor: C.accent }],
+                    isDisabled && styles.tabBtnDisabled,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.tabText,
+                      { color: C.headerText },
+                      isActive && styles.tabTextActive,
+                      isDisabled && styles.tabTextDisabledOnHeader,
+                    ]}
+                  >
+                    {tab.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
       </LinearGradient>
 
       <View style={[styles.bottom, { paddingBottom: 60 + insets.bottom }]}>
-        <View style={styles.tabRow}>
-          {sectionButtons.map((tab) => {
-            const isActive = activeTab === tab.key;
-            const isDisabled = tab.key !== "exercises";
-            return (
-              <Pressable
-                key={tab.key}
-                disabled={isDisabled}
-                onPress={() => setActiveTab(tab.key)}
-                style={[
-                  styles.tabBtn,
-                  { backgroundColor: C.tabBg, borderColor: C.border },
-                  isActive && [styles.tabBtnActive, { backgroundColor: C.accent, borderColor: C.accent }],
-                  isDisabled && styles.tabBtnDisabled,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.tabText,
-                    { color: C.subText },
-                    isActive && styles.tabTextActive,
-                    isDisabled && styles.tabTextDisabled,
-                  ]}
-                >
-                  {tab.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
 
         {activeTab === "exercises" ? (
           <View style={[styles.panel, { backgroundColor: C.tabBg, borderColor: C.border }]}>
             <View style={[styles.panelHeader, { borderBottomColor: C.border }]}>
               <Text style={[styles.panelTitle, { color: C.text }]}>All Exercises</Text>
+              <Pressable
+                onPress={handleAddExercise}
+                style={({ pressed }) => [
+                  styles.headerAction,
+                  { borderColor: C.border },
+                  pressed && styles.headerActionPressed,
+                ]}
+              >
+                <Ionicons name="add" size={16} color={C.text} />
+                <Text style={[styles.headerActionText, { color: C.text }]}>
+                  New Exercise
+                </Text>
+              </Pressable>
             </View>
 
             {exercisesList.length === 0 ? (
@@ -252,18 +269,27 @@ export default function UserScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
 
-  top: {
-    flex: 0.2,
+  headerBlock: {
+    width: "100%",
     paddingHorizontal: 20,
-    justifyContent: "center",
-    borderBottomWidth: 1,
+    paddingTop: 18,
+    paddingBottom: 14,
+    borderBottomLeftRadius: 18,
+    borderBottomRightRadius: 18,
+    overflow: "hidden",
+  },
+  headerContent: {
+    paddingBottom: 12,
+  },
+  headerControls: {
+    paddingBottom: 6,
   },
   name: { fontSize: 20, fontWeight: "700", marginBottom: 6, ...typography.body },
   email: { fontSize: 15, marginBottom: 2, ...typography.body },
   uid: { fontSize: 12, ...typography.body },
 
   bottom: {
-    flex: 0.8,
+    flex: 1,
     paddingHorizontal: 16,
     paddingTop: 16,
   },
@@ -284,6 +310,7 @@ const styles = StyleSheet.create({
   tabTextActive: { color: "#fff" },
   tabBtnDisabled: { opacity: 0.5 },
   tabTextDisabled: { color: "#94A3B8" },
+  tabTextDisabledOnHeader: { color: "rgba(255, 255, 255, 0.6)" },
 
   panel: {
     marginTop: 12,
@@ -295,8 +322,22 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderBottomWidth: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   panelTitle: { fontSize: 15, fontWeight: "700", ...typography.body },
+  headerAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  },
+  headerActionPressed: { opacity: 0.7 },
+  headerActionText: { fontSize: 12, fontWeight: "700", ...typography.button },
   row: {
     minHeight: 48,
     paddingHorizontal: 14,

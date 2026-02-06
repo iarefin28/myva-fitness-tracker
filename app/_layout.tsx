@@ -143,6 +143,7 @@ function TabLayout() {
             name="Your Profile"
             component={UserScreen}
             options={{
+              headerTitle: () => <HeaderLogo />,
               tabBarIcon: ({ color, size }) => <Ionicons name="sparkles" size={size} color={color} />,
             }}
           />
