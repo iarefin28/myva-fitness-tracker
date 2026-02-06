@@ -13,7 +13,6 @@ import {
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Pressable,
   SafeAreaView,
@@ -26,11 +25,9 @@ import {
   View,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from "../auth/AuthProvider";
 import { auth, db } from "../FirebaseConfig";
 import { useExerciseLibrary } from "@/store/exerciseLibrary";
-import { useWorkoutStore } from "@/store/workoutStore";
 
 type FriendRequest = {
   id: string;
@@ -48,10 +45,8 @@ export default function UserScreen() {
   const navigation = useNavigation<any>();
   const exercisesById = useExerciseLibrary((s) => s.exercises);
   const ensureDefaults = useExerciseLibrary((s) => s.ensureDefaults);
-  const clearHistory = useWorkoutStore((s) => s.clearHistory);
-
   const [signingOut, setSigningOut] = useState(false);
-  const [activeTab, setActiveTab] = useState<"friends" | "exercises" | "utilities">("exercises");
+  const [activeTab, setActiveTab] = useState<"friends" | "exercises">("exercises");
 
   // —— SOCIAL STATE ——
   const [searchText, setSearchText] = useState("");
@@ -84,64 +79,6 @@ export default function UserScreen() {
   const exercisesList = Object.values(exercisesById).sort((a: any, b: any) =>
     a.name.localeCompare(b.name)
   );
-
-  const handleClearStorage = () => {
-    Alert.alert(
-      "Clear local storage?",
-      "This will delete all locally saved data on this device. This cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            await AsyncStorage.clear();
-            useExerciseLibrary.setState({ exercises: {}, byName: {}, ready: false });
-            useWorkoutStore.setState({ draft: null, history: [] });
-            Alert.alert("Cleared", "Local storage has been cleared.");
-          },
-        },
-      ]
-    );
-  };
-
-  const handleClearExerciseLibrary = () => {
-    Alert.alert(
-      "Reset exercise library?",
-      "This will reset all exercises to defaults and remove all custom exercises.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Reset",
-          style: "destructive",
-          onPress: async () => {
-            await AsyncStorage.removeItem("myva_exercise_library_v1");
-            useExerciseLibrary.setState({ exercises: {}, byName: {}, ready: false });
-            ensureDefaults();
-            Alert.alert("Reset", "Exercise library reset to defaults.");
-          },
-        },
-      ]
-    );
-  };
-
-  const handleClearCompletedWorkouts = () => {
-    Alert.alert(
-      "Clear completed workouts?",
-      "This will remove all completed workouts saved on this device.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Clear",
-          style: "destructive",
-          onPress: () => {
-            clearHistory();
-            Alert.alert("Cleared", "Completed workouts cleared.");
-          },
-        },
-      ]
-    );
-  };
 
   const handleAddExercise = () => {
     navigation.navigate("addNewExercise", { addToDraft: "0" });
@@ -428,7 +365,6 @@ export default function UserScreen() {
           {[
             { key: "exercises", label: "Exercises" },
             { key: "friends", label: "Friends" },
-            { key: "utilities", label: "Utilities" },
           ].map((t) => {
             const isActive = activeTab === t.key;
             return (
@@ -701,50 +637,6 @@ export default function UserScreen() {
           </View>
         )}
 
-        {/* ——————————————————————— */}
-        {/*          UTILITIES         */}
-        {/* ——————————————————————— */}
-        {activeTab === "utilities" && (
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: C.text }]}>
-              Utilities
-            </Text>
-
-            <View style={styles.resetActions}>
-              <TouchableOpacity
-                onPress={handleClearCompletedWorkouts}
-                style={[
-                  styles.secondaryBtn,
-                  { backgroundColor: C.btn, borderColor: C.border },
-                ]}
-              >
-                <Text style={[styles.clearBtnText, { color: C.text }]}>
-                  Clear Completed Workouts
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleClearExerciseLibrary}
-                style={[
-                  styles.secondaryBtn,
-                  { backgroundColor: C.danger, borderColor: C.danger },
-                ]}
-              >
-                <Text style={styles.clearBtnText}>Reset Exercise Library</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={handleClearStorage}
-                style={[
-                  styles.secondaryBtn,
-                  { backgroundColor: C.danger, borderColor: C.danger },
-                ]}
-              >
-                <Text style={styles.clearBtnText}>Clear Async Storage</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -840,19 +732,6 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 12,
   },
-  resetActions: {
-    marginTop: 12,
-    gap: 10,
-  },
-  secondaryBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 10,
-    alignItems: "center",
-    borderWidth: 1,
-  },
-  clearBtnText: { color: "#fff", fontSize: 14, fontWeight: "700" },
-
   addExerciseBtn: {
     flex: 1,
     paddingVertical: 10,
