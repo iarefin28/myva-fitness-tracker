@@ -6,7 +6,13 @@ import {
   useColorScheme,
   View,
   Pressable,
+  FlatList,
 } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { Ionicons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
+import { useNavigation } from "@react-navigation/native";
 import {
   collection,
   doc,
@@ -35,9 +41,11 @@ type TopTab = "exercises" | "friends" | "requests";
 
 export default function UserScreen() {
   const { user } = useAuth();
+  const navigation = useNavigation<any>();
   const exercisesById = useExerciseLibrary((s) => s.exercises);
   const ensureDefaults = useExerciseLibrary((s) => s.ensureDefaults);
   const [activeTab, setActiveTab] = useState<TopTab>("exercises");
+  const insets = useSafeAreaInsets();
 
   const [friends, setFriends] = useState<string[]>([]);
   const [friendProfiles, setFriendProfiles] = useState<any[]>([]);
@@ -52,11 +60,17 @@ export default function UserScreen() {
       bg: isDark ? "#000" : "#fff",
       text: isDark ? "#fff" : "#0b0b0b",
       sub: isDark ? "#bdbdbd" : "#4a4a4a",
+      headerText: "#fff",
       subText: isDark ? "#9ca3af" : "#64748B",
       border: isDark ? "#2a2a2a" : "#e5e5eb",
       tabBg: isDark ? "#111" : "#F1F5F9",
       accent: isDark ? "#0A84FF" : "#2563EB",
     }),
+    [isDark]
+  );
+
+  const headerGradient = useMemo(
+    () => (isDark ? ["#14532D", "#22C55E"] : ["#86EFAC", "#22C55E"]),
     [isDark]
   );
 
@@ -140,21 +154,29 @@ export default function UserScreen() {
     },
   ];
 
+  const handleExercisePress = (exerciseId: string) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    navigation.navigate("exercise-detail", { exerciseId });
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: C.bg }]}>
-      <View style={[styles.top, { borderBottomColor: C.border }]}>
-        <Text style={[styles.name, { color: C.text }]}>
+      <LinearGradient
+        colors={headerGradient}
+        style={[styles.top, { borderBottomColor: C.border }]}
+      >
+        <Text style={[styles.name, { color: C.headerText }]}>
           {user?.displayName || "No name"}
         </Text>
-        <Text style={[styles.email, { color: C.sub }]}>
+        <Text style={[styles.email, { color: C.headerText }]}>
           {user?.email || "No email"}
         </Text>
-        <Text style={[styles.uid, { color: C.sub }]}>
+        <Text style={[styles.uid, { color: C.headerText }]}>
           uid: {user?.uid || "Unknown"}
         </Text>
-      </View>
+      </LinearGradient>
 
-      <View style={styles.bottom}>
+      <View style={[styles.bottom, { paddingBottom: 60 + insets.bottom }]}>
         <View style={styles.tabRow}>
           {sectionButtons.map((tab) => {
             const isActive = activeTab === tab.key;
@@ -185,6 +207,43 @@ export default function UserScreen() {
             );
           })}
         </View>
+
+        {activeTab === "exercises" ? (
+          <View style={[styles.panel, { backgroundColor: C.tabBg, borderColor: C.border }]}>
+            <View style={[styles.panelHeader, { borderBottomColor: C.border }]}>
+              <Text style={[styles.panelTitle, { color: C.text }]}>All Exercises</Text>
+            </View>
+
+            {exercisesList.length === 0 ? (
+              <View style={styles.emptyWrap}>
+                <Text style={[styles.emptyText, { color: C.sub }]}>
+                  No exercises yet.
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={exercisesList}
+                keyExtractor={(item: any) => String(item.id ?? item.name)}
+                ItemSeparatorComponent={() => (
+                  <View style={[styles.sep, { backgroundColor: C.border }]} />
+                )}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => handleExercisePress(String(item.id))}
+                    style={({ pressed }) => [
+                      styles.row,
+                      pressed && styles.rowPressed,
+                    ]}
+                  >
+                    <Text style={[styles.rowTitle, { color: C.text }]}>{item.name}</Text>
+                    <Ionicons name="chevron-forward" size={18} color={C.sub} />
+                  </Pressable>
+                )}
+                contentContainerStyle={{ paddingBottom: 8 }}
+              />
+            )}
+          </View>
+        ) : null}
       </View>
     </SafeAreaView>
   );
@@ -225,4 +284,30 @@ const styles = StyleSheet.create({
   tabTextActive: { color: "#fff" },
   tabBtnDisabled: { opacity: 0.5 },
   tabTextDisabled: { color: "#94A3B8" },
+
+  panel: {
+    marginTop: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    overflow: "hidden",
+  },
+  panelHeader: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+  },
+  panelTitle: { fontSize: 15, fontWeight: "700", ...typography.body },
+  row: {
+    minHeight: 48,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  rowPressed: { opacity: 0.7 },
+  rowTitle: { fontSize: 15, fontWeight: "600", ...typography.body },
+  sep: { height: 1, width: "92%", alignSelf: "center" },
+  emptyWrap: { paddingHorizontal: 14, paddingVertical: 16 },
+  emptyText: { fontSize: 14, fontStyle: "italic", ...typography.body },
 });
