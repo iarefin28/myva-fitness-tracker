@@ -18,6 +18,7 @@ import {
 import { useAuth } from "../auth/AuthProvider";
 import { db } from "../FirebaseConfig";
 import { useExerciseLibrary } from "@/store/exerciseLibrary";
+import { typography } from "@/theme/typography";
 
 type FriendRequest = {
   id: string;
@@ -198,9 +199,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     borderBottomWidth: 1,
   },
-  name: { fontSize: 20, fontWeight: "700", marginBottom: 6 },
-  email: { fontSize: 15, marginBottom: 2 },
-  uid: { fontSize: 12 },
+  name: { fontSize: 20, fontWeight: "700", marginBottom: 6, ...typography.body },
+  email: { fontSize: 15, marginBottom: 2, ...typography.body },
+  uid: { fontSize: 12, ...typography.body },
 
   bottom: {
     flex: 0.8,
@@ -220,7 +221,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabBtnActive: { borderWidth: 1 },
-  tabText: { fontWeight: "700" },
+  tabText: { fontWeight: "700", ...typography.button },
   tabTextActive: { color: "#fff" },
   tabBtnDisabled: { opacity: 0.5 },
   tabTextDisabled: { color: "#94A3B8" },
