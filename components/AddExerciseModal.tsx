@@ -16,6 +16,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import { typography } from "@/theme/typography";
 
 
 
@@ -199,9 +200,9 @@ export default function AddExerciseModal({
     onAddNew?.(name); // You'll navigate in parent
   };
 
-  // Footer renderer for "Add '{query}'" at the END of search list
-  const renderSearchFooter = useCallback(() => {
-    if (!hasResults || !canSuggestAdd) return null;
+  // Row renderer for adding a new exercise
+  const renderAddRow = useCallback(() => {
+    if (!canSuggestAdd) return null;
     return (
       <Pressable
         onPress={handleAddNew}
@@ -219,7 +220,7 @@ export default function AddExerciseModal({
         <Ionicons name="add-circle" size={20} color={C.accent} />
       </Pressable>
     );
-  }, [hasResults, canSuggestAdd, query]);
+  }, [canSuggestAdd, query]);
 
   // --- Separated sections ---
   const renderSearchSection = () => (
@@ -228,14 +229,19 @@ export default function AddExerciseModal({
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={0}
     >
-      <View style={[styles.searchNote, { backgroundColor: C.noteBg, borderColor: C.noteBorder }]}>
-        <Text style={[styles.searchNoteTitle, { color: C.text }]}>Search is simple for now.</Text>
-        <Text style={[styles.searchNoteText, { color: C.subText }]}>
-          MYVA doesn’t have a huge library yet, so this just searches everything. Later we’ll add
-          filters like favorites, commonly used, back, chest, and other muscle groups.
-        </Text>
+      <View style={styles.filterWrap}>
+        <Pressable
+          style={({ pressed }) => [
+            styles.filterBtn,
+            { backgroundColor: C.accent, borderColor: C.accent },
+            pressed && styles.filterBtnPressed,
+          ]}
+        >
+          <Ionicons name="search" size={16} color="#fff" />
+          <Text style={[styles.filterBtnText, { color: "#fff" }]}>All Exercises</Text>
+        </Pressable>
       </View>
-      {hasResults ? (
+      {query.trim().length > 0 ? (
         <FlatList
           data={filteredList}
           keyExtractor={keyExtractor}
@@ -257,29 +263,9 @@ export default function AddExerciseModal({
               <Ionicons name="add-circle" size={20} color={C.accent} />
             </Pressable>
           )}
-          ListFooterComponent={renderSearchFooter}
+          ListFooterComponent={hasResults ? renderAddRow : null}
+          ListEmptyComponent={!hasResults ? renderAddRow : null}
         />
-      ) : query.trim().length > 0 ? (
-        <View style={styles.emptyStateWrap}>
-          <Pressable
-            onPress={handleAddNew}
-            style={({ pressed }) => [
-              styles.suggestionEmpty,
-              {
-                alignSelf: "stretch",
-                marginHorizontal: 16,
-                opacity: pressed ? 0.9 : 1,
-                backgroundColor: C.emptyBg,
-                borderColor: C.emptyBorder,
-              },
-            ]}
-          >
-            <Text style={[styles.suggestionEmptyText, { color: C.text }]}>
-              No matches found. Tap here to add a new exercise
-            </Text>
-            <Ionicons name="add-circle" size={20} color={C.accent} />
-          </Pressable>
-        </View>
       ) : null}
     </KeyboardAvoidingView>
   );
@@ -510,19 +496,19 @@ const styles = StyleSheet.create({
   },
 
   // Top bar
-  topbar: { flexDirection: "row", alignItems: "center", height: 64 },
+  topbar: { flexDirection: "row", alignItems: "center", height: 64, backgroundColor: "#1e293b" },
   sideLeft: { width: 56, alignItems: "flex-start", justifyContent: "center" },
   sideRight: { width: 56 },
   iconBtn: { padding: 10, borderRadius: 12 },
   center: { flex: 1, alignItems: "center", justifyContent: "center" },
 
   centerRow: { flexDirection: "row", alignItems: "center" },
-  title: { color: "#e5e7eb", fontWeight: "800", fontSize: 16, marginLeft: 6 },
+  title: { color: "#e5e7eb", fontSize: 16, marginLeft: 6, ...typography.body },
 
   realSearchRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#141414",
+    backgroundColor: "#0ea5e9",
     borderColor: "#2a2a2a",
     borderWidth: 1,
     borderRadius: 10,
@@ -538,7 +524,7 @@ const styles = StyleSheet.create({
   fakeSearch: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#141414",
+    backgroundColor: "#0ea5e9",
     borderColor: "#2a2a2a",
     borderWidth: 1,
     marginHorizontal: 16,
@@ -566,7 +552,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabBtnActive: { backgroundColor: "#0A84FF", borderColor: "#0A84FF" },
-  tabText: { color: "#9ca3af", fontWeight: "700" },
+  tabText: { color: "#9ca3af", ...typography.body },
   tabTextActive: { color: "#fff" },
 
   // When real search is active
@@ -589,7 +575,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#1a1a1a",
   },
-  panelTitle: { color: "#e5e7eb", fontWeight: "700", fontSize: 15 },
+  panelTitle: { color: "#e5e7eb", fontSize: 15, ...typography.body },
 
   row: {
     flexDirection: "row",
@@ -600,38 +586,13 @@ const styles = StyleSheet.create({
   },
   rowPressed: { opacity: 0.7 },
   rowTextWrap: { flex: 1, paddingRight: 10 },
-  rowTitle: { color: "#e5e7eb", fontSize: 15, fontWeight: "600" },
-  rowSub: { color: "#9ca3af", fontSize: 12, marginTop: 2 },
+  rowTitle: { color: "#e5e7eb", fontSize: 15, ...typography.body },
+  rowSub: { color: "#9ca3af", fontSize: 12, marginTop: 2, ...typography.body },
   sep: { height: 1, width: "90%", alignSelf: "center" },
 
   emptyBox: { alignItems: "center" },
-  emptyTitle: { color: "#d1d5db", fontWeight: "700", marginBottom: 4 },
-  emptySub: { color: "#9ca3af" },
-
-  // Centered empty state between top and keyboard
-  emptyStateWrap: {
-    flex: 1,
-    justifyContent: "center",
-    padding: 24,
-  },
-
-  // CTA card reused for empty state
-  suggestionEmpty: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 12,
-    padding: 16,
-    backgroundColor: "#0f1428",
-    borderWidth: 1,
-    borderColor: "#1a2038",
-  },
-  suggestionEmptyText: {
-    flex: 1,
-    fontSize: 15,
-    color: "#e5e7eb",
-    marginRight: 12,
-  },
+  emptyTitle: { color: "#d1d5db", marginBottom: 4, ...typography.body },
+  emptySub: { color: "#9ca3af", ...typography.body },
 
   searchNote: {
     marginHorizontal: 16,
@@ -642,6 +603,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1a2038",
   },
-  searchNoteTitle: { color: "#e5e7eb", fontWeight: "800", marginBottom: 4 },
-  searchNoteText: { color: "#9ca3af", fontSize: 12, lineHeight: 16 },
+  searchNoteTitle: { color: "#e5e7eb", marginBottom: 4, ...typography.body },
+  searchNoteText: { color: "#9ca3af", fontSize: 12, lineHeight: 16, ...typography.body },
+  filterWrap: {
+    marginHorizontal: 0,
+    marginBottom: 12,
+  },
+  filterBtn: {
+    width: "100%",
+    borderRadius: 0,
+    borderWidth: 1,
+    paddingVertical: 12,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 8,
+  },
+  filterBtnPressed: { opacity: 0.85 },
+  filterBtnText: { fontSize: 14, ...typography.body },
 });
