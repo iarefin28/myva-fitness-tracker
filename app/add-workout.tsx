@@ -89,6 +89,17 @@ export default function AddWorkout() {
 
     // ---------- Header ----------
     const onDiscard = () => {
+        const isFresh = !!draft && draft.items.length === 0 && !(draft.name ?? '').trim();
+        if (isFresh) {
+            try {
+                isDiscardingRef.current = true;
+                clearDraft();
+                router.back();
+            } finally {
+                setTimeout(() => { isDiscardingRef.current = false; }, 500);
+            }
+            return;
+        }
         Alert.alert(
             'Discard workout?',
             'This will permanently delete the current draft, timer, and action log.',
