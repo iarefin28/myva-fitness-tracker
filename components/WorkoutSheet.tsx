@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, useColorScheme, View } from 'react-native';
+import { typography } from '@/theme/typography';
 
 type WorkoutSheetProps = {
   title: string;
@@ -72,12 +73,12 @@ const styles = StyleSheet.create({
   },
   sheetHeaderRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 },
   sheetSide: { width: 88, alignItems: 'flex-start', justifyContent: 'center' },
-  sheetTitle: { flex: 1, textAlign: 'center', color: 'white', fontSize: 16, fontWeight: '700' },
+  sheetTitle: { flex: 1, textAlign: 'center', color: 'white', fontSize: 16, ...typography.body },
   closeBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#151515', alignSelf: 'flex-end' },
-  closeText: { color: '#0A84FF', fontWeight: '800' },
+  closeText: { color: '#0A84FF', ...typography.body },
   saveBtn: { backgroundColor: '#0A84FF' },
   saveText: { color: 'white' },
   deleteBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: '#3b0b0b' },
-  deleteText: { color: '#ef4444', fontWeight: '800' },
+  deleteText: { color: '#ef4444', ...typography.body },
   sheetBody: { flex: 1, padding: 16, gap: 12 },
 });

@@ -179,7 +179,7 @@ export default function FinishWorkoutModal({
 }
 
 const styles = StyleSheet.create({
-  workoutTitle: { marginBottom: 6, fontSize: 14, fontWeight: '600', textAlign: 'center' },
+  workoutTitle: { marginBottom: 6, fontSize: 14, textAlign: 'center', ...typography.body },
   workoutTitleDivider: { height: 1, width: '100%', marginBottom: 10 },
   toggleRow: {
     flexDirection: 'row',
@@ -198,8 +198,8 @@ const styles = StyleSheet.create({
   toggleBtnActive: {
     borderWidth: 2,
   },
-  toggleText: { fontSize: 13, fontWeight: '600' },
-  summary: { marginBottom: 12, fontSize: 15 },
+  toggleText: { fontSize: 13, ...typography.body },
+  summary: { marginBottom: 12, fontSize: 15, ...typography.body },
   jsonBox: {
     flex: 1,
     borderWidth: 1,
@@ -218,9 +218,9 @@ const styles = StyleSheet.create({
   statsLeft: { flex: 1 },
   statsRight: { gap: 8 },
   statsRightRow: { alignItems: 'flex-end' },
-  statsLabel: { fontSize: 12, fontWeight: '600', ...typography.body },
-  statsValue: { fontSize: 14, fontWeight: '700', ...typography.body },
-  statsTime: { fontSize: 22, fontWeight: '800', ...typography.body },
+  statsLabel: { fontSize: 12, ...typography.body },
+  statsValue: { fontSize: 14, ...typography.body },
+  statsTime: { fontSize: 22, ...typography.body },
   prettyList: { gap: 8, paddingBottom: 12 },
   prettyCard: {
     borderWidth: 1,
@@ -233,10 +233,10 @@ const styles = StyleSheet.create({
   prettyLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   prettyIcon: { marginRight: 10 },
   prettyTextWrap: { flex: 1 },
-  prettyTitle: { fontWeight: '600', ...typography.body },
+  prettyTitle: { ...typography.body },
   prettySub: { marginTop: 2, fontSize: 12, ...typography.body },
   emptyCard: { borderWidth: 1, borderRadius: 12, padding: 14, alignItems: 'center' },
-  emptyText: { fontSize: 13 },
+  emptyText: { fontSize: 13, ...typography.body },
   finishConfirm: { paddingVertical: 14, borderRadius: 10, alignItems: 'center' },
   finishConfirmText: { fontSize: 16, ...typography.button },
 });

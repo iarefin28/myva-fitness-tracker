@@ -139,6 +139,11 @@ export default function EditExerciseModal({
 
     // ----- Header actions -----
     const confirmDiscardExercise = () => {
+        if (!hasSets) {
+            onDiscard?.();
+            onClose();
+            return;
+        }
         Alert.alert("Discard exercise?", "This will remove the exercise from your list.", [
             { text: "Cancel", style: "cancel" },
             { text: "Discard", style: "destructive", onPress: () => { onDiscard?.(); onClose(); } },
@@ -320,22 +325,27 @@ export default function EditExerciseModal({
                                 onPress={confirmDiscardExercise}
                                 hitSlop={10}
                                 style={styles.iconBtn}
-                                accessibilityLabel="Discard exercise"
+                                accessibilityLabel="Delete exercise"
                             >
                                 <Ionicons name="trash-outline" size={22} color="#ef4444" />
+                                <Text style={styles.deleteLabel}>Delete</Text>
                             </Pressable>
                         )}
-                        {!isCompleted && (
-                            <Pressable
-                                onPress={confirmUndoLastSet}
-                                hitSlop={10}
-                                style={styles.undoTextBtn}
-                                accessibilityLabel="Undo last set"
-                                disabled={!hasUndoableAction}
-                            >
-                                <Text style={[styles.undoText, !hasUndoableAction && styles.undoTextDisabled]}>Undo</Text>
-                            </Pressable>
-                        )}
+                        {!isCompleted &&
+                            (hasUndoableAction ? (
+                                <Pressable
+                                    onPress={confirmUndoLastSet}
+                                    hitSlop={10}
+                                    style={styles.undoTextBtn}
+                                    accessibilityLabel="Undo last set"
+                                    disabled={!hasUndoableAction}
+                                >
+                                    <Ionicons name="arrow-undo-outline" size={18} color="#ef4444" />
+                                    <Text style={styles.undoLabel}>Undo</Text>
+                                </Pressable>
+                            ) : (
+                                <View style={styles.undoSpacer} />
+                            ))}
                     </View>
 
                     <View style={styles.barCenter}>
@@ -746,7 +756,7 @@ export default function EditExerciseModal({
                                         }
                                     }}
                                 >
-                                    <Text style={[styles.finishText, { color: "#111827" }, typography.button]}>
+                                    <Text style={[styles.finishText, { color: "#ffffff" }, typography.button]}>
                                         {activeNoteId
                                             ? "Edit"
                                             : selectedOrdinal !== null
@@ -781,14 +791,16 @@ const styles = StyleSheet.create({
     topBar: { height: 56, flexDirection: "row", alignItems: "center", paddingHorizontal: 10 },
     barSide: { width: 110, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 },
     barCenter: { flex: 1, alignItems: "center", justifyContent: "center" },
-    topTitle: { color: "white", fontSize: 16, fontWeight: "800" },
-    iconBtn: { padding: 8, borderRadius: 10 },
-    undoTextBtn: { paddingVertical: 4, paddingHorizontal: 4 },
-    undoText: { color: "#ef4444", fontWeight: "400", fontSize: 13 },
+    topTitle: { color: "white", fontSize: 16, ...typography.body },
+    iconBtn: { padding: 8, borderRadius: 10, alignItems: "center", justifyContent: "center", width: 56 },
+    undoTextBtn: { paddingVertical: 4, paddingHorizontal: 4, alignItems: "center", justifyContent: "center", width: 56 },
+    undoLabel: { color: "#ef4444", fontSize: 10, marginTop: 2, ...typography.body },
     undoTextDisabled: { color: "#6b7280" },
+    undoSpacer: { width: 56, height: 28 },
     autoSaveWrap: { alignItems: "flex-end" },
-    autoSaveTitle: { color: "#9ca3af", fontSize: 11 },
-    autoSaveTime: { color: "#9ca3af", fontSize: 11 },
+    autoSaveTitle: { color: "#9ca3af", fontSize: 11, ...typography.body },
+    autoSaveTime: { color: "#9ca3af", fontSize: 11, ...typography.body },
+    deleteLabel: { color: "#ef4444", fontSize: 10, marginTop: 2, ...typography.body },
 
     exerciseHeaderGradient: { marginHorizontal: 14, borderRadius: 14, paddingVertical: 10, marginTop: 8 },
     exerciseNameBlockTop: { alignItems: "center", gap: 4, paddingHorizontal: 16 },
@@ -821,21 +833,21 @@ const styles = StyleSheet.create({
         marginHorizontal: 14,
     },
     setCardActive: { borderColor: "#22C55E", shadowColor: "#22C55E", shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 3 } },
-    setCardTitle: { fontSize: 14, fontWeight: "800", textAlign: "center", marginBottom: 6, ...typography.body },
+    setCardTitle: { fontSize: 14, textAlign: "center", marginBottom: 6, ...typography.body },
     setCardDivider: { height: 1.5, alignSelf: "stretch", opacity: 0.6, marginBottom: 8 },
     setCardMetricsCentered: { flexDirection: "row", alignItems: "stretch", justifyContent: "center", gap: 8 },
     metricBlockCentered: { alignItems: "center", width: 88, paddingVertical: 8, borderRadius: 10 },
     metricBlockSingle: { width: 140 },
     metricDivider: { width: 1, height: "100%", backgroundColor: "#e5e7eb", opacity: 0.25 },
     metricBlockFocused: { borderWidth: 1, borderColor: "#22C55E", backgroundColor: "rgba(34,197,94,0.15)" },
-    metricLabel: { fontSize: 12, fontWeight: "700", marginBottom: 2, ...typography.body },
-    metricValue: { fontSize: 20, fontWeight: "800", ...typography.body },
+    metricLabel: { fontSize: 12, marginBottom: 2, ...typography.body },
+    metricValue: { fontSize: 20, ...typography.body },
     metricInputWrap: { borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2, minWidth: 80 },
-    metricInput: { fontSize: 20, fontWeight: "800", textAlign: "center" },
+    metricInput: { fontSize: 20, textAlign: "center", ...typography.body },
     metricInputActive: { borderWidth: 1, borderColor: "#22C55E", backgroundColor: "rgba(34, 197, 94, 0.15)" },
     finishBtn: { paddingVertical: 12, borderRadius: 12, alignItems: "center", width: "100%" },
     finishText: { color: "white", fontSize: 16, ...typography.body },
-    exerciseNameText: { fontSize: 16, fontWeight: "700" },
-    exerciseHintText: { fontSize: 12 },
-    noteInput: { fontSize: 14, fontWeight: "600", paddingVertical: 4, textAlign: "center" },
+    exerciseNameText: { fontSize: 16, ...typography.body },
+    exerciseHintText: { fontSize: 12, ...typography.body },
+    noteInput: { fontSize: 14, paddingVertical: 4, textAlign: "center", ...typography.body },
 });
