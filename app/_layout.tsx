@@ -80,6 +80,8 @@ function TabLayout() {
             },
             headerTitleStyle: {
               color: iconColor,
+              fontFamily: fontFamilies.base,
+              fontWeight: "normal",
             },
             tabBarShowLabel: false,
             tabBarStyle: {
@@ -159,7 +161,18 @@ function AppStack() {
   const iconColor = isDarkMode ? '#fff' : '#000';
 
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerTitleStyle: {
+          fontFamily: fontFamilies.base,
+          fontWeight: "normal",
+        },
+        headerBackTitleStyle: {
+          fontFamily: fontFamilies.base,
+          fontWeight: "normal",
+        },
+      }}
+    >
       <Stack.Screen
         name="Root"
         component={TabLayout}

@@ -27,6 +27,7 @@ import FinishWorkoutModal from "@/components/FinishWorkoutModal";
 import NoteModal from "@/components/NoteModal";
 import { InteractionManager } from "react-native";
 import { typography } from "@/theme/typography";
+import { fontFamilies } from "@/theme/typography";
 import { useExerciseLibrary } from "@/store/exerciseLibrary";
 
 type SheetKind = 'exercise' | 'note' | 'custom';
@@ -113,12 +114,24 @@ export default function AddWorkout() {
     useLayoutEffect(() => {
         navigation.setOptions({
             headerTitle: 'Add Workout',
+            headerTitleStyle: { fontFamily: fontFamilies.base, fontWeight: "normal" },
+            headerBackTitleStyle: { fontFamily: fontFamilies.base, fontWeight: "normal" },
+            headerBackTitle: "Back",
             contentStyle: { backgroundColor: C.bg },
             headerRight: () => (
-                <Pressable onPress={onDiscard} hitSlop={10} accessibilityLabel="Discard workout">
-                    <Ionicons name="trash-outline" size={22} color="#ef4444" />
+                <Pressable
+                    onPress={onDiscard}
+                    hitSlop={10}
+                    accessibilityLabel="Discard workout"
+                    style={{ alignItems: "center", justifyContent: "center" }}
+                >
+                    <Ionicons name="trash-outline" size={18} color="#ef4444" />
+                    <Text style={{ color: "#ef4444", fontSize: 10, ...typography.body }}>
+                        Discard
+                    </Text>
                 </Pressable>
             ),
+            headerRightContainerStyle: { paddingRight: 8 },
         });
     }, [navigation]);
 
