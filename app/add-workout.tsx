@@ -544,7 +544,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         borderRadius: 12,
         fontSize: 16,
-        fontWeight: '600',
+        ...typography.body,
     },
 
     timerCard: {
@@ -553,22 +553,22 @@ const styles = StyleSheet.create({
         paddingVertical: 14,
         alignItems: 'center',
     },
-    timerText: { fontSize: 36, fontWeight: '800', letterSpacing: 1 },
-    timerSubtext: { marginBottom: 4, fontSize: 12, fontWeight: '600' },
+    timerText: { fontSize: 36, letterSpacing: 1, ...typography.body },
+    timerSubtext: { marginBottom: 4, fontSize: 12, ...typography.body },
 
     actionsRow: { flexDirection: 'row', gap: 10 },
     actionBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1 },
-    actionTextWhite: { color: 'white', fontSize: 15, ...typography.button },
-    actionTextDark: { color: '#111', fontSize: 15, ...typography.button },
-    actionTextMuted: { color: '#9ca3af', fontSize: 15, ...typography.button },
+    actionTextWhite: { color: 'white', fontSize: 15, ...typography.body },
+    actionTextDark: { color: '#111', fontSize: 15, ...typography.body },
+    actionTextMuted: { color: '#9ca3af', fontSize: 15, ...typography.body },
 
     card: { borderWidth: 1, borderRadius: 12, padding: 12, gap: 6 },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between' },
-    cardType: { fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
-    cardTime: { fontSize: 12 },
-    cardText: { fontSize: 15 },
+    cardType: { fontSize: 12, letterSpacing: 0.5, ...typography.body },
+    cardTime: { fontSize: 12, ...typography.body },
+    cardText: { fontSize: 15, ...typography.body },
 
-    empty: { textAlign: 'center', marginTop: 8 },
+    empty: { textAlign: 'center', marginTop: 8, ...typography.body },
 
     actionsFooter: {
         borderTopLeftRadius: 20,
@@ -591,11 +591,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         gap: 6,
     },
-    exerciseTitle: { fontSize: 18, fontWeight: '800', textAlign: 'center' },
-    exerciseSub: { fontSize: 12, fontWeight: '600', textAlign: 'center' },
+    exerciseTitle: { fontSize: 18, textAlign: 'center', ...typography.body },
+    exerciseSub: { fontSize: 12, textAlign: 'center', ...typography.body },
 
     finishBtn: { paddingVertical: 16, borderRadius: 12, alignItems: 'center' },
-    finishText: { color: 'white', fontSize: 16, ...typography.button },
+    finishText: { color: 'white', fontSize: 16, ...typography.body },
 
     segment: {
         flexDirection: 'row',
@@ -606,19 +606,19 @@ const styles = StyleSheet.create({
     },
     segmentChip: { flex: 1, alignItems: 'center', paddingVertical: 8, borderRadius: 8 },
     segmentChipActive: { backgroundColor: '#0A84FF' },
-    segmentText: { fontWeight: '700', textTransform: 'capitalize' },
+    segmentText: { textTransform: 'capitalize', ...typography.body },
     segmentTextActive: { color: 'white' },
 
 
     entryRow: { borderWidth: 1, borderRadius: 10, padding: 10, flexDirection: 'row', justifyContent: 'space-between' },
-    entryText: { fontWeight: '700' },
+    entryText: { ...typography.body },
     entryTime: { fontSize: 12 },
 
     nextBtn: { paddingVertical: 12, borderRadius: 10, alignItems: 'center', marginTop: 6 },
-    nextBtnText: { color: 'white', fontSize: 15, ...typography.button },
+    nextBtnText: { color: 'white', fontSize: 15, ...typography.body },
     duoRow: { flexDirection: 'row', gap: 8 },
     duoBtn: { flex: 1, paddingVertical: 12, borderRadius: 10, alignItems: 'center' },
-    duoBtnText: { color: 'white', fontSize: 15, ...typography.button },
+    duoBtnText: { color: 'white', fontSize: 15, ...typography.body },
     btnPrimary: { backgroundColor: '#0A84FF' },
     btnSuccess: { backgroundColor: '#22C55E' },
     btnDisabled: { opacity: 0.5 },

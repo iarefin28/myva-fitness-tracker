@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   headerControls: {
     paddingBottom: 6,
   },
-  name: { fontSize: 20, fontWeight: "700", marginBottom: 6, ...typography.body },
+  name: { fontSize: 20, marginBottom: 6, ...typography.body },
   email: { fontSize: 15, marginBottom: 2, ...typography.body },
   uid: { fontSize: 12, ...typography.body },
 
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   tabBtnActive: { borderWidth: 1 },
-  tabText: { fontWeight: "700", ...typography.button },
+  tabText: { ...typography.body },
   tabTextActive: { color: "#fff" },
   tabBtnDisabled: { opacity: 0.5 },
   tabTextDisabled: { color: "#94A3B8" },
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  panelTitle: { fontSize: 15, fontWeight: "700", ...typography.body },
+  panelTitle: { fontSize: 15, ...typography.body },
   headerAction: {
     flexDirection: "row",
     alignItems: "center",
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   headerActionPressed: { opacity: 0.7 },
-  headerActionText: { fontSize: 12, fontWeight: "700", ...typography.button },
+  headerActionText: { fontSize: 12, ...typography.body },
   row: {
     minHeight: 48,
     paddingHorizontal: 14,
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   rowPressed: { opacity: 0.7 },
-  rowTitle: { fontSize: 15, fontWeight: "600", ...typography.body },
+  rowTitle: { fontSize: 15, ...typography.body },
   sep: { height: 1, width: "92%", alignSelf: "center" },
   emptyWrap: { paddingHorizontal: 14, paddingVertical: 16 },
   emptyText: { fontSize: 14, fontStyle: "italic", ...typography.body },

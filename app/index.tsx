@@ -139,7 +139,7 @@ export default function IndexScreen() {
             }}
           >
             <Text
-              style={{ color: "#fff", fontWeight: "700", fontSize: 16, textAlign: "center", ...typography.body }}
+              style={{ color: "#fff", fontSize: 16, textAlign: "center", ...typography.body }}
               numberOfLines={2}
             >
               {bannerText}
@@ -149,7 +149,7 @@ export default function IndexScreen() {
       </View>
       {/* ---------- FAVORITES ---------- */}
       <View style={{ marginTop: 4 }}>
-        <Text style={{ color: textColor, fontWeight: "700", fontSize: 16, marginBottom: 8, ...typography.body }}>
+        <Text style={{ color: textColor, fontSize: 16, marginBottom: 8, ...typography.body }}>
           Your Favorites
         </Text>
         <View style={{ flexDirection: "row", gap: favoritesGap }}>
@@ -189,7 +189,7 @@ export default function IndexScreen() {
                     justifyContent: "center",
                   }}
                 >
-                  <Text style={{ color: "#fff", fontWeight: "700", textAlign: "center", ...typography.body }}>
+                  <Text style={{ color: "#fff", textAlign: "center", ...typography.body }}>
                     {quickStartLabel}
                   </Text>
                 </LinearGradient>
@@ -218,7 +218,7 @@ export default function IndexScreen() {
                     size={14}
                     color={scheme === "dark" ? "#FBBF24" : "#F59E0B"}
                   />
-                  <Text style={{ color: textColor, fontWeight: "700", marginTop: 1, ...typography.body }}>
+                  <Text style={{ color: textColor, marginTop: 1, ...typography.body }}>
                     {item.label}
                   </Text>
                   <Text style={{ color: subText, fontSize: 12, marginTop: 1, ...typography.body }}>
@@ -234,7 +234,7 @@ export default function IndexScreen() {
       {/* ---------- RECENT WORKOUTS ---------- */}
         {recent.length > 0 && (
           <View style={{ marginTop: 8 }}>
-            <Text style={{ color: textColor, fontWeight: "700", fontSize: 16, marginBottom: 8, ...typography.body }}>
+            <Text style={{ color: textColor, fontSize: 16, marginBottom: 8, ...typography.body }}>
               Recent Workouts
             </Text>
             <View style={{ gap: 8 }}>
@@ -259,7 +259,7 @@ export default function IndexScreen() {
                       style={{ marginRight: 10 }}
                     />
                     <View>
-                      <Text style={{ color: textColor, fontWeight: "600", ...typography.body }}>
+                      <Text style={{ color: textColor, ...typography.body }}>
                         {w.name?.trim() || "Workout"}
                       </Text>
                       <Text style={{ color: subText, marginTop: 2, fontSize: 12, ...typography.body }}>
@@ -294,7 +294,7 @@ export default function IndexScreen() {
             {/* Top row */}
             <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" }}>
               <View style={{ flex: 1, paddingRight: 8 }}>
-                <Text style={{ color: "#fff", fontSize: 20, fontWeight: "700", ...typography.body }} numberOfLines={1}>
+                <Text style={{ color: "#fff", fontSize: 20, ...typography.body }} numberOfLines={1}>
                   Move with purpose.
                 </Text>
 
@@ -331,7 +331,6 @@ export default function IndexScreen() {
                       style={{
                         color: "#fff",
                         fontSize: 10,
-                        fontWeight: "700",
                         letterSpacing: 0.4,
                         textTransform: "uppercase",
                         ...typography.body,
@@ -343,7 +342,6 @@ export default function IndexScreen() {
                       style={{
                         color: "#fff",
                         fontSize: 16,
-                        fontWeight: "700",
                         fontVariant: ["tabular-nums"],
                         fontFeatureSettings: "'tnum' 1",
                         ...typography.body,
@@ -370,7 +368,7 @@ export default function IndexScreen() {
                 marginTop: 12,
               }}
             >
-              <Text style={{ color: "#111", fontWeight: "700", ...typography.button }}>
+              <Text style={{ color: "#111", ...typography.body }}>
                 {isLive ? "Open Live Workout" : "Start Live Workout"}
               </Text>
             </TouchableOpacity>
@@ -388,7 +386,7 @@ export default function IndexScreen() {
                 borderColor: "rgba(255,255,255,0.45)",
               }}
             >
-              <Text style={{ color: "#fff", fontWeight: "700", ...typography.button }}>
+              <Text style={{ color: "#fff", ...typography.body }}>
                 View Completed Workouts
               </Text>
             </TouchableOpacity>
