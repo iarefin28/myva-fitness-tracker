@@ -2,6 +2,7 @@ import { useWorkoutStore } from "@/store/workoutStore";
 import { useRouter } from "expo-router";
 import React, { useMemo } from "react";
 import { FlatList, StyleSheet, Text, TouchableOpacity, useColorScheme, View } from "react-native";
+import { typography } from "@/theme/typography";
 
 export default function CompletedWorkoutsScreen() {
   const router = useRouter();
@@ -53,7 +54,7 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   list: { padding: 16, gap: 12 },
   card: { borderWidth: 1, borderRadius: 14, padding: 14 },
-  cardTitle: { fontSize: 16, fontWeight: "800" },
-  cardSub: { marginTop: 6, fontSize: 12, fontWeight: "600" },
-  empty: { padding: 24, textAlign: "center", fontSize: 14, fontWeight: "600" },
+  cardTitle: { fontSize: 16, ...typography.body },
+  cardSub: { marginTop: 6, fontSize: 12, ...typography.body },
+  empty: { padding: 24, textAlign: "center", fontSize: 14, ...typography.body },
 });

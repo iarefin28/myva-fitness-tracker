@@ -2,6 +2,7 @@ import { useWorkoutStore } from "@/store/workoutStore";
 import { useRoute } from "@react-navigation/native";
 import React, { useMemo } from "react";
 import { ScrollView, StyleSheet, Text, useColorScheme, View } from "react-native";
+import { typography } from "@/theme/typography";
 
 type RouteParams = { workoutId?: string };
 
@@ -46,7 +47,7 @@ export default function CompletedWorkoutDetailScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, padding: 16 },
   card: { flex: 1, borderWidth: 1, borderRadius: 12, padding: 12 },
-  json: { fontSize: 12 },
-  title: { fontSize: 18, fontWeight: "800" },
-  sub: { marginTop: 6, fontSize: 12 },
+  json: { fontSize: 12, ...typography.mono },
+  title: { fontSize: 18, ...typography.body },
+  sub: { marginTop: 6, fontSize: 12, ...typography.body },
 });

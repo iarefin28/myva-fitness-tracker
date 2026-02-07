@@ -18,6 +18,7 @@ import {
 
 import { auth } from "@/FirebaseConfig";
 import { useExerciseLibrary } from "@/store/exerciseLibrary";
+import { typography } from "@/theme/typography";
 // IMPORTANT: match the path your other screens use in this navigator:
 import type { ExerciseType } from "@/types/workout";
 import { useWorkoutStore } from "../store/workoutStore"; // <-- unify with _layout usage
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
   body: { padding: 16, gap: 14 },
 
   block: { gap: 8 },
-  label: { color: "#e5e7eb", fontWeight: "800" },
+  label: { color: "#e5e7eb", ...typography.body },
   input: {
     borderWidth: 1,
     borderColor: "#333",
@@ -239,11 +240,11 @@ const styles = StyleSheet.create({
   },
   segmentChip: { flex: 1, alignItems: "center", paddingVertical: 8, borderRadius: 8 },
   segmentChipActive: { backgroundColor: "#0A84FF" },
-  segmentText: { color: "#9ca3af", fontWeight: "700", textTransform: "capitalize" },
+  segmentText: { color: "#9ca3af", textTransform: "capitalize", ...typography.body },
   segmentTextActive: { color: "white" },
 
   infoRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  infoText: { color: "#93c5fd", fontSize: 12 },
+  infoText: { color: "#93c5fd", fontSize: 12, ...typography.body },
 
   tip: {
     flexDirection: "row",
@@ -255,7 +256,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1a2038",
   },
-  tipText: { color: "#e5e7eb", flex: 1 },
+  tipText: { color: "#e5e7eb", flex: 1, ...typography.body },
 
   primary: {
     backgroundColor: "#0A84FF",
@@ -264,5 +265,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 6,
   },
-  primaryText: { color: "white", fontSize: 16, fontWeight: "800" },
+  primaryText: { color: "white", fontSize: 16, ...typography.button },
 });
