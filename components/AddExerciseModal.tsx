@@ -408,7 +408,7 @@ export default function AddExerciseModal({
         <View style={[styles.grabber, { backgroundColor: C.grabber }]} />
 
         {/* Top Bar */}
-        <View style={styles.topbar}>
+        <View style={[styles.topbar, { backgroundColor: C.bg }]}>
           {/* Left: X */}
           <View style={styles.sideLeft}>
             <Pressable
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
   },
 
   // Top bar
-  topbar: { flexDirection: "row", alignItems: "center", height: 64, backgroundColor: "#1e293b" },
+  topbar: { flexDirection: "row", alignItems: "center", height: 64 },
   sideLeft: { width: 56, alignItems: "flex-start", justifyContent: "center" },
   sideRight: { width: 56 },
   iconBtn: { padding: 10, borderRadius: 12 },
