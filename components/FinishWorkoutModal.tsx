@@ -26,7 +26,7 @@ export default function FinishWorkoutModal({
   onConfirm,
 }: FinishWorkoutModalProps) {
   const [viewMode, setViewMode] = useState<'pretty' | 'data'>('pretty');
-  const jsonPreview = useMemo(() => JSON.stringify({ draft, history }, null, 2), [draft, history]);
+  const jsonPreview = useMemo(() => JSON.stringify({ draft }, null, 2), [draft]);
   const scheme = useColorScheme();
   const isDark = scheme === 'dark';
   const C = useMemo(
