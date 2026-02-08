@@ -44,7 +44,7 @@ export default function UserScreen() {
   const navigation = useNavigation<any>();
   const exercisesById = useExerciseLibrary((s) => s.exercises);
   const ensureDefaults = useExerciseLibrary((s) => s.ensureDefaults);
-  const [activeTab, setActiveTab] = useState<TopTab>("exercises");
+  const [activeTab, setActiveTab] = useState<TopTab>("friends");
   const insets = useSafeAreaInsets();
 
   const [friends, setFriends] = useState<string[]>([]);
@@ -147,10 +147,10 @@ export default function UserScreen() {
 
   const sectionButtons = [
     { key: "exercises" as const, label: `Exercises (${exercisesList.length})` },
-    { key: "friends" as const, label: `Friends (${friendProfiles.length})` },
+    { key: "friends" as const, label: "Mobility" },
     {
       key: "requests" as const,
-      label: `Requests (${incomingRequests.length + outgoingRequests.length})`,
+      label: `Friends (${incomingRequests.length + outgoingRequests.length})`,
     },
   ];
 
@@ -160,6 +160,10 @@ export default function UserScreen() {
   };
   const handleAddExercise = () => {
     navigation.navigate("addNewExercise", { addToDraft: "0" });
+  };
+  const handleAddMobility = () => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    navigation.navigate("addNewMobility");
   };
 
   return (
@@ -180,24 +184,31 @@ export default function UserScreen() {
           <View style={styles.tabRow}>
             {sectionButtons.map((tab) => {
               const isActive = activeTab === tab.key;
-              const isDisabled = tab.key !== "exercises";
+              const isDisabled = tab.key === "requests";
+              const isPrimaryAction = tab.key === "exercises" || tab.key === "friends";
               return (
                 <Pressable
                   key={tab.key}
                   disabled={isDisabled}
-                  onPress={() => setActiveTab(tab.key)}
+                  onPress={() => {
+                    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setActiveTab(tab.key);
+                  }}
                   style={[
                     styles.tabBtn,
-                    { backgroundColor: "rgba(17, 17, 17, 0.18)", borderColor: "rgba(255, 255, 255, 0.35)" },
-                    isActive && [styles.tabBtnActive, { backgroundColor: C.accent, borderColor: C.accent }],
+                    isPrimaryAction
+                      ? { backgroundColor: "#fff", borderColor: "#fff" }
+                      : { backgroundColor: "rgba(17, 17, 17, 0.18)", borderColor: "rgba(255, 255, 255, 0.35)" },
+                    isActive && styles.tabBtnActive,
+                    isActive && isPrimaryAction && { borderColor: "#ef4444", borderWidth: 2 },
                     isDisabled && styles.tabBtnDisabled,
                   ]}
                 >
                   <Text
                     style={[
                       styles.tabText,
-                      { color: C.headerText },
-                      isActive && styles.tabTextActive,
+                      { color: isPrimaryAction ? "#111" : C.headerText },
+                      isActive && !isPrimaryAction && styles.tabTextActive,
                       isDisabled && styles.tabTextDisabledOnHeader,
                     ]}
                   >
@@ -259,6 +270,33 @@ export default function UserScreen() {
                 contentContainerStyle={{ paddingBottom: 8 }}
               />
             )}
+          </View>
+        ) : null}
+
+        {activeTab === "friends" ? (
+          <View style={[styles.panel, { backgroundColor: C.tabBg, borderColor: C.border }]}>
+            <View style={[styles.panelHeader, { borderBottomColor: C.border }]}>
+              <Text style={[styles.panelTitle, { color: C.text }]}>Mobility</Text>
+              <Pressable
+                onPress={handleAddMobility}
+                style={({ pressed }) => [
+                  styles.headerAction,
+                  { borderColor: C.border },
+                  pressed && styles.headerActionPressed,
+                ]}
+              >
+                <Ionicons name="add" size={16} color={C.text} />
+                <Text style={[styles.headerActionText, { color: C.text }]}>
+                  New Mobility
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={styles.emptyWrap}>
+              <Text style={[styles.emptyText, { color: C.sub }]}>
+                No mobility moves yet.
+              </Text>
+            </View>
           </View>
         ) : null}
       </View>

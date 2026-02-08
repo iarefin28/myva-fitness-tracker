@@ -219,6 +219,11 @@ function AppStack() {
         options={{ title: "Add New Exercise", headerBackTitle: 'Back', headerTintColor: iconColor }}
       />
       <Stack.Screen
+        name="addNewMobility"
+        getComponent={() => require('./addNewMobility').default}
+        options={{ title: "Add New Mobility", headerBackTitle: 'Back', headerTintColor: iconColor }}
+      />
+      <Stack.Screen
         name="exercise-detail"
         getComponent={() => require('./exercise-detail').default}
         options={{ title: "Exercise Details", headerBackTitle: 'Back', headerTintColor: iconColor }}
