@@ -1,7 +1,7 @@
 // app/addNewMobility.tsx
 import { Ionicons } from "@expo/vector-icons";
-import { useRoute } from "@react-navigation/native";
-import React, { useMemo, useState } from "react";
+import { useNavigation, useRoute } from "@react-navigation/native";
+import React, { useLayoutEffect, useMemo, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -21,12 +21,17 @@ type RouteParams = { name?: string };
 
 export default function AddNewMobility() {
   const route = useRoute();
+  const navigation = useNavigation();
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
   const { name: initialName = "" } = (route.params ?? {}) as RouteParams;
 
   const [name, setName] = useState(initialName.trim());
-  const [type, setType] = useState<"flow" | "stretch" | "breath">("stretch");
+  const [type, setType] = useState<
+    "Static" | "Dynamic" | "Branded" | "Corrective" | "PNF" | "Active"
+  >();
+  const [defaultMetrics, setDefaultMetrics] = useState<("Breathes" | "Reps" | "Time")[]>([]);
+  const [showAdvancedMetrics, setShowAdvancedMetrics] = useState(false);
   const [howTo, setHowTo] = useState("");
 
   const canSave = false;
@@ -47,6 +52,20 @@ export default function AddNewMobility() {
     [isDark]
   );
 
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          disabled={!canSave}
+          style={[styles.headerAction, !canSave && { opacity: 0.5 }]}
+        >
+          <Text style={[styles.headerActionText, { color: C.primary }]}>Save</Text>
+        </Pressable>
+      ),
+      headerRightContainerStyle: { paddingRight: 8 },
+    });
+  }, [C.primary, canSave, navigation]);
+
   return (
     <SafeAreaView style={[styles.root, { backgroundColor: C.bg }]}>
       <View style={[styles.tip, { backgroundColor: C.tipBg, borderColor: C.tipBorder }]}>
@@ -63,7 +82,7 @@ export default function AddNewMobility() {
         <ScrollView contentContainerStyle={styles.body}>
           {/* Name */}
           <View style={styles.block}>
-            <Text style={[styles.label, { color: C.text }]}>Mobility name</Text>
+            <Text style={[styles.label, { color: C.text }]}>Name of Mobility Movement</Text>
             <TextInput
               value={name}
               onChangeText={setName}
@@ -75,36 +94,10 @@ export default function AddNewMobility() {
             />
           </View>
 
-          {/* Type */}
-          <View style={styles.block}>
-            <Text style={[styles.label, { color: C.text }]}>Type</Text>
-            <View style={[styles.segment, { backgroundColor: C.surface, borderColor: C.border }]}>
-              {(["flow", "stretch", "breath"] as const).map((t) => {
-                const active = type === t;
-                return (
-                  <Pressable
-                    key={t}
-                    onPress={() => setType(t)}
-                    style={[styles.segmentChip, active && [styles.segmentChipActive, { backgroundColor: C.primary }]]}
-                  >
-                    <Text
-                      style={[
-                        styles.segmentText,
-                        { color: active ? "#fff" : C.subText },
-                      ]}
-                    >
-                      {t}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
           {/* How-To */}
           <View style={styles.block}>
             <Text style={[styles.label, { color: C.text }]}>
-              How do you perform it? (optional)
+              General Notes on How To Perform (optional)
             </Text>
             <TextInput
               value={howTo}
@@ -120,15 +113,76 @@ export default function AddNewMobility() {
           </View>
 
           <Pressable
-            style={[
-              styles.primary,
-              { backgroundColor: C.primary },
-              (!canSave) && { opacity: 0.5 },
-            ]}
-            disabled
+            onPress={() => setShowAdvancedMetrics((v) => !v)}
+            style={[styles.advancedToggle, { backgroundColor: C.primary }]}
           >
-            <Text style={styles.primaryText}>Save Mobility (Coming Soon)</Text>
+            <Text style={styles.advancedToggleText}>
+              {showAdvancedMetrics ? "Hide Advanced Metrics" : "Show Advanced Metrics"}
+            </Text>
           </Pressable>
+
+          {showAdvancedMetrics ? (
+            <>
+              {/* Type */}
+              <View style={styles.block}>
+                <Text style={[styles.label, { color: C.text }]}>Type (select one)</Text>
+                <View style={[styles.segment, { backgroundColor: C.surface, borderColor: C.border }]}>
+                  {(["Static", "Dynamic", "Branded", "Corrective", "PNF", "Active"] as const).map((t) => {
+                    const active = type === t;
+                    return (
+                      <Pressable
+                        key={t}
+                        onPress={() => setType(t)}
+                        style={[styles.segmentChip, active && [styles.segmentChipActive, { backgroundColor: C.primary }]]}
+                      >
+                        <Text
+                          style={[
+                            styles.segmentText,
+                            { color: active ? "#fff" : C.subText },
+                          ]}
+                        >
+                          {t}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Default Metrics Tracked */}
+              <View style={styles.block}>
+                <Text style={[styles.label, { color: C.text }]}>
+                  Default Metrics Tracked (select all that apply)
+                </Text>
+                <View style={[styles.segment, { backgroundColor: C.surface, borderColor: C.border }]}>
+                  {(["Reps", "Time", "Breathes"] as const).map((t) => {
+                    const active = defaultMetrics.includes(t);
+                    return (
+                      <Pressable
+                        key={t}
+                        onPress={() =>
+                          setDefaultMetrics((prev) =>
+                            prev.includes(t) ? prev.filter((m) => m !== t) : [...prev, t]
+                          )
+                        }
+                        style={[styles.segmentChip, active && [styles.segmentChipActive, { backgroundColor: C.primary }]]}
+                      >
+                        <Text
+                          style={[
+                            styles.segmentText,
+                            { color: active ? "#fff" : C.subText },
+                          ]}
+                        >
+                          {t}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            </>
+          ) : null}
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -154,6 +208,7 @@ const styles = StyleSheet.create({
 
   segment: {
     flexDirection: "row",
+    flexWrap: "wrap",
     backgroundColor: "#111",
     borderRadius: 10,
     padding: 4,
@@ -161,9 +216,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#2a2a2a",
   },
-  segmentChip: { flex: 1, alignItems: "center", paddingVertical: 8, borderRadius: 8 },
+  segmentChip: {
+    flexBasis: "32%",
+    flexGrow: 1,
+    alignItems: "center",
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
   segmentChipActive: { backgroundColor: "#0A84FF" },
-  segmentText: { color: "#9ca3af", textTransform: "capitalize", ...typography.body },
+  segmentText: { color: "#9ca3af", ...typography.body },
 
   tip: {
     flexDirection: "row",
@@ -179,6 +240,15 @@ const styles = StyleSheet.create({
   },
   tipText: { color: "#e5e7eb", flex: 1, ...typography.body },
 
+  advancedToggle: {
+    width: "100%",
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  advancedToggleText: { color: "#fff", fontSize: 14, ...typography.body, fontWeight: "600" },
+
   primary: {
     backgroundColor: "#0A84FF",
     paddingVertical: 14,
@@ -187,4 +257,12 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   primaryText: { color: "white", fontSize: 16, ...typography.button },
+  headerAction: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  headerActionText: { fontSize: 14, ...typography.body, fontWeight: "600" },
 });
