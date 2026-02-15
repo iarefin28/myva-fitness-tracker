@@ -1,4 +1,5 @@
 import { useExerciseLibrary } from "@/store/exerciseLibrary";
+import { useMobilityMovementLibrary } from "@/store/mobilityMovementLibrary";
 import { Ionicons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -53,6 +54,7 @@ export default function AddExerciseModal({
   const [query, setQuery] = useState(initialQuery);
   const inputRef = useRef<TextInput>(null);
   const [quickTab, setQuickTab] = useState<"recent" | "all" | "most">("recent");
+  const [mode, setMode] = useState<"exercises" | "mobility">("exercises");
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
   const C = useMemo(
@@ -81,6 +83,9 @@ export default function AddExerciseModal({
   const exercisesById = useExerciseLibrary((s) => s.exercises);
   const searchLocal = useExerciseLibrary((s) => s.searchLocal);
   const ensureDefaults = useExerciseLibrary((s) => s.ensureDefaults);
+  const mobilityReady = useMobilityMovementLibrary((s) => s.ready);
+  const mobilityById = useMobilityMovementLibrary((s) => s.movements);
+  const ensureMobilityReady = useMobilityMovementLibrary((s) => s.ensureReady);
 
   // Convert store map -> array
   const allFromLib: Exercise[] = useMemo(() => {
@@ -96,13 +101,34 @@ export default function AddExerciseModal({
     return arr.sort((a, b) => a.name.localeCompare(b.name));
   }, [exercisesById]);
 
+  const allMobilityFromLib: Exercise[] = useMemo(() => {
+    if (!mobilityById) return [];
+    const arr = Object.values(mobilityById).map((m: any) => ({
+      id: m.id,
+      name: m.name,
+      subtitle: m.type || "Mobility",
+      usageCount: 0,
+      lastUsedAt: null,
+      createdAt: m.createdAt ?? 0,
+    }));
+    return arr.sort((a, b) => a.name.localeCompare(b.name));
+  }, [mobilityById]);
+
   // Which list to show when fake search is visible
   const masterList: Exercise[] = useMemo(() => {
+    if (mode === "mobility") {
+      if (mobilityReady && allMobilityFromLib.length) return allMobilityFromLib;
+      return [];
+    }
     if (libReady && allFromLib.length) return allFromLib;
     return exercises;
-  }, [libReady, allFromLib, exercises]);
+  }, [mode, mobilityReady, allMobilityFromLib, libReady, allFromLib, exercises]);
 
   const quickSelectBase: Exercise[] = useMemo(() => {
+    if (mode === "mobility") {
+      if (mobilityReady && allMobilityFromLib.length) return allMobilityFromLib;
+      return [];
+    }
     if (libReady && allFromLib.length) return allFromLib;
     return exercises.map((ex) => ({
       ...ex,
@@ -110,7 +136,7 @@ export default function AddExerciseModal({
       lastUsedAt: ex.lastUsedAt ?? null,
       createdAt: ex.createdAt ?? 0,
     }));
-  }, [libReady, allFromLib, exercises]);
+  }, [mode, mobilityReady, allMobilityFromLib, libReady, allFromLib, exercises]);
 
   const quickSelectList: Exercise[] = useMemo(() => {
     const base = [...quickSelectBase];
@@ -139,7 +165,7 @@ export default function AddExerciseModal({
     const q = query.trim();
     if (!searchActive) return [];
     if (!q) return [];
-    if (searchLocal) {
+    if (mode === "exercises" && searchLocal) {
       return searchLocal(q, 200).map((e: any) => ({
         id: e.id,
         name: e.name,
@@ -147,18 +173,28 @@ export default function AddExerciseModal({
       }));
     }
     return masterList.filter((e) => e.name.toLowerCase().includes(q.toLowerCase()));
-  }, [searchActive, query, searchLocal, masterList]);
+  }, [searchActive, query, searchLocal, masterList, mode]);
 
   const hasResults = filteredList.length > 0;
   const canSuggestAdd = searchActive && !!query.trim();
+  const isMobility = mode === "mobility";
+  const allLabel = isMobility ? "All Mobility" : "All Exercises";
+  const searchLabel = isMobility ? "Search mobility library" : "Search exercises";
+  const addRowTitle = isMobility
+    ? `+ Add “${query.trim()}” to your mobility`
+    : `+ Add “${query.trim()}” to your exercises`;
+  const addRowSub = isMobility
+    ? "Create a new mobility movement in your library"
+    : "Create a new exercise in your library";
 
   // Reset state each time the modal opens
   useEffect(() => {
     if (!open) return;
     ensureDefaults();
+    ensureMobilityReady();
     setSearchActive(false);
     setQuery(initialQuery);
-  }, [open, initialQuery, ensureDefaults]);
+  }, [open, initialQuery, ensureDefaults, ensureMobilityReady]);
 
   // --- Handlers ---
   const focusRealSearch = useCallback(() => {
@@ -210,17 +246,13 @@ export default function AddExerciseModal({
         android_ripple={{ color: isDark ? "#1f2937" : "#E2E8F0" }}
       >
         <View style={styles.rowTextWrap}>
-          <Text style={[styles.rowTitle, { color: C.text }]}>
-            + Add “{query.trim()}” to your exercises
-          </Text>
-          <Text style={[styles.rowSub, { color: C.subText }]}>
-            Create a new exercise in your library
-          </Text>
+          <Text style={[styles.rowTitle, { color: C.text }]}>{addRowTitle}</Text>
+          <Text style={[styles.rowSub, { color: C.subText }]}>{addRowSub}</Text>
         </View>
         <Ionicons name="add-circle" size={20} color={C.accent} />
       </Pressable>
     );
-  }, [canSuggestAdd, query]);
+  }, [canSuggestAdd, addRowTitle, addRowSub, C.text, C.subText, C.accent]);
 
   // --- Separated sections ---
   const renderSearchSection = () => (
@@ -238,7 +270,7 @@ export default function AddExerciseModal({
           ]}
         >
           <Ionicons name="search" size={16} color="#fff" />
-          <Text style={[styles.filterBtnText, { color: "#fff" }]}>All Exercises</Text>
+          <Text style={[styles.filterBtnText, { color: "#fff" }]}>{allLabel}</Text>
         </Pressable>
       </View>
       {query.trim().length > 0 ? (
@@ -306,7 +338,7 @@ export default function AddExerciseModal({
               quickTab === "all" && [styles.tabTextActive, { color: "#fff" }],
             ]}
           >
-            All Exercises
+            {allLabel}
           </Text>
         </Pressable>
         <Pressable
@@ -333,10 +365,10 @@ export default function AddExerciseModal({
         <View style={[styles.panelHeader, { borderBottomColor: C.border }]}>
           <Text style={[styles.panelTitle, { color: C.text }]}>
             {quickTab === "recent"
-              ? "Recent Exercises"
+              ? `Recent ${isMobility ? "Mobility" : "Exercises"}`
               : quickTab === "most"
-              ? "Most Used Exercises"
-              : "All Exercises"}
+              ? `Most Used ${isMobility ? "Mobility" : "Exercises"}`
+              : allLabel}
           </Text>
         </View>
 
@@ -379,7 +411,9 @@ export default function AddExerciseModal({
           )}
           ListEmptyComponent={() => (
             <View style={styles.emptyBox}>
-              <Text style={[styles.emptyTitle, { color: C.text }]}>No exercises yet</Text>
+              <Text style={[styles.emptyTitle, { color: C.text }]}>
+                {isMobility ? "No mobility moves yet" : "No exercises yet"}
+              </Text>
               <Text style={[styles.emptySub, { color: C.subText }]}>
                 Tap Search above to add your first one.
               </Text>
@@ -436,12 +470,12 @@ export default function AddExerciseModal({
                   ref={inputRef}
                   value={query}
                   onChangeText={updateQuery}
-                  placeholder="Search exercises"
+                  placeholder={searchLabel}
                   placeholderTextColor={C.muted}
                   style={[styles.input, { color: C.text }]}
                   returnKeyType="search"
                   blurOnSubmit={false}
-                  accessibilityLabel="Search exercises"
+                  accessibilityLabel={searchLabel}
                 />
               </View>
             )}
@@ -464,15 +498,55 @@ export default function AddExerciseModal({
 
         {/* Fake search below top bar */}
         {!searchActive && (
-          <Pressable
-            style={[styles.fakeSearch, { backgroundColor: C.surface, borderColor: C.border }]}
-            onPress={handleFakePress}
-            accessibilityRole="button"
-            accessibilityLabel="Open search"
-          >
-            <Ionicons name="search" size={18} color={C.subText} style={styles.fakeIcon} />
-            <Text style={[styles.fakeText, { color: C.subText }]}>Search exercises</Text>
-          </Pressable>
+          <>
+            <Pressable
+              style={[styles.fakeSearch, { backgroundColor: C.surface, borderColor: C.border }]}
+              onPress={handleFakePress}
+              accessibilityRole="button"
+              accessibilityLabel="Open search"
+            >
+              <Ionicons name="search" size={18} color={C.subText} style={styles.fakeIcon} />
+              <Text style={[styles.fakeText, { color: C.subText }]}>
+                {searchLabel}
+              </Text>
+            </Pressable>
+            <View style={styles.modeRow}>
+              <Pressable
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setMode("exercises");
+                }}
+                style={({ pressed }) => [
+                  styles.modeBtn,
+                  styles.modeBtnExercises,
+                  mode === "exercises" && [styles.modeBtnSelected, { borderColor: C.text }],
+                  pressed && styles.modeBtnPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Exercises"
+              >
+                <Ionicons name="search" size={16} color="#fff" />
+                <Text style={styles.modeBtnText}>Exercises</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                  setMode("mobility");
+                }}
+                style={({ pressed }) => [
+                  styles.modeBtn,
+                  styles.modeBtnMobility,
+                  mode === "mobility" && [styles.modeBtnSelected, { borderColor: C.text }],
+                  pressed && styles.modeBtnPressed,
+                ]}
+                accessibilityRole="button"
+                accessibilityLabel="Mobility Movement"
+              >
+                <Ionicons name="search" size={16} color="#fff" />
+                <Text style={styles.modeBtnText}>Mobility Movement</Text>
+              </Pressable>
+            </View>
+          </>
         )}
 
         {/* CONTENT AREA */}
@@ -504,6 +578,27 @@ const styles = StyleSheet.create({
 
   centerRow: { flexDirection: "row", alignItems: "center" },
   title: { color: "#e5e7eb", fontSize: 16, marginLeft: 6, ...typography.body },
+
+  modeRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginHorizontal: 16,
+    marginBottom: 12,
+  },
+  modeBtn: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    flexDirection: "row",
+    gap: 6,
+  },
+  modeBtnExercises: { backgroundColor: "#0A84FF" },
+  modeBtnMobility: { backgroundColor: "#16A34A" },
+  modeBtnSelected: { borderWidth: 2 },
+  modeBtnPressed: { opacity: 0.85 },
+  modeBtnText: { color: "#fff", fontSize: 13, ...typography.body },
 
   realSearchRow: {
     flexDirection: "row",
