@@ -1,7 +1,7 @@
 // app/addNewMobility.tsx
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import React, { useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -21,6 +21,7 @@ import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 
+import { useMobilityMovementLibrary } from "@/store/mobilityMovementLibrary";
 import { typography } from "@/theme/typography";
 
 type RouteParams = { name?: string };
@@ -56,7 +57,10 @@ export default function AddNewMobility() {
   const [viewMode, setViewMode] = useState<"pretty" | "data">("pretty");
   const [howTo, setHowTo] = useState("");
 
-  const canSave = false;
+  const ensureLocalMovement = useMobilityMovementLibrary((s) => s.ensureLocalMovement);
+  const ensureReady = useMobilityMovementLibrary((s) => s.ensureReady);
+
+  const canSave = !!name.trim();
 
   const C = useMemo(
     () => ({
@@ -100,6 +104,17 @@ export default function AddNewMobility() {
       headerRight: () => (
         <Pressable
           disabled={!canSave}
+          onPress={() => {
+            const trimmed = name.trim();
+            if (!trimmed) return;
+            ensureLocalMovement({
+              name: trimmed,
+              type,
+              howTo,
+              defaultMetrics,
+            });
+            navigation.goBack();
+          }}
           style={[styles.headerAction, !canSave && { opacity: 0.5 }]}
         >
           <Text style={[styles.headerActionText, { color: C.primary }]}>Save</Text>
@@ -107,7 +122,11 @@ export default function AddNewMobility() {
       ),
       headerRightContainerStyle: { paddingRight: 8 },
     });
-  }, [C.primary, canSave, navigation]);
+  }, [C.primary, canSave, defaultMetrics, howTo, name, navigation, type, ensureLocalMovement]);
+
+  useEffect(() => {
+    ensureReady();
+  }, [ensureReady]);
 
   const formatDuration = (ms?: number | null) => {
     if (!ms) return "";

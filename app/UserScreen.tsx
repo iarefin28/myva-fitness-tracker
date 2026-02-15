@@ -24,6 +24,7 @@ import {
 import { useAuth } from "../auth/AuthProvider";
 import { db } from "../FirebaseConfig";
 import { useExerciseLibrary } from "@/store/exerciseLibrary";
+import { useMobilityMovementLibrary } from "@/store/mobilityMovementLibrary";
 import { typography } from "@/theme/typography";
 
 type FriendRequest = {
@@ -44,6 +45,8 @@ export default function UserScreen() {
   const navigation = useNavigation<any>();
   const exercisesById = useExerciseLibrary((s) => s.exercises);
   const ensureDefaults = useExerciseLibrary((s) => s.ensureDefaults);
+  const mobilityById = useMobilityMovementLibrary((s) => s.movements);
+  const ensureMobilityReady = useMobilityMovementLibrary((s) => s.ensureReady);
   const [activeTab, setActiveTab] = useState<TopTab>("friends");
   const insets = useSafeAreaInsets();
 
@@ -78,10 +81,19 @@ export default function UserScreen() {
     ensureDefaults();
   }, [ensureDefaults]);
 
+  useEffect(() => {
+    ensureMobilityReady();
+  }, [ensureMobilityReady]);
+
   const exercisesList = useMemo(() => {
     const values = Object.values(exercisesById ?? {});
     return values.sort((a: any, b: any) => a.name.localeCompare(b.name));
   }, [exercisesById]);
+
+  const mobilityList = useMemo(() => {
+    const values = Object.values(mobilityById ?? {});
+    return values.sort((a: any, b: any) => a.name.localeCompare(b.name));
+  }, [mobilityById]);
 
   useEffect(() => {
     if (!user?.uid) return;
@@ -147,7 +159,7 @@ export default function UserScreen() {
 
   const sectionButtons = [
     { key: "exercises" as const, label: `Exercises (${exercisesList.length})` },
-    { key: "friends" as const, label: "Mobility" },
+    { key: "friends" as const, label: `Mobility (${mobilityList.length})` },
     {
       key: "requests" as const,
       label: `Friends (${incomingRequests.length + outgoingRequests.length})`,
@@ -164,6 +176,10 @@ export default function UserScreen() {
   const handleAddMobility = () => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     navigation.navigate("addNewMobility");
+  };
+  const handleMobilityPress = (mobilityId: string) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    navigation.navigate("mobility-detail", { mobilityId });
   };
 
   return (
@@ -292,11 +308,34 @@ export default function UserScreen() {
               </Pressable>
             </View>
 
-            <View style={styles.emptyWrap}>
-              <Text style={[styles.emptyText, { color: C.sub }]}>
-                No mobility moves yet.
-              </Text>
-            </View>
+            {mobilityList.length === 0 ? (
+              <View style={styles.emptyWrap}>
+                <Text style={[styles.emptyText, { color: C.sub }]}>
+                  No mobility moves yet.
+                </Text>
+              </View>
+            ) : (
+              <FlatList
+                data={mobilityList}
+                keyExtractor={(item: any) => String(item.id ?? item.name)}
+                ItemSeparatorComponent={() => (
+                  <View style={[styles.sep, { backgroundColor: C.border }]} />
+                )}
+                renderItem={({ item }) => (
+                  <Pressable
+                    onPress={() => handleMobilityPress(String(item.id))}
+                    style={({ pressed }) => [
+                      styles.row,
+                      pressed && styles.rowPressed,
+                    ]}
+                  >
+                    <Text style={[styles.rowTitle, { color: C.text }]}>{item.name}</Text>
+                    <Ionicons name="chevron-forward" size={18} color={C.sub} />
+                  </Pressable>
+                )}
+                contentContainerStyle={{ paddingBottom: 8 }}
+              />
+            )}
           </View>
         ) : null}
       </View>

@@ -228,6 +228,11 @@ function AppStack() {
         getComponent={() => require('./exercise-detail').default}
         options={{ title: "Exercise Details", headerBackTitle: 'Back', headerTintColor: iconColor }}
       />
+      <Stack.Screen
+        name="mobility-detail"
+        getComponent={() => require('./mobility-detail').default}
+        options={{ title: "Mobility Details", headerBackTitle: 'Back', headerTintColor: iconColor }}
+      />
     </Stack.Navigator>
   );
 }
